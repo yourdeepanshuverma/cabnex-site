@@ -2,8 +2,8 @@
 import axios from 'axios';
 import { toast } from 'sonner';
 
-const API_URL = 'https://cabnex-backend.onrender.com/api/v1';
-const BASE_URL = 'http://localhost:5173'; // Update to your production URL (e.g., https://cabnex.com)
+const API_URL = 'https://api.cabnex.in/api/v1';
+const BASE_URL = 'https://dev.cabnex.in/';
 
 export const loadRazorpay = async ({
   amount,

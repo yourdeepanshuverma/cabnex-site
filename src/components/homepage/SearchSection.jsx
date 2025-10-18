@@ -6,7 +6,7 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { registerLocale } from 'react-datepicker';
 import enUS from 'date-fns/locale/en-US';
 import { LoadScript, Autocomplete } from '@react-google-maps/api';
-import { googleConfig } from '../../api/api-config';
+import { googleConfig, api, endpoints } from '../../api/api-config';
 import { useNavigate } from 'react-router-dom';
 import { useSearch } from '../../context/SearchContext';
 
@@ -29,8 +29,7 @@ const SearchSection = ({ isUpdate = false }) => {
       : 0
   );
   const [expanded, setExpanded] = useState({});
-  const [pickupDate, setPickupDate] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : null);
-  const [dropoffDate, setDropoffDate] = useState(searchFormData.dropoffDate ? new Date(searchFormData.dropoffDate) : null);
+  const [pickupDateTime, setPickupDateTime] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : null); // Changed to pickupDateTime
   const [transferDateTime, setTransferDateTime] = useState(
     searchFormData.transferDateTime ? new Date(searchFormData.transferDateTime) : null
   );
@@ -88,11 +87,8 @@ const SearchSection = ({ isUpdate = false }) => {
     const fetchPackages = async () => {
       setLoading(true);
       try {
-        const response = await fetch('https://cabnex-backend.onrender.com/api/v1/package/rental', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const result = await response.json();
+        const response = await api.get('/api/v1/package/rental');
+        const result = response.data;
         if (result.success) {
           setPackages(result.data);
           if (result.data.length > 0 && !rentalPackage) {
@@ -127,8 +123,7 @@ const SearchSection = ({ isUpdate = false }) => {
   useEffect(() => {
     saveFormToContext();
   }, [
-    pickupDate,
-    dropoffDate,
+    pickupDateTime, // Updated to pickupDateTime
     transferDateTime,
     outstationTripType,
     outstationPickupDateTime,
@@ -197,8 +192,8 @@ const SearchSection = ({ isUpdate = false }) => {
     }
 
     setSearchFormData({
-      pickupDate: pickupDate ? pickupDate.toISOString() : null,
-      dropoffDate: dropoffDate ? dropoffDate.toISOString() : null,
+      pickupDate: pickupDateTime ? pickupDateTime.toISOString() : null, // Updated to pickupDateTime
+      dropoffDate: null, // Set to null for rental
       transferDateTime: transferDateTime ? transferDateTime.toISOString() : null,
       outstationTripType,
       outstationPickupDateTime: outstationPickupDateTime ? outstationPickupDateTime.toISOString() : null,
@@ -225,12 +220,8 @@ const SearchSection = ({ isUpdate = false }) => {
       return;
     }
     try {
-      const response = await fetch('https://cabnex-backend.onrender.com/api/v1/auth/search', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-      const result = await response.json();
+      const response = await api.post(endpoints.search, data);
+      const result = response.data;
       console.log('API Response:', result);
       if (result.success) {
         setSearchResult(result);
@@ -310,7 +301,7 @@ const SearchSection = ({ isUpdate = false }) => {
               onSubmit={(e) => {
                 e.preventDefault();
                 const placeId = selectedPlaces.rentalPickup?.place_id;
-                if (!placeId || !pickupDate || !dropoffDate || !rentalPackage) {
+                if (!placeId || !pickupDateTime || !rentalPackage) {
                   alert('Complete all fields.');
                   return;
                 }
@@ -320,8 +311,7 @@ const SearchSection = ({ isUpdate = false }) => {
                   oneWay: true,
                   serviceType: 'rental',
                   packageId: rentalPackage,
-                  pickupDate: pickupDate.toISOString(),
-                  dropoffDate: dropoffDate.toISOString(),
+                  pickupDateTime: pickupDateTime.toISOString(), // Updated to pickupDateTime
                 };
                 handleSearch(data, 'Rental');
               }}
@@ -348,24 +338,14 @@ const SearchSection = ({ isUpdate = false }) => {
                   </div>
                 </div>
                 <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">Pickup Date</label>
+                  <label className="text-md font-grotesk font-semibold mb-2">Pickup Date/Time</label>
                   <DatePicker
-                    selected={pickupDate}
-                    onChange={setPickupDate}
-                    dateFormat="MMMM d, yyyy"
-                    customInput={<CustomInput placeholder="Select pickup date" />}
+                    selected={pickupDateTime}
+                    onChange={setPickupDateTime}
+                    showTimeSelect
+                    dateFormat="MMMM d, yyyy h:mm aa"
+                    customInput={<CustomInput placeholder="Select pickup date and time" />}
                     minDate={new Date()}
-                    required
-                  />
-                </div>
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">Dropoff Date</label>
-                  <DatePicker
-                    selected={dropoffDate}
-                    onChange={setDropoffDate}
-                    dateFormat="MMMM d, yyyy"
-                    customInput={<CustomInput placeholder="Select dropoff date" />}
-                    minDate={pickupDate || new Date()}
                     required
                   />
                 </div>

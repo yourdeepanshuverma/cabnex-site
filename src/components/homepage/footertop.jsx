@@ -1,11 +1,17 @@
 import React from "react";
 import { FaPhoneAlt } from "react-icons/fa";
+import footerBg from "../../assets/footer/bg.webp";
+import centralimg from '../../assets/footer/car.webp'
 
 export default function CallToActionSection() {
   return (
     <section
       className="bg-cover relative bg-center py-6 px-6 rounded-lg flex items-center justify-between max-w-7xl mx-auto h-48"
-      style={{ backgroundImage: "url('src/assets/footer/bg.webp')" }} // Replace with actual image path
+       style={{
+    backgroundImage: `url(${footerBg})`,
+    backgroundSize: "cover",
+    backgroundPosition: "center",
+  }}
     >
       {/* Left Text */}
       <div className="text-white z-10">
@@ -15,7 +21,7 @@ export default function CallToActionSection() {
  {/* Absolutely Positioned Car Image in the Middle */}
       <div className="absolute bottom-[-109%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[550px] z-9">
         <img
-          src="src/assets/footer/car.webp" // Replace with actual car image path
+          src={centralimg}
           alt="Luxury Car"
           className="w-full h-auto object-cover"
         />

@@ -5,12 +5,12 @@ import "slick-carousel/slick/slick-theme.css";
 import { FaCar,FaCarSide,FaArrowRight } from "react-icons/fa";
 
 const carTypes = [
-  { type: "Sedan", img: "src/assets/cartype/sedan.webp" },
-  { type: "Hatchback", img: "src/assets/cartype/hatchback.jpg" },
-  { type: "SUV", img: "src/assets/cartype/suv.jpg" },
-  { type: "Convertible", img: "src/assets/cartype/convertible.jpg" },
-  { type: "Coupe", img: "src/assets/cartype/coupe.jpeg" },
-  { type: "Electric", img: "src/assets/cartype/electric.jpg" },
+  { type: "Sedan", img: "public/cartype/sedan.webp" },
+  { type: "Hatchback", img: "public/cartype/hatchback.jpg" },
+  { type: "SUV", img: "public/cartype/suv.jpg" },
+  { type: "Convertible", img: "public/cartype/convertible.jpg" },
+  { type: "Coupe", img: "public/cartype/coupe.jpeg" },
+  { type: "Electric", img: "public/cartype/electric.jpg" },
 ];
 
 export default function CarTypesSection() {

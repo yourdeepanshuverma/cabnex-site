@@ -38,6 +38,7 @@ const endpoints = {
   vendorMe: "/api/v1/vendor/me",
   vendorCars: "/api/v1/vendor/cars",
   carcategory: "/api/v1/admin/car-categories",
+  search:"/api/v1/auth/search",
   travelpackage: "/api/v1/package/activity",
 };
 

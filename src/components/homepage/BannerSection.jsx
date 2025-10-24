@@ -4,7 +4,9 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { FaCarSide } from 'react-icons/fa';
 import Searchsection from '../homepage/SearchSection'
-
+import bannerone from "../../assets/banner/banner1.png";
+import bannerTwo from "../../assets/banner/banner2.png";
+import bannerthree from "../../assets/banner/banner3.png";
 const BannerSlider = () => {
   // State to control animation trigger
   const [activeSlide, setActiveSlide] = useState(0);
@@ -38,17 +40,17 @@ const BannerSlider = () => {
   // Enhanced slide content
   const slides = [
     {
-      image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      image: bannerone,
       title: 'Discover Paradise Beaches',
       description: 'Immerse yourself in turquoise waters and golden sands. Your dream beach escape awaits with unforgettable sunsets.',
     },
     {
-      image: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      image: bannerTwo,
       title: 'Journey in Style',
       description: 'Hit the road with our premium car rentals. Explore new horizons with comfort and freedom at your fingertips.',
     },
     {
-      image: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80',
+      image: bannerthree,
       title: 'Adventure Awaits You',
       description: 'From mountain treks to city vibes, craft your perfect journey with exclusive travel experiences tailored for you.',
     },

@@ -1,8 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaArrowRight } from 'react-icons/fa';
 
 // Icons with orange gradient fill
+const RegisterIcon = () => (
+  <svg className="w-14 h-14" fill="url(#orange-gradient)" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7M12 22a10 10 0 110-20 10 10 0 010 20z" />
+  </svg>
+);
+
 const SearchIcon = () => (
   <svg className="w-14 h-14" fill="url(#orange-gradient)" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -11,7 +16,7 @@ const SearchIcon = () => (
 
 const CarIcon = () => (
   <svg className="w-14 h-14" fill="url(#orange-gradient)" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 13h18l-2-5H5l-2 5zm3 5a2 2 0 11.001-4.001A2 2 0 016 18zm12 0a2 2 0 11.001-4.001A2 2 0 0118 18z" />
   </svg>
 );
 
@@ -21,23 +26,27 @@ const PaymentIcon = () => (
   </svg>
 );
 
-
 const HowItWorks = () => {
   const steps = [
     {
+      icon: <RegisterIcon />,
+      title: 'Register Your Business',
+      description: 'Click Register, complete your basic KYC details, and set up your business account effortlessly.',
+    },
+    {
       icon: <SearchIcon />,
       title: 'Search for Cars',
-      description: 'Enter your pickup location, dates, and car type to find available vehicles.',
+      description: 'Choose the service type — Rental, Transfer, or Outstation — then enter pickup location and dates to view available vehicles.',
     },
     {
       icon: <CarIcon />,
       title: 'Choose Your Car',
-      description: 'Browse cars, compare prices, and pick the one that suits you best.',
+      description: 'Explore listings, compare options, and select the vehicle that best fits your client’s travel needs.',
     },
     {
       icon: <PaymentIcon />,
       title: 'Book & Pay',
-      description: 'Add your details, select extras, and pay securely to confirm.',
+      description: 'Add trip details, choose any add-ons, and complete secure payment to confirm your booking.',
     },
   ];
 
@@ -65,13 +74,13 @@ const HowItWorks = () => {
           {steps.map((step, index) => (
             <React.Fragment key={index}>
               <motion.div
-                className="flex-1 relative overflow-hidden flex flex-col items-start p-8 pb-14 pl-12 bg-[#222222] rounded-3xl transition-transform duration-300 z-10"
+                className="flex-1 relative overflow-hidden flex flex-col items-start px-4 min-h-[300px] pt-6 pb-16  bg-[#222222] rounded-3xl transition-transform duration-300 z-10"
                 initial={{ opacity: 0, x: -50 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.2 }}
               >
                 <div className="mb-3 text-white">{step.icon}</div>
-                <h3 className="text-2xl font-grotesk font-bold text-white mb-1">{step.title}</h3>
+                <h3 className="text-2xl font-grotesk text-start font-bold text-white mb-1">{step.title}</h3>
                 <p className="text-gray-200 font-grotesk text-start pb-3 text-sm">{step.description}</p>
                 <div className="absolute bottom-[-9px] left-[-9px] bg-black cartypee w-18 h-18 flex items-center justify-center rounded-tr-[20px] cursor-pointer transition">
                   <div className="text-white hover:text-white bg-[#222222] text-xl border border-orange-600 flex justify-center items-center font-bold w-12 h-12 rounded-full transition-transform duration-500 hover:rotate-[-45deg]">
@@ -89,15 +98,14 @@ const HowItWorks = () => {
                   </div>
                 </div>
               </motion.div>
-
-          
             </React.Fragment>
           ))}
         </div>
 
         {/* Note at the Bottom */}
         <p className="mt-12 text-lg font-grotesk text-orange-500 text-center">
-          If you've never rented a car before, we'll guide you through the process.
+          Need Assistance? <br />
+          If you need any help with the above steps, please feel free to contact our support team — we’re always happy to assist you.
         </p>
       </div>
     </section>

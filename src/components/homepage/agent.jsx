@@ -15,7 +15,8 @@ export default function AgentRegistrationSection() {
             Become an <span className="text-orange-600">Agent</span> Today
           </h2>
           <p className="mt-3 text-slate-600 max-w-2xl mx-auto">
-            Partner with us to offer premium car rental services to your clients. Enjoy flexible earnings, dedicated support, and access to our wide range of vehicles.
+            Partner with Cabnex to deliver premium car rental services to your clients across India.
+            Enjoy flexible earnings, reliable support, and access to our extensive fleet — from sedans to luxury coaches.
           </p>
         </div>
 
@@ -28,9 +29,11 @@ export default function AgentRegistrationSection() {
               Easy Onboarding
             </h3>
             <p className="text-slate-600 text-sm">
-              Sign up in minutes with our simple registration process and start offering rentals right away.
+              Register your business in just a few minutes with our simple KYC-based sign-up process
+              and start offering verified rental services immediately.
             </p>
           </div>
+
           {/* Benefit 2 */}
           <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition">
             <FaUserPlus className="text-orange-500 text-4xl mb-4 mx-auto" />
@@ -38,9 +41,11 @@ export default function AgentRegistrationSection() {
               Competitive Earnings
             </h3>
             <p className="text-slate-600 text-sm">
-              Earn attractive commissions for every booking made through your network.
+              Earn attractive commissions for every successful booking made through your network —
+              whether for local rentals, transfers, or outstation trips.
             </p>
           </div>
+
           {/* Benefit 3 */}
           <div className="bg-white p-6 rounded-2xl shadow-md hover:shadow-lg transition">
             <FaUserPlus className="text-orange-500 text-4xl mb-4 mx-auto" />
@@ -48,7 +53,8 @@ export default function AgentRegistrationSection() {
               24/7 Support
             </h3>
             <p className="text-slate-600 text-sm">
-              Get round-the-clock assistance to ensure smooth operations and happy clients.
+              Our dedicated team is available round the clock to ensure smooth operations,
+              quick resolutions, and happy clients.
             </p>
           </div>
         </div>
@@ -60,6 +66,11 @@ export default function AgentRegistrationSection() {
         >
           Join as an Agent Now
         </a>
+
+        <p className="mt-6 text-slate-700 font-grotesk">
+          Ready to get started? <br />
+          <span className="text-orange-600 font-semibold">Start earning with Cabnex today.</span>
+        </p>
       </div>
     </section>
   );

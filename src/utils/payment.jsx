@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = 'https://api.cabnex.in/api/v1';
-const BASE_URL = 'https://dev.cabnex.in/';
+const BASE_URL = 'http://localhost:5173/';
 
 export const loadRazorpay = async ({
   amount,

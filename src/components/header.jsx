@@ -28,11 +28,13 @@ import {
 import { ChevronDownIcon, PhoneIcon, PlayCircleIcon } from '@heroicons/react/20/solid';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast, ToastContainer } from 'react-toastify';
+import Cookies from 'js-cookie';
 import logo from '../assets/logo/logo-cab.png';
 import loginImg from '../assets/login/login.jpg';
 import signupImg from '../assets/login/register.jpg';
 import { api, endpoints } from '../api/api-config';
 import { useSearch } from '../context/SearchContext';
+import 'react-toastify/dist/ReactToastify.css';
 
 const services = [
   { name: 'Corporates', description: 'Reliable transport for business needs', href: '#', icon: ChartPieIcon },
@@ -64,6 +66,7 @@ export default function Header() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [mobile, setMobile] = useState('');
@@ -84,84 +87,88 @@ export default function Header() {
 
   // Debugging context
   useEffect(() => {
-    console.log('SearchContext values:', { isLoggedIn, setIsLoggedIn, user, setUser });
-  }, [isLoggedIn, setIsLoggedIn, user, setUser]);
+    console.log('SearchContext values:', { isLoggedIn, user });
+  }, [isLoggedIn, user]);
 
-  // Open login dialog if redirected with openLogin: true, and handle pending search after login
+  // Check for existing user session from cookies or localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('userData');
+    const userName = Cookies.get('userName');
+    if (userData) {
+      const parsedUserData = JSON.parse(userData);
+      setUser(parsedUserData);
+      setIsLoggedIn(true);
+      console.log('User restored from localStorage:', parsedUserData);
+      // Sync cookie with fullName
+      if (userName !== parsedUserData.fullName) {
+        console.warn('Cookie userName mismatch:', userName, 'vs', parsedUserData.fullName);
+        Cookies.set('userName', parsedUserData.fullName, { expires: 7 });
+      }
+    } else if (userName) {
+      // Fallback for old cookie-based session
+      setUser({ fullName: userName });
+      setIsLoggedIn(true);
+      console.log('User restored from cookies:', userName);
+    } else {
+      setIsLoggedIn(false);
+      setUser(null);
+      console.log('No user found in cookies or localStorage');
+    }
+  }, [setIsLoggedIn, setUser]);
+
+  // Open login dialog if redirected with openLogin: true
   useEffect(() => {
     if (location.state?.openLogin) {
       setLoginOpen(true);
     }
   }, [location.state]);
 
-  // Fetch user profile on page load/refresh
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        if (typeof setIsLoggedIn === 'function') {
-          setIsLoggedIn(false);
-          setUser(null);
-        }
-        console.log('No token found, user not logged in');
-        return;
-      }
-      try {
-        const response = await api.get('/api/v1/auth/me');
-        console.log('Profile response on load:', response.data);
-        const userData = response.data.data.user;
-        if (typeof setUser === 'function') {
-          setUser(userData);
-          setIsLoggedIn(true);
-        }
-        console.log('Updated user:', userData);
-      } catch (error) {
-        console.log('Error fetching profile:', error.response?.data);
-        if (typeof setIsLoggedIn === 'function') {
-          setIsLoggedIn(false);
-          setUser(null);
-        }
-        localStorage.removeItem('token');
-        toast.error('Failed to fetch profile. Please log in again.');
-      }
-    };
-    fetchUserProfile();
-  }, [setIsLoggedIn, setUser]);
-
   // Login Function
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoginError('');
+
+    // Validation
     if (!identifier) {
+      setLoginError('Please enter an email or mobile number.');
       toast.error('Please enter an email or mobile number.');
       return;
     }
     if (!password) {
+      setLoginError('Please enter a password.');
       toast.error('Please enter a password.');
       return;
     }
     const isValidEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(identifier);
     const isValidMobile = /^\d{10}$/.test(identifier);
     if (!isValidEmail && !isValidMobile) {
+      setLoginError('Please enter a valid email or 10-digit mobile number.');
       toast.error('Please enter a valid email or 10-digit mobile number.');
       return;
     }
+
     const loginData = isValidEmail
       ? { email: identifier, password }
       : { mobile: identifier, password };
+
     try {
       setIsLoading(true);
       console.log('Logging in with data:', loginData);
       const response = await api.post('/api/v1/auth/login', loginData);
       console.log('Login response:', response.data);
+
       if (response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        const profileResponse = await api.get('/api/v1/auth/me');
-        console.log('Profile response:', profileResponse.data);
-        const userData = profileResponse.data.data.user;
-        if (typeof setUser === 'function' && typeof setIsLoggedIn === 'function') {
-          setUser(userData);
-          setIsLoggedIn(true);
+        const userData = response.data.data; // Expecting { _id, fullName, email, mobile }
+        // Validate required fields
+        if (!userData.fullName || !userData.email || !userData.mobile) {
+          throw new Error('Incomplete user data received from server');
         }
+        // Save full user data in localStorage
+        localStorage.setItem('userData', JSON.stringify(userData));
+        // Save userName in cookie for backward compatibility
+        Cookies.set('userName', userData.fullName, { expires: 7 });
+        setUser(userData);
+        setIsLoggedIn(true);
         toast.success(response.data.message || 'Login successful!');
         setIdentifier('');
         setPassword('');
@@ -170,7 +177,6 @@ export default function Header() {
         // Handle redirect after login
         const { from, car, pendingSearch } = location.state || {};
         if (pendingSearch) {
-          // If there's a pending search, execute it now after login
           handleSearch(pendingSearch.data, pendingSearch.tab);
         } else if (from === '/car-listing' && car) {
           navigate('/car-details', { state: { car } });
@@ -178,14 +184,30 @@ export default function Header() {
           navigate(from || '/');
         }
       } else {
+        setLoginError(response.data.message || 'Login failed');
         toast.error(response.data.message || 'Login failed');
       }
     } catch (error) {
-      toast.error('Login failed: ' + (error.response?.data?.message || error.message));
-      console.log('Error details:', error.response?.data);
+      const errorMessage = error.response?.data?.message || error.message;
+      setLoginError('Login failed: ' + errorMessage);
+      toast.error('Login failed: ' + errorMessage);
+      console.error('Login error:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Logout Function
+  const handleLogout = () => {
+    console.log('Initiating user logout...');
+    Cookies.remove('userName');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('vendorToken');
+    localStorage.removeItem('vendorName');
+    setIsLoggedIn(false);
+    setUser(null);
+    toast.success('Logged out successfully');
+    navigate('/');
   };
 
   // Register Function
@@ -236,14 +258,15 @@ export default function Header() {
       const response = await api.post(endpoints.signup, formData);
       console.log('Register response:', response.data);
       if (response.data.statusCode === 201 && response.data.success) {
-        localStorage.setItem('token', response.data.token);
-        const profileResponse = await api.get('/api/v1/auth/me');
-        console.log('Profile response:', profileResponse.data);
-        const userData = profileResponse.data.data.user;
-        if (typeof setUser === 'function' && typeof setIsLoggedIn === 'function') {
-          setUser(userData);
-          setIsLoggedIn(true);
+        const userData = response.data.data; // Expecting { _id, fullName, email, mobile }
+        // Validate required fields
+        if (!userData.fullName || !userData.email || !userData.mobile) {
+          throw new Error('Incomplete user data received from server');
         }
+        localStorage.setItem('userData', JSON.stringify(userData));
+        Cookies.set('userName', userData.fullName, { expires: 7 });
+        setUser(userData);
+        setIsLoggedIn(true);
         toast.success(response.data.message || 'Registration successful!');
         setFullName('');
         setEmail('');
@@ -257,7 +280,6 @@ export default function Header() {
         setVerifiedRegisterOtp('');
         setRegisterOpen(false);
 
-        // Handle redirect after registration
         const { from, car, pendingSearch } = location.state || {};
         if (pendingSearch) {
           handleSearch(pendingSearch.data, pendingSearch.tab);
@@ -269,29 +291,9 @@ export default function Header() {
       }
     } catch (error) {
       toast.error('Registration failed: ' + (error.response?.data?.message || error.message));
-      console.log('Error details:', error.response?.data);
+      console.error('Register error:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  // Logout Function
-  const handleLogout = async () => {
-    try {
-      console.log('Token before logout:', localStorage.getItem('token'));
-      await api.post('/api/v1/auth/logout');
-      if (typeof setIsLoggedIn === 'function' && typeof setUser === 'function') {
-        setIsLoggedIn(false);
-        setUser(null);
-      }
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      console.log('Logged out, cleared context and localStorage');
-      toast.success('Logged out successfully');
-      navigate('/');
-    } catch (error) {
-      console.log('Logout error:', error.response?.data);
-      toast.error('Logout failed');
     }
   };
 
@@ -327,7 +329,7 @@ export default function Header() {
       }
     } catch (error) {
       toast.error('Error: ' + (error.response?.data?.message || error.message));
-      console.log('Error details:', error.response?.data);
+      console.error('Send OTP error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -352,7 +354,7 @@ export default function Header() {
       toast.success('OTP verified successfully!');
     } catch (error) {
       toast.error('Error: ' + (error.response?.data?.message || error.message));
-      console.log('Error details:', error.response?.data);
+      console.error('Verify OTP error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -391,7 +393,7 @@ export default function Header() {
       }
     } catch (error) {
       toast.error('Error: ' + (error.response?.data?.message || error.message));
-      console.log('Error details:', error.response?.data);
+      console.error('Reset password error:', error);
     } finally {
       setIsLoading(false);
     }
@@ -415,8 +417,8 @@ export default function Header() {
       <header className="bg-transparent absolute inset-x-0 top-0 z-50 left-0 right-0 backdrop-blur-md border-b border-gray-200">
         <nav aria-label="Global" className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-0">
           <div className="flex lg:flex-1">
-            <a href="/" className="-m-1.5 p-1.5 bg-white rounded-2xl">
-              <img alt="" src={logo} className="h-16 w-auto" />
+            <a href="/" className="-m-1.5  rounded-2xl">
+              <img alt="logo" src={logo} className="h-16 w-auto" />
             </a>
           </div>
           <div className="flex lg:hidden">
@@ -525,7 +527,7 @@ export default function Header() {
               <Popover className="relative cursor-pointer">
                 <PopoverButton className="cursor-pointer flex items-center gap-x-2 text-md font-grotesk font-semibold text-white">
                   <UserIcon className="h-10 w-10 bg-[#FF6900] p-2 rounded-full text-white" aria-hidden="true" />
-                  <span>{user?.fullName || user?.userName || 'User'}</span>
+                  <span>{user?.fullName || 'User'}</span>
                   <ChevronDownIcon aria-hidden="true" className="h-5 w-5 text-gray-400" />
                 </PopoverButton>
                 <PopoverPanel
@@ -678,7 +680,7 @@ export default function Header() {
                       <DisclosureButton className="group flex w-full items-center justify-between rounded-lg py-2 pr-3.5 pl-3 text-base/7 font-semibold text-gray-900 hover:bg-gray-50">
                         <div className="flex items-center gap-x-2">
                           <UserIcon className="h-5 w-5 text-gray-900" aria-hidden="true" />
-                          <span>{user?.fullName || user?.userName || 'User'}</span>
+                          <span>{user?.fullName || 'User'}</span>
                         </div>
                         <ChevronDownIcon aria-hidden="true" className="h-5 w-5 flex-none group-data-[open]:rotate-180" />
                       </DisclosureButton>
@@ -735,7 +737,10 @@ export default function Header() {
               <div className="w-2/3 p-8 flex flex-col justify-start relative">
                 <button
                   type="button"
-                  onClick={() => setLoginOpen(false)}
+                  onClick={() => {
+                    setLoginOpen(false);
+                    setLoginError('');
+                  }}
                   className="absolute top-4 right-4 text-gray-700 hover:text-gray-900"
                 >
                   <span className="sr-only">Close</span>
@@ -784,6 +789,9 @@ export default function Header() {
                       />
                     </div>
                   </div>
+                  {loginError && (
+                    <p className="text-red-500 text-sm mt-2 text-center">{loginError}</p>
+                  )}
                   <div className="text-right">
                     <button
                       onClick={() => {

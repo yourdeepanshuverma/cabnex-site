@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import Cookies from 'js-cookie';
 
 const SearchContext = createContext();
 
@@ -19,14 +20,20 @@ export const SearchProvider = ({ children }) => {
     multicityStops: [],
     serviceType: 'rental',
     dropoffLocation: null,
-    pickupLocation: null, // पिकअप लोकेशन के लिए जोड़ा
+    pickupLocation: null,
   });
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return !!localStorage.getItem('token');
+    const userData = localStorage.getItem('userData');
+    const userName = Cookies.get('userName');
+    return !!(userData || userName);
   });
   const [user, setUser] = useState(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser ? JSON.parse(savedUser) : null;
+    const savedUser = localStorage.getItem('userData');
+    if (savedUser) {
+      console.log('Loaded userData from localStorage:', JSON.parse(savedUser));
+      return JSON.parse(savedUser);
+    }
+    return null;
   });
 
   useEffect(() => {
@@ -46,7 +53,7 @@ export const SearchProvider = ({ children }) => {
   }, [searchFormData]);
 
   useEffect(() => {
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('userData', JSON.stringify(user));
   }, [user]);
 
   return (

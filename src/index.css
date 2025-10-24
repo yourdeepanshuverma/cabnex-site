@@ -172,7 +172,6 @@ body {
   border-radius: 0px;
   position: absolute;
   bottom: -27px;
-  transform: rotate(-2deg);
   padding: 12px 0;
   z-index: 9;
 }

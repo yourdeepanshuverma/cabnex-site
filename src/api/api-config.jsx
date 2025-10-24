@@ -8,25 +8,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("vendorToken");
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("vendorToken");
-      localStorage.removeItem("vendorName");
-      window.location.href = '/vendor-login';
-    }
-    return Promise.reject(error);
-  }
-);
 
 const endpoints = {
   signup: "/api/v1/auth/register",
@@ -38,8 +20,8 @@ const endpoints = {
   vendorMe: "/api/v1/vendor/me",
   vendorCars: "/api/v1/vendor/cars",
   carcategory: "/api/v1/admin/car-categories",
-  search:"/api/v1/auth/search",
   travelpackage: "/api/v1/package/activity",
+  search:"/api/v1/auth/search",
 };
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';

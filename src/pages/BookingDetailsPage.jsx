@@ -1,5 +1,4 @@
-// src/pages/BookingDetailsPage.jsx (Updated Full Code)
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   CheckCircleIcon,
   ArrowPathIcon,
@@ -9,8 +8,9 @@ import {
   CalendarIcon,
   ClockIcon,
   UserIcon,
+  EnvelopeIcon,
 } from '@heroicons/react/24/solid';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearch } from '../context/SearchContext';
 import Header from '../components/header';
 import { loadRazorpay } from '../utils/payment';
@@ -25,12 +25,22 @@ const iconMap = {
   CalendarIcon,
   ClockIcon,
   UserIcon,
+  EnvelopeIcon,
 };
 
 const BookingDetailsPage = () => {
-  const { user, searchFormData } = useSearch();
+  const { user, searchFormData, isLoggedIn } = useSearch();
   const location = useLocation();
-  const { item } = location.state || {}; // Changed from car to item for generality
+  const navigate = useNavigate();
+  const { item } = location.state || {};
+
+  // Redirect to login if not logged in
+  useEffect(() => {
+    if (!isLoggedIn) {
+      toast.error('Please log in to proceed with booking.');
+      navigate('/login', { state: { from: location.pathname, item } });
+    }
+  }, [isLoggedIn, navigate, location.pathname, item]);
 
   const isActivity = item?.type === 'activity';
 
@@ -60,9 +70,9 @@ const BookingDetailsPage = () => {
 
   const defaultItem = {
     id: 1,
-    image: 'https://via.placeholder.com/300x200?text=Item+Image', // Default image
+    image: 'https://via.placeholder.com/300x200?text=Item+Image',
     name: 'Default Item',
-    features: transformFeatures(['AC', 'Automatic', 'Petrol', '5 Seats']), // Use transform
+    features: transformFeatures(['AC', 'Automatic', 'Petrol', '5 Seats']),
     inclusions: [
       { text: '24/7 Roadside Assistance', icon: 'CheckCircleIcon' },
       { text: 'Free Cancellation & Return', icon: 'ArrowPathIcon' },
@@ -73,13 +83,14 @@ const BookingDetailsPage = () => {
     ],
     actualPrice: 4500,
     description: 'Comfortable item perfect for your needs.',
-    type: 'car', // Default to car
+    type: 'car',
+    cancellationPolicy: 'Non-refundable',
   };
 
   // Transform the incoming item features if they exist
   const selectedItem = item ? {
     ...item,
-    features: isActivity ? [] : transformFeatures(item.features || []), // No features for activities
+    features: isActivity ? [] : transformFeatures(item.features || []),
     actualPrice: item.actualPrice || 4500,
     description: item.description || 'Selected item for your booking.',
     inclusions: item.inclusions || defaultItem.inclusions,
@@ -88,6 +99,7 @@ const BookingDetailsPage = () => {
   } : defaultItem;
 
   // Debug logs
+  console.log('User Data:', user);
   console.log('Transformed Features:', selectedItem.features);
   console.log('Search Form Data:', searchFormData);
   console.log('Selected Item Price Debug:', selectedItem.actualPrice);
@@ -123,12 +135,13 @@ const BookingDetailsPage = () => {
     dropoffLocation = searchFormData.dropoffLocation || searchFormData.selectedPlaces?.outstationDropoff || dropoffLocation;
   } else if (serviceType === 'activity') {
     pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.activityLocation || pickupLocation;
-    dropoffLocation = pickupLocation; // For activities, dropoff is same as pickup or not applicable
+    dropoffLocation = pickupLocation;
   }
 
   const [travellerInfo, setTravellerInfo] = useState({
-    name: user?.fullName || user?.userName || 'Guest',
-    mobile: user?.mobile || 'Not provided',
+    name: user?.fullName || 'Guest',
+    mobile: user?.mobile || '',
+    email: user?.email || '',
     exactPickupLocation: '',
     pickupLocation,
     pickupDate: formatDate(
@@ -150,29 +163,42 @@ const BookingDetailsPage = () => {
   const [isBookingForOther, setIsBookingForOther] = useState(false);
   const [alternateName, setAlternateName] = useState('');
   const [alternatePhone, setAlternatePhone] = useState('');
+  const [alternateEmail, setAlternateEmail] = useState('');
   const [paymentOption, setPaymentOption] = useState('half');
 
   const handleExactPickupLocationChange = (e) => {
     setTravellerInfo({ ...travellerInfo, exactPickupLocation: e.target.value });
   };
 
+  const handleTravellerInfoChange = (field, value) => {
+    setTravellerInfo({ ...travellerInfo, [field]: value });
+  };
+
   const handlePayNow = async () => {
     // Validation
     if (!travellerInfo.exactPickupLocation) {
-      toast.error("Please enter exact pickup location.");
+      toast.error('Please enter exact pickup location.');
       return;
     }
-    if (isBookingForOther && (!alternateName || !alternatePhone)) {
-      toast.error("Enter alternate traveller details.");
+    if (!travellerInfo.mobile) {
+      toast.error('Please enter a mobile number.');
+      return;
+    }
+    if (!travellerInfo.email) {
+      toast.error('Please enter an email address.');
+      return;
+    }
+    if (isBookingForOther && (!alternateName || !alternatePhone || !alternateEmail)) {
+      toast.error('Please enter all alternate traveller details.');
       return;
     }
 
-    // Amount Calculation Fix: Round to 2 decimals for rupees
+    // Amount Calculation
     const rawPayAmount = paymentOption === 'half' ? selectedItem.actualPrice / 2 : selectedItem.actualPrice;
-    const payAmount = parseFloat(rawPayAmount.toFixed(2)); 
+    const payAmount = parseFloat(rawPayAmount.toFixed(2));
     console.log(`Payment Amount Calculation: Option=${paymentOption}, Raw=${rawPayAmount}, Fixed=${payAmount}`);
 
-    // Pickup DateTime ISO format mein
+    // Pickup DateTime ISO format
     const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
     const pickupDateObj = new Date(pickupDateTimeStr);
     const pickupDateTimeISO = pickupDateObj.toISOString();
@@ -180,12 +206,12 @@ const BookingDetailsPage = () => {
     // Helper to check if dropoff should be shown
     const showDropoff = dropoffLocation.name !== 'Not specified';
 
-    // Payment Params - Updated to use array of objects for locations
+    // Payment Params
     const paymentParams = {
       amount: payAmount,
-      carCategoryName: isActivity ? selectedItem.name : selectedItem.name || 'Default Car', // Handle activity name
+      carCategoryName: isActivity ? selectedItem.name : selectedItem.name || 'Default Car',
       serviceType,
-      packageType: null, 
+      packageType: null,
       packageId: null,
       exactLocation: travellerInfo.exactPickupLocation,
       pickupDateTime: pickupDateTimeISO,
@@ -196,21 +222,27 @@ const BookingDetailsPage = () => {
       destinations: showDropoff ? [{
         address: travellerInfo.dropoffLocation.name,
         place_id: travellerInfo.dropoffLocation.place_id || null,
-      }] : [], 
+      }] : [],
       returnDateTime: null,
       distance: searchFormData.distance || null,
       totalAmount: selectedItem.actualPrice,
       city: travellerInfo.pickupLocation.name.split(',')[0]?.trim() || 'Unknown',
-      user,
+      user: {
+        _id: user?._id || null,
+        fullName: isBookingForOther ? alternateName : travellerInfo.name,
+        email: isBookingForOther ? alternateEmail : travellerInfo.email,
+        mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
+      },
     };
 
-    console.log('Payment Params:', paymentParams); 
+    console.log('Payment Params:', paymentParams);
 
-    // Call function
     try {
       await loadRazorpay(paymentParams);
+      toast.success('Payment initiated successfully!');
     } catch (err) {
-      toast.error("Payment process interrupted.");
+      console.error('Payment Error:', err);
+      toast.error('Payment process interrupted.');
     }
   };
 
@@ -278,14 +310,39 @@ const BookingDetailsPage = () => {
                 <UserIcon className="h-6 w-6 text-[#5143D9]" />
                 <div>
                   <p className="font-grotesk font-semibold text-md text-black">Name</p>
-                  <p className="font-grotesk text-sm text-gray-600">{travellerInfo.name}</p>
+                  <input
+                    type="text"
+                    value={travellerInfo.name}
+                    onChange={(e) => handleTravellerInfoChange('name', e.target.value)}
+                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
+                    placeholder="Enter traveller name"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <UserIcon className="h-6 w-6 text-[#5143D9]" />
                 <div>
                   <p className="font-grotesk font-semibold text-md text-black">Phone Number</p>
-                  <p className="font-grotesk text-sm text-gray-600">{travellerInfo.mobile}</p>
+                  <input
+                    type="tel"
+                    value={travellerInfo.mobile}
+                    onChange={(e) => handleTravellerInfoChange('mobile', e.target.value)}
+                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
+                    placeholder="Enter phone number"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <EnvelopeIcon className="h-6 w-6 text-[#5143D9]" />
+                <div>
+                  <p className="font-grotesk font-semibold text-md text-black">Email</p>
+                  <input
+                    type="email"
+                    value={travellerInfo.email}
+                    onChange={(e) => handleTravellerInfoChange('email', e.target.value)}
+                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
+                    placeholder="Enter email address"
+                  />
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -364,6 +421,19 @@ const BookingDetailsPage = () => {
                         placeholder="Enter alternate phone number"
                         value={alternatePhone}
                         onChange={(e) => setAlternatePhone(e.target.value)}
+                        className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 col-span-2">
+                    <EnvelopeIcon className="h-6 w-6 text-[#5143D9] mt-1 flex-shrink-0" />
+                    <div className="w-full">
+                      <p className="font-grotesk font-semibold text-md text-black">Alternate Email</p>
+                      <input
+                        type="email"
+                        placeholder="Enter alternate email address"
+                        value={alternateEmail}
+                        onChange={(e) => setAlternateEmail(e.target.value)}
                         className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
                       />
                     </div>

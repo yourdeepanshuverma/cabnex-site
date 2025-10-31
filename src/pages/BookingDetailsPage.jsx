@@ -174,77 +174,88 @@ const BookingDetailsPage = () => {
     setTravellerInfo({ ...travellerInfo, [field]: value });
   };
 
-  const handlePayNow = async () => {
-    // Validation
-    if (!travellerInfo.exactPickupLocation) {
-      toast.error('Please enter exact pickup location.');
-      return;
-    }
-    if (!travellerInfo.mobile) {
-      toast.error('Please enter a mobile number.');
-      return;
-    }
-    if (!travellerInfo.email) {
-      toast.error('Please enter an email address.');
-      return;
-    }
-    if (isBookingForOther && (!alternateName || !alternatePhone || !alternateEmail)) {
-      toast.error('Please enter all alternate traveller details.');
-      return;
-    }
+const handlePayNow = async () => {
+  // Validation
+  if (!travellerInfo.exactPickupLocation) {
+    toast.error('Please enter exact pickup location.');
+    return;
+  }
+  if (!travellerInfo.mobile) {
+    toast.error('Please enter a mobile number.');
+    return;
+  }
+  if (!travellerInfo.email) {
+    toast.error('Please enter an email address.');
+    return;
+  }
+  if (isBookingForOther && (!alternateName || !alternatePhone || !alternateEmail)) {
+    toast.error('Please enter all alternate traveller details.');
+    return;
+  }
 
-    // Amount Calculation
-    const rawPayAmount = paymentOption === 'half' ? selectedItem.actualPrice / 2 : selectedItem.actualPrice;
-    const payAmount = parseFloat(rawPayAmount.toFixed(2));
-    console.log(`Payment Amount Calculation: Option=${paymentOption}, Raw=${rawPayAmount}, Fixed=${payAmount}`);
+  // Amount Calculation
+  const rawPayAmount = paymentOption === 'half' ? selectedItem.actualPrice / 2 : selectedItem.actualPrice;
+  const payAmount = parseFloat(rawPayAmount.toFixed(2));
+  console.log(`Payment Amount Calculation: Option=${paymentOption}, Raw=${rawPayAmount}, Fixed=${payAmount}`);
 
-    // Pickup DateTime ISO format
-    const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
-    const pickupDateObj = new Date(pickupDateTimeStr);
-    const pickupDateTimeISO = pickupDateObj.toISOString();
+  // Pickup DateTime ISO format
+  const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
+  const pickupDateObj = new Date(pickupDateTimeStr);
+  const pickupDateTimeISO = pickupDateObj.toISOString();
 
-    // Helper to check if dropoff should be shown
-    const showDropoff = dropoffLocation.name !== 'Not specified';
+  // Helper to check if dropoff should be shown
+  const showDropoff = dropoffLocation.name !== 'Not specified';
 
-    // Payment Params
-    const paymentParams = {
-      amount: payAmount,
-      carCategoryName: isActivity ? selectedItem.name : selectedItem.name || 'Default Car',
-      serviceType,
-      packageType: null,
-      packageId: null,
-      exactLocation: travellerInfo.exactPickupLocation,
-      pickupDateTime: pickupDateTimeISO,
-      startLocation: {
-        address: travellerInfo.pickupLocation.name,
-        place_id: travellerInfo.pickupLocation.place_id || null,
-      },
-      destinations: showDropoff ? [{
-        address: travellerInfo.dropoffLocation.name,
-        place_id: travellerInfo.dropoffLocation.place_id || null,
-      }] : [],
-      returnDateTime: null,
-      distance: searchFormData.distance || null,
-      totalAmount: selectedItem.actualPrice,
-      city: travellerInfo.pickupLocation.name.split(',')[0]?.trim() || 'Unknown',
-      user: {
-        _id: user?._id || null,
-        fullName: isBookingForOther ? alternateName : travellerInfo.name,
-        email: isBookingForOther ? alternateEmail : travellerInfo.email,
-        mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
-      },
-    };
+  // Determine oneWay based on serviceType and outstationTripType
+  const oneWay = serviceType === 'outstation' && 
+    (searchFormData.outstationTripType === 'round-trip' || searchFormData.outstationTripType === 'multicity')
+    ? false
+    : true;
 
-    console.log('Payment Params:', paymentParams);
-
-    try {
-      await loadRazorpay(paymentParams);
-      toast.success('Payment initiated successfully!');
-    } catch (err) {
-      console.error('Payment Error:', err);
-      toast.error('Payment process interrupted.');
-    }
+  // Payment Params
+  const paymentParams = {
+    amount: payAmount,
+    carCategoryName: isActivity ? selectedItem.name : selectedItem.name || 'Default Car',
+    serviceType,
+    packageType: serviceType === 'rental' ? searchFormData.rentalPackage || null : null,
+    packageId: null,
+    exactLocation: travellerInfo.exactPickupLocation,
+    pickupDateTime: pickupDateTimeISO,
+    startLocation: {
+      address: travellerInfo.pickupLocation.name,
+      place_id: travellerInfo.pickupLocation.place_id || null,
+    },
+    destinations: showDropoff ? [{
+      address: travellerInfo.dropoffLocation.name,
+      place_id: travellerInfo.dropoffLocation.place_id || null,
+    }] : [],
+    returnDateTime: serviceType === 'outstation' && searchFormData.outstationTripType === 'round-trip'
+      ? searchFormData.outstationReturnDateTime
+      : serviceType === 'outstation' && searchFormData.outstationTripType === 'multicity' && searchFormData.multicityStops.length > 0
+      ? searchFormData.multicityStops[searchFormData.multicityStops.length - 1].dateTime
+      : null,
+    distance: searchFormData.distance || 0,
+    totalAmount: selectedItem.actualPrice,
+    city: travellerInfo.pickupLocation.name.split(',')[0]?.trim() || 'Unknown',
+    oneWay, // Added oneWay field
+    user: {
+      _id: user?._id || null,
+      fullName: isBookingForOther ? alternateName : travellerInfo.name,
+      email: isBookingForOther ? alternateEmail : travellerInfo.email,
+      mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
+    },
   };
+
+  console.log('Payment Params:', paymentParams);
+
+  try {
+    await loadRazorpay(paymentParams);
+    toast.success('Payment initiated successfully!');
+  } catch (err) {
+    console.error('Payment Error:', err);
+    toast.error('Payment process interrupted.');
+  }
+};
 
   return (
     <section className="max-w-7xl mx-auto p-6">

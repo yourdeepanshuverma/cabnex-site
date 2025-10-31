@@ -29,7 +29,7 @@ const SearchSection = ({ isUpdate = false }) => {
       : 0
   );
   const [expanded, setExpanded] = useState({});
-  const [pickupDateTime, setPickupDateTime] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : null); // Changed to pickupDateTime
+  const [pickupDateTime, setPickupDateTime] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : null);
   const [transferDateTime, setTransferDateTime] = useState(
     searchFormData.transferDateTime ? new Date(searchFormData.transferDateTime) : null
   );
@@ -123,7 +123,7 @@ const SearchSection = ({ isUpdate = false }) => {
   useEffect(() => {
     saveFormToContext();
   }, [
-    pickupDateTime, // Updated to pickupDateTime
+    pickupDateTime,
     transferDateTime,
     outstationTripType,
     outstationPickupDateTime,
@@ -170,44 +170,69 @@ const SearchSection = ({ isUpdate = false }) => {
   };
 
   const saveFormToContext = () => {
-    const cleanStops = multicityStops.map(({ pickupRef, dropoffRef, ...rest }) => ({
-      ...rest,
-      dateTime: rest.dateTime ? rest.dateTime.toISOString() : null,
-    }));
+  const cleanStops = multicityStops.map(({ pickupRef, dropoffRef, ...rest }) => ({
+    ...rest,
+    dateTime: rest.dateTime ? rest.dateTime.toISOString() : null,
+  }));
 
-    let pickupLocation = null;
-    let dropoffLocation = null;
-    const serviceType = tabs[activeTabIndex].toLowerCase().replace(' ', '_');
+  let pickupLocation = null;
+  let dropoffLocation = null;
+  const serviceType = tabs[activeTabIndex].toLowerCase().replace(' ', '_');
 
-    if (serviceType === 'rental') {
-      pickupLocation = selectedPlaces.rentalPickup || null;
-    } else if (serviceType === 'transfer') {
-      pickupLocation = selectedPlaces.transferFrom || null;
-      dropoffLocation = selectedPlaces.transferTo || null;
-    } else if (serviceType === 'outstation') {
-      pickupLocation = selectedPlaces.outstationPickup || null;
-      dropoffLocation = outstationTripType === 'multicity' ? null : selectedPlaces.outstationDropoff || null;
-    } else if (serviceType === 'activity') {
-      pickupLocation = selectedPlaces.activityLocation || null;
-    }
-
-    setSearchFormData({
-      pickupDate: pickupDateTime ? pickupDateTime.toISOString() : null, // Updated to pickupDateTime
-      dropoffDate: null, // Set to null for rental
-      transferDateTime: transferDateTime ? transferDateTime.toISOString() : null,
-      outstationTripType,
-      outstationPickupDateTime: outstationPickupDateTime ? outstationPickupDateTime.toISOString() : null,
-      outstationReturnDateTime: outstationReturnDateTime ? outstationReturnDateTime.toISOString() : null,
-      selectedPlaces,
-      rentalPackage,
-      multicityStops: cleanStops,
-      serviceType,
-      pickupLocation,
-      dropoffLocation,
-      activityDateTime: activityDateTime ? activityDateTime.toISOString() : null,
-    });
+  // Reset irrelevant fields based on serviceType
+  let newFormData = {
+    serviceType,
+    pickupDate: null,
+    dropoffDate: null,
+    transferDateTime: null,
+    outstationTripType: serviceType === 'outstation' ? outstationTripType : 'one-way',
+    outstationPickupDateTime: null,
+    outstationReturnDateTime: null,
+    selectedPlaces: selectedPlaces,
+    rentalPackage: null,
+    multicityStops: [],
+    pickupLocation: null,
+    dropoffLocation: null,
+    activityDateTime: null,
+    distance: searchFormData.distance || 0, // Preserve distance
   };
 
+  if (serviceType === 'rental') {
+    pickupLocation = selectedPlaces.rentalPickup || null;
+    newFormData = {
+      ...newFormData,
+      pickupDateTime: pickupDateTime ? pickupDateTime.toISOString() : null,
+      rentalPackage,
+    };
+  } else if (serviceType === 'transfer') {
+    pickupLocation = selectedPlaces.transferFrom || null;
+    dropoffLocation = selectedPlaces.transferTo || null;
+    newFormData = {
+      ...newFormData,
+      transferDateTime: transferDateTime ? transferDateTime.toISOString() : null,
+    };
+  } else if (serviceType === 'outstation') {
+    pickupLocation = selectedPlaces.outstationPickup || null;
+    dropoffLocation = outstationTripType === 'multicity' ? null : selectedPlaces.outstationDropoff || null;
+    newFormData = {
+      ...newFormData,
+      outstationPickupDateTime: outstationPickupDateTime ? outstationPickupDateTime.toISOString() : null,
+      outstationReturnDateTime: outstationTripType === 'round-trip' ? outstationReturnDateTime?.toISOString() : null,
+      multicityStops: outstationTripType === 'multicity' ? cleanStops : [],
+    };
+  } else if (serviceType === 'activity') {
+    pickupLocation = selectedPlaces.activityLocation || null;
+    newFormData = {
+      ...newFormData,
+      activityDateTime: activityDateTime ? activityDateTime.toISOString() : null,
+    };
+  }
+
+  newFormData.pickupLocation = pickupLocation;
+  newFormData.dropoffLocation = dropoffLocation;
+
+  setSearchFormData(newFormData);
+};
   const handleSearch = async (data, tab = '') => {
     if (!isLoggedIn) {
       navigate('/', { state: { openLogin: true, pendingSearch: { data, tab } } });
@@ -225,6 +250,11 @@ const SearchSection = ({ isUpdate = false }) => {
       console.log('API Response:', result);
       if (result.success) {
         setSearchResult(result);
+        // Fix: Save distance to searchFormData
+        setSearchFormData((prev) => ({
+          ...prev,
+          distance: result.data.distance || 0, // Save distance from API response
+        }));
         sessionStorage.setItem('lastSearch', JSON.stringify(result));
         if (!isUpdate) navigate('/car-listing');
       } else {
@@ -311,7 +341,7 @@ const SearchSection = ({ isUpdate = false }) => {
                   oneWay: true,
                   serviceType: 'rental',
                   packageId: rentalPackage,
-                  pickupDateTime: pickupDateTime.toISOString(), // Updated to pickupDateTime
+                  pickupDateTime: pickupDateTime.toISOString(),
                 };
                 handleSearch(data, 'Rental');
               }}

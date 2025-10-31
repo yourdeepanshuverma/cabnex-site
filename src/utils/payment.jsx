@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = 'https://api.cabnex.in/api/v1';
-const BASE_URL = 'http://localhost:5173/';
+const BASE_URL = 'http://dev.cabnex.in';
 
 export const loadRazorpay = async ({
   amount,
@@ -19,6 +19,7 @@ export const loadRazorpay = async ({
   distance,
   totalAmount,
   city,
+   oneWay,
   user,
 }) => {
   const initiatePayment = async () => {
@@ -60,7 +61,7 @@ export const loadRazorpay = async ({
               razorpayPaymentId: response.razorpay_payment_id,
               razorpayOrderId: response.razorpay_order_id,
               razorpaySignature: response.razorpay_signature,
-              carCategoryName,
+              carCategory:carCategoryName,
               serviceType,
               packageType,
               packageId,
@@ -76,6 +77,7 @@ export const loadRazorpay = async ({
               distance: distance || 0,
               totalAmount,
               city,
+              oneWay,
             };
             console.log('Verification Payload:', verifyPayload);
 
@@ -102,11 +104,11 @@ setTimeout(() => {
           } catch (err) {
             console.error('Verification Error:', err.response?.data || err);
             toast.error('Verification failed! Redirecting to failure page...');
-            setTimeout(() => {
-              window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(
-                err.response?.data?.message || 'network_error'
-              )}`;
-            }, 2000);
+            // setTimeout(() => {
+            //   window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(
+            //     err.response?.data?.message || 'network_error'
+            //   )}`;
+            // }, 2000);
           }
         },
         prefill: {

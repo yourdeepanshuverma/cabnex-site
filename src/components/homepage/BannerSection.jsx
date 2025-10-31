@@ -41,18 +41,18 @@ const BannerSlider = () => {
   const slides = [
     {
       image: bannerone,
-      title: 'Discover Paradise Beaches',
-      description: 'Immerse yourself in turquoise waters and golden sands. Your dream beach escape awaits with unforgettable sunsets.',
+      title: 'Explore South India with Cabnex',
+      description: 'From Kerala’s tranquil backwaters and Tamil Nadu’s ancient temples to Karnataka’s coffee hills and Andhra’s iconic Ramoji Film City — discover every destination with comfort and care.',
     },
     {
       image: bannerTwo,
-      title: 'Journey in Style',
-      description: 'Hit the road with our premium car rentals. Explore new horizons with comfort and freedom at your fingertips.',
+      title: 'Travel in Comfort, Arrive in Style',
+      description: 'Whether it’s a corporate trip, airport transfer, or holiday getaway, our modern fleet and professional chauffeurs ensure every journey is seamless.',
     },
     {
       image: bannerthree,
-      title: 'Adventure Awaits You',
-      description: 'From mountain treks to city vibes, craft your perfect journey with exclusive travel experiences tailored for you.',
+      title: 'Discover. Experience. Connect.',
+      description: 'From business to leisure, Cabnex offers curated rides, excursions, and activity experiences designed to make every trip memorable.',
     },
   ];
 
@@ -91,7 +91,7 @@ const BannerSlider = () => {
           {slides.map((slide, index) => (
             <div key={index} className="outline-none">
               <div
-                className="h-dvh pb-22 w-full bg-cover bg-center relative flex items-center justify-start"
+                className="h-[60vh] lg:h-dvh pb-22 w-full bg-cover bg-center relative flex items-center justify-start"
                 style={{ backgroundImage: `url(${slide.image})` }}
               >
                 <div className="absolute inset-0 bg-[#00000063]"></div>
@@ -115,7 +115,7 @@ const BannerSlider = () => {
             </div>
           ))}
         </Slider>
-       <div className="absolute top-1/2 left-0 w-full ">
+       <div className="lg:absolute lg:top-[52%] lg:left-[-20px] w-full ">
          <Searchsection/>
        </div>
       </div>

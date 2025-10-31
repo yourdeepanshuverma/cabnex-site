@@ -68,45 +68,45 @@ const FAQ = () => {
           Frequently Asked <span className="text-orange-500">Questions</span>
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className={`p-4 rounded-lg transition-colors duration-300 ${
-                openIndex === index ? 'bg-orange-100' : 'bg-[#f2f2f2]'
-              } hover:bg-orange-200 cursor-pointer`}
-              onClick={() => toggleFAQ(index)}
-            >
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-grotesk font-semibold text-black">
-                  {faq.question}
-                </h3>
-                <div
-                  className={`transition-transform duration-300 ${
-                    openIndex === index ? 'rotate-180' : ''
-                  }`}
-                >
-                  <FaChevronDown
-                    className={`w-5 h-5 ${
-                      openIndex === index ? 'text-orange-600' : 'text-orange-400'
-                    }`}
-                  />
-                </div>
-              </div>
-              <div
-                className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                  openIndex === index
-                    ? 'max-h-96 opacity-100'
-                    : 'max-h-0 opacity-0'
-                }`}
-              >
-                <p className="text-gray-700 text-start font-grotesk text-sm pt-2">
-                  {faq.answer}
-                </p>
-              </div>
-            </div>
-          ))}
+      <div className="flex flex-wrap gap-6">
+  {faqs.map((faq, index) => (
+    <div
+      key={index}
+      className={`w-full md:w-[48%] mx-auto p-4 rounded-lg transition-colors duration-300 ${
+        openIndex === index ? 'bg-orange-100' : 'bg-[#f2f2f2]'
+      } hover:bg-orange-200 cursor-pointer`}
+      onClick={() => toggleFAQ(index)}
+    >
+      <div className="flex justify-between items-center">
+        <h3 className="text-lg font-grotesk font-semibold text-black">
+          {faq.question}
+        </h3>
+        <div
+          className={`transition-transform duration-300 ${
+            openIndex === index ? 'rotate-180' : ''
+          }`}
+        >
+          <FaChevronDown
+            className={`w-5 h-5 ${
+              openIndex === index ? 'text-orange-600' : 'text-orange-400'
+            }`}
+          />
         </div>
+      </div>
+
+      <div
+        className={`overflow-hidden transition-all duration-500 ease-in-out ${
+          openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+        }`}
+      >
+        <p className="text-gray-700 text-start font-grotesk text-sm pt-2">
+          {faq.answer}
+        </p>
+      </div>
+    </div>
+  ))}
+</div>
+
       </div>
     </section>
   );

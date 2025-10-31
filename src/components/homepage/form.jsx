@@ -88,7 +88,7 @@ export default function FlightForm() {
             </div>
 
             {/* Swap Icon */}
-            <div className="flex absolute border-gray-200 justify-center items-center left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border rounded-full p-1 cursor-pointer sm:block hidden">
+            <div className=" absolute border-gray-200 justify-center items-center left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white border rounded-full p-1 cursor-pointer sm:block hidden">
               <button className="bg-gray-100 p-2 rounded-full hover:bg-gray-200 transition">
                 <FaExchangeAlt className="text-blue-600" />
               </button>

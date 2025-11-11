@@ -1,11 +1,11 @@
 import React from "react";
-import logo from '../assets/logo/logo-cab.png';
 import { Link } from 'react-router-dom';
-
+import { useWebsiteSettings } from "../context/WebsiteSettingsContext";
 import { FaYoutube, FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 
 
 export default function Footer() {
+  const { settings } = useWebsiteSettings();
   return (
     <footer className=" bg-[#000000] mt-18  text-white pt-20 pb-8 relative  overflow-hidden"  style={{
           backgroundImage: "url('src/assets/footer/footer-bg.svg')", // Replace with actual image path
@@ -14,7 +14,7 @@ export default function Footer() {
 
       <div className=" px-4 relative max-w-7xl mx-auto z-10">
         {/* Contact Section */}
-        <div className="flex flex-col md:flex-row justify-between gap-8 bg-[#1b1b1bee] items-center py-5 mb-20 px-6 md:px-8 border border-[#202020] rounded-2xl">
+        <div className="flex flex-col md:flex-row justify-between gap-8 bg-[#1b1b1bee] items-start md:items-center py-5 mb-20 px-6 md:px-8 border border-[#202020] rounded-2xl">
           <div className="text-center md:text-left flex  items-center ">
             <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
               <svg
@@ -34,7 +34,7 @@ export default function Footer() {
             </div>
             <div className="ml-4">
                 <p className="text-2xl font-bold font-grotesk ">Call us</p>
-            <p className="text-xs font-grotesk  text-gray-400">+91 96672 84400</p>
+            <p className="text-xs font-grotesk  text-gray-400">{settings?.contactPhone || ''}</p>
             </div>
           </div>
              <div className="text-start flex  items-center ">
@@ -56,7 +56,7 @@ export default function Footer() {
             </div>
             <div className="ml-4">
                 <p className="text-2xl font-bold font-grotesk ">Write to us</p>
-                <p className="text-xs font-grotesk  text-gray-400">info@cabnex.in</p>
+                <p className="text-xs font-grotesk  text-gray-400">{settings?.contactEmail || ''}</p>
             </div>
           </div>
              <div className="text-start flex  items-center ">
@@ -78,9 +78,9 @@ export default function Footer() {
             </div>
             <div className="ml-4">
                 <p className="text-2xl font-bold font-grotesk ">Address</p>
-            <p className="text-xs font-grotesk  text-gray-400">Cochin : Panampilly Nagar, Ernakulam, 682036</p>
-            <p className="text-xs font-grotesk  text-gray-400">Bangalore : Mahadevapura, Bangalore, 560048</p>
-            <p className="text-xs font-grotesk  text-gray-400">Noida : MIQB, C 25, Sector 58, Noida 201301</p>
+            {settings?.addresses?.map((address, index) => (
+              <p key={index} className="text-xs font-grotesk  text-gray-400">{address}</p>
+            ))}
             </div>
           </div>
         
@@ -91,9 +91,9 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-20 mt-8">
           {/* NOVARIDE Section */}
           <div>
-            <img src={logo}  className="w-52 rounded-2xl bg-white p-3 mb-3" alt="footer logo" />
+            <img src={settings?.logo?.url || ''}  className="w-52 rounded-2xl bg-white p-3 mb-3" alt="footer logo" />
             <p className="text-sm font-grotesk ">
-              Enjoy seamless and reliable travel experiences with Cabnex.
+              Enjoy seamless and reliable travel experiences with {settings?.siteName}.
             </p>
           </div>
 
@@ -114,9 +114,9 @@ export default function Footer() {
             <h4 className="text-2xl font-bold font-grotesk  mb-5">Quick Links</h4>
             <ul className="space-y-2 font-grotesk  text-sm">
               <li><Link to="/">Home</Link></li>
-              <li><Link to="/about">About Us</Link></li>
-              <li><Link to="/services">Service</Link></li>
-              <li><Link to="/contact">Contact Us</Link></li>
+              <li><Link to="/about-us">About Us</Link></li>
+              <li><Link to="/mobility-solutions">Service</Link></li>
+              <li><Link to="/contact-us">Contact Us</Link></li>
             </ul>
           </div>
 
@@ -151,24 +151,36 @@ export default function Footer() {
 
         {/* Bottom Section with Social Icons */}
         <div className="mt-8 flex flex-col md:flex-row justify-between items-center border-t border-gray-700 pt-4">
-          <p className="text-lg font-grotesk ">© 2024 Nexfleet Tech Solutions Pvt Ltd. All rights reserved.</p>
+          <p className="text-lg font-grotesk ">© {new Date().getFullYear()} {settings?.siteName}. All rights reserved.</p>
          
 <div className="flex space-x-4 mt-4 md:mt-0">
-  <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
-    <FaYoutube />
-  </a>
-  <a href="https://www.facebook.com/cabnex.in" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
-    <FaFacebookF />
-  </a>
-  <a href="https://twitter.com/" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
-    <FaTwitter />
-  </a>
-  <a href="https://www.instagram.com/cabnex.in" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
-    <FaInstagram />
-  </a>
-  <a href="https://www.linkedin.com/company/cabnex" target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
-    <FaLinkedinIn />
-  </a>
+  {settings?.socials?.map((social) => {
+    let icon;
+    switch (social.platform) {
+      case "facebook":
+        icon = <FaFacebookF />;
+        break;
+      case "twitter":
+        icon = <FaTwitter />;
+        break;
+      case "instagram":
+        icon = <FaInstagram />;
+        break;
+      case "linkedin":
+        icon = <FaLinkedinIn />;
+        break;
+      case "youtube":
+        icon = <FaYoutube />;
+        break;
+      default:
+        icon = null;
+    }
+    return (
+      <a key={social._id} href={social.url} target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
+        {icon}
+      </a>
+    );
+  })}
 </div>
         </div>
       </div>

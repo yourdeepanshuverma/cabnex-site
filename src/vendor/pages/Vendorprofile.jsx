@@ -26,7 +26,7 @@ const VendorProfile = () => {
         const response = await api.get('/api/v1/vendor/me');
         console.log('GET Response:', response.data);
         if (response.data.success) {
-          const vendorData = response.data.data;
+          const vendorData = response.data.data.vendor;
           setProfile({
             name: vendorData.contactPerson || '',
             email: vendorData.email || '',

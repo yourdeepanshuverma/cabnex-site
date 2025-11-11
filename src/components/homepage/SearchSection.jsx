@@ -12,7 +12,7 @@ import { useSearch } from '../../context/SearchContext';
 
 registerLocale('en-US', enUS);
 
-const SearchSection = ({ isUpdate = false }) => {
+const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   const { searchFormData, setSearchFormData, setSearchResult, isLoggedIn } = useSearch();
   const navigate = useNavigate();
 
@@ -28,7 +28,21 @@ const SearchSection = ({ isUpdate = false }) => {
       ? tabServiceMap[searchFormData.serviceType]
       : 0
   );
-  const [expanded, setExpanded] = useState({});
+
+  // Transfer-specific states
+  const [transferDirection, setTransferDirection] = useState('home-to-station');
+  const [selectedCity, setSelectedCity] = useState(searchFormData.selectedCity || null);
+  const cityRef = useRef(null);
+
+  // Refs
+  const rentalPickupRef = useRef(null);
+  const transferFromRef = useRef(null);
+  const transferToRef = useRef(null);
+  const outstationPickupRef = useRef(null);
+  const outstationDropoffRef = useRef(null);
+  const activityLocationRef = useRef(null);
+
+  // States
   const [pickupDateTime, setPickupDateTime] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : null);
   const [transferDateTime, setTransferDateTime] = useState(
     searchFormData.transferDateTime ? new Date(searchFormData.transferDateTime) : null
@@ -45,8 +59,6 @@ const SearchSection = ({ isUpdate = false }) => {
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [pickupBounds, setPickupBounds] = useState(null);
-  const [activityLocation, setActivityLocation] = useState(null);
   const [activityDateTime, setActivityDateTime] = useState(null);
 
   const createInitialStop = () => ({
@@ -73,13 +85,6 @@ const SearchSection = ({ isUpdate = false }) => {
     }
     return stops;
   });
-
-  const rentalPickupRef = useRef(null);
-  const transferFromRef = useRef(null);
-  const transferToRef = useRef(null);
-  const outstationPickupRef = useRef(null);
-  const outstationDropoffRef = useRef(null);
-  const activityLocationRef = useRef(null);
 
   const tabs = ['Rental', 'Transfer', 'Outstation', 'Activity'];
 
@@ -132,11 +137,10 @@ const SearchSection = ({ isUpdate = false }) => {
     rentalPackage,
     multicityStops,
     activeTabIndex,
-    activityLocation,
     activityDateTime,
+    selectedCity,
+    transferDirection,
   ]);
-
-  const toggleExpanded = (tabKey) => setExpanded((prev) => ({ ...prev, [tabKey]: !prev[tabKey] }));
 
   const CustomInput = ({ value, onClick, placeholder }) => (
     <div className="relative">
@@ -152,7 +156,7 @@ const SearchSection = ({ isUpdate = false }) => {
     </div>
   );
 
-  const handlePlaceSelect = (ref, key) => {
+  const handlePlaceSelect = (ref, key, onCitySelect = null) => {
     if (!ref.current) return;
     const place = ref.current.getPlace();
     if (place && place.geometry && place.place_id) {
@@ -161,85 +165,95 @@ const SearchSection = ({ isUpdate = false }) => {
         place_id: place.place_id,
         lat: place.geometry.location.lat(),
         lng: place.geometry.location.lng(),
+        viewport: place.geometry.viewport,
       };
-      setSelectedPlaces((prev) => ({ ...prev, [key]: details }));
-      if (key.includes('Pickup') || key === 'outstationPickup' || key === 'transferFrom') {
-        setPickupBounds(place.geometry.viewport);
+
+      // Set the place for all keys (rentalPickup, transferFrom, etc.)
+      setSelectedPlaces(prev => ({
+        ...prev,
+        [key]: details,
+      }));
+
+      if (onCitySelect && key === 'transferCity') {
+        setSelectedCity(details);
+        onCitySelect(details);
       }
     }
   };
 
   const saveFormToContext = () => {
-  const cleanStops = multicityStops.map(({ pickupRef, dropoffRef, ...rest }) => ({
-    ...rest,
-    dateTime: rest.dateTime ? rest.dateTime.toISOString() : null,
-  }));
+    const cleanStops = multicityStops.map(({ pickupRef, dropoffRef, ...rest }) => ({
+      ...rest,
+      dateTime: rest.dateTime ? rest.dateTime.toISOString() : null,
+    }));
 
-  let pickupLocation = null;
-  let dropoffLocation = null;
-  const serviceType = tabs[activeTabIndex].toLowerCase().replace(' ', '_');
+    let pickupLocation = null;
+    let dropoffLocation = null;
+    const serviceType = tabs[activeTabIndex].toLowerCase().replace(' ', '_');
 
-  // Reset irrelevant fields based on serviceType
-  let newFormData = {
-    serviceType,
-    pickupDate: null,
-    dropoffDate: null,
-    transferDateTime: null,
-    outstationTripType: serviceType === 'outstation' ? outstationTripType : 'one-way',
-    outstationPickupDateTime: null,
-    outstationReturnDateTime: null,
-    selectedPlaces: selectedPlaces,
-    rentalPackage: null,
-    multicityStops: [],
-    pickupLocation: null,
-    dropoffLocation: null,
-    activityDateTime: null,
-    distance: searchFormData.distance || 0, // Preserve distance
+ let newFormData = {
+  serviceType,
+  pickupDate: null,
+  dropoffDate: null,
+  transferDateTime: null,
+  outstationTripType: serviceType === 'outstation' ? outstationTripType : 'one-way',
+  outstationPickupDateTime: null,
+  outstationReturnDateTime: null,
+  selectedPlaces,
+  rentalPackage: null,
+  multicityStops: [],
+  pickupLocation: null,
+  dropoffLocation: null,
+  activityDateTime: null,
+  distance: searchFormData.distance || 0,
+  transferDirection: serviceType === 'transfer' ? transferDirection : null,
+  selectedCity: serviceType === 'transfer' ? selectedCity : null,
+};
+
+    if (serviceType === 'rental') {
+      pickupLocation = selectedPlaces.rentalPickup || null;
+      newFormData = {
+        ...newFormData,
+        pickupDateTime: pickupDateTime ? pickupDateTime.toISOString() : null,
+        rentalPackage,
+      };
+    } else if (serviceType === 'transfer') {
+      pickupLocation = selectedPlaces.transferFrom || null;
+      dropoffLocation = selectedPlaces.transferTo || null;
+      newFormData = {
+        ...newFormData,
+        transferDateTime: transferDateTime ? transferDateTime.toISOString() : null,
+        transferDirection,
+      };
+    } else if (serviceType === 'outstation') {
+      pickupLocation = selectedPlaces.outstationPickup || null;
+      dropoffLocation = outstationTripType === 'multicity' ? null : selectedPlaces.outstationDropoff || null;
+      newFormData = {
+        ...newFormData,
+        outstationPickupDateTime: outstationPickupDateTime ? outstationPickupDateTime.toISOString() : null,
+        outstationReturnDateTime: outstationTripType === 'round-trip' ? outstationReturnDateTime?.toISOString() : null,
+        multicityStops: outstationTripType === 'multicity' ? cleanStops : [],
+      };
+    } else if (serviceType === 'activity') {
+      pickupLocation = selectedPlaces.activityLocation || null;
+      newFormData = {
+        ...newFormData,
+        activityDateTime: activityDateTime ? activityDateTime.toISOString() : null,
+      };
+    }
+
+    newFormData.pickupLocation = pickupLocation;
+    newFormData.dropoffLocation = dropoffLocation;
+
+    setSearchFormData(newFormData);
   };
 
-  if (serviceType === 'rental') {
-    pickupLocation = selectedPlaces.rentalPickup || null;
-    newFormData = {
-      ...newFormData,
-      pickupDateTime: pickupDateTime ? pickupDateTime.toISOString() : null,
-      rentalPackage,
-    };
-  } else if (serviceType === 'transfer') {
-    pickupLocation = selectedPlaces.transferFrom || null;
-    dropoffLocation = selectedPlaces.transferTo || null;
-    newFormData = {
-      ...newFormData,
-      transferDateTime: transferDateTime ? transferDateTime.toISOString() : null,
-    };
-  } else if (serviceType === 'outstation') {
-    pickupLocation = selectedPlaces.outstationPickup || null;
-    dropoffLocation = outstationTripType === 'multicity' ? null : selectedPlaces.outstationDropoff || null;
-    newFormData = {
-      ...newFormData,
-      outstationPickupDateTime: outstationPickupDateTime ? outstationPickupDateTime.toISOString() : null,
-      outstationReturnDateTime: outstationTripType === 'round-trip' ? outstationReturnDateTime?.toISOString() : null,
-      multicityStops: outstationTripType === 'multicity' ? cleanStops : [],
-    };
-  } else if (serviceType === 'activity') {
-    pickupLocation = selectedPlaces.activityLocation || null;
-    newFormData = {
-      ...newFormData,
-      activityDateTime: activityDateTime ? activityDateTime.toISOString() : null,
-    };
-  }
-
-  newFormData.pickupLocation = pickupLocation;
-  newFormData.dropoffLocation = dropoffLocation;
-
-  setSearchFormData(newFormData);
-};
   const handleSearch = async (data, tab = '') => {
     if (!isLoggedIn) {
       navigate('/', { state: { openLogin: true, pendingSearch: { data, tab } } });
       return;
     }
     saveFormToContext();
-    console.log('Form Data Before Send:', data);
     if (!data.pickupLocation || (data.destinations && data.destinations.some(d => !d))) {
       alert(`Invalid locations in ${tab}. Select valid from dropdown.`);
       return;
@@ -247,16 +261,18 @@ const SearchSection = ({ isUpdate = false }) => {
     try {
       const response = await api.post(endpoints.search, data);
       const result = response.data;
-      console.log('API Response:', result);
       if (result.success) {
         setSearchResult(result);
-        // Fix: Save distance to searchFormData
         setSearchFormData((prev) => ({
           ...prev,
-          distance: result.data.distance || 0, // Save distance from API response
+          distance: result.data.distance || 0,
         }));
         sessionStorage.setItem('lastSearch', JSON.stringify(result));
-        if (!isUpdate) navigate('/car-listing');
+        if (isUpdate) {
+          if (onUpdateComplete) onUpdateComplete();
+        } else {
+          navigate('/car-listing');
+        }
       } else {
         alert(`API Error in ${tab}: ${result.message}`);
       }
@@ -305,27 +321,73 @@ const SearchSection = ({ isUpdate = false }) => {
     return prevDateStr ? new Date(prevDateStr) : new Date();
   };
 
-  const buttonText = isUpdate ? 'Update' : 'Search';
-  const buttonIcon = isUpdate ? <FaSearch className="inline" /> : <FaSearch className="inline" />;
+  const buttonText = isUpdate ? 'Update Search' : 'Search';
+  const buttonIcon = <FaSearch className="inline" />;
+
+  const handleTabSwitch = (index) => {
+    const newServiceType = tabs[index].toLowerCase().replace(' ', '_');
+
+    // Reset internal component state
+    setPickupDateTime(null);
+    setTransferDateTime(null);
+    setOutstationTripType('one-way');
+    setOutstationPickupDateTime(null);
+    setOutstationReturnDateTime(null);
+    setSelectedPlaces({});
+    setRentalPackage('');
+    setMulticityStops([createInitialStop()]);
+    setActivityDateTime(null);
+    setSelectedCity(null);
+    setTransferDirection('home-to-station');
+
+    // Reset the context state, preserving only the new service type
+    setSearchFormData(prev => ({
+      ...prev,
+      pickupDate: null,
+      dropoffDate: null,
+      pickupDateTime: null,
+      transferDateTime: null,
+      outstationTripType: 'one-way',
+      outstationPickupDateTime: null,
+      outstationReturnDateTime: null,
+      selectedPlaces: {},
+      rentalPackage: '',
+      multicityStops: [],
+      serviceType: newServiceType,
+      dropoffLocation: null,
+      pickupLocation: null,
+      transferDirection: 'home-to-station',
+      selectedCity: null,
+      distance: 0,
+    }));
+
+    // Set the new tab as active
+    setActiveTabIndex(index);
+  };
 
   return (
     <LoadScript googleMapsApiKey={googleConfig.apiKey} libraries={googleConfig.libraries}>
       <div className="search-section w-full max-w-7xl mx-auto mt-6 px-4 z-30 relative">
-        <Tabs selectedIndex={activeTabIndex} onSelect={setActiveTabIndex}>
-          <TabList className="flex justify-center gap-0 md:justify-start border-gray-200 mb-0">
+        <Tabs selectedIndex={activeTabIndex} onSelect={handleTabSwitch}>
+          <TabList className="flex flex-wrap justify-center gap-0 md:justify-start border-gray-200 mb-0">
             {tabs.map((tab, index, arr) => (
               <Tab
                 key={index}
-                className={`px-6 py-3 font-grotesk text-md font-medium cursor-pointer backdrop-blur-xl bg-[#cdcdcd33] text-[#ffffff] hover:bg-black transition-colors ${
-                  index === 0 ? 'rounded-tl-3xl' : index === arr.length - 1 ? 'rounded-tr-3xl' : ''
+                className={`w-1/2 md:w-auto text-center px-6 py-3 font-grotesk text-md font-medium cursor-pointer backdrop-blur-xl bg-black md:bg-[#cdcdcd33] text-[#ffffff] hover:bg-black transition-colors ${
+                  index === 0
+                    ? 'rounded-tl-3xl md:rounded-tl-3xl'
+                    : index === arr.length - 1
+                    ? 'rounded-tr-3xl md:rounded-tr-3xl'
+                    : ''
                 }`}
-                selectedClassName="bg-orange-600 text-white"
+                selectedClassName="!bg-orange-600 text-white"
               >
                 {tab}
               </Tab>
             ))}
           </TabList>
 
+          {/* RENTAL TAB */}
           <TabPanel>
             <form
               onSubmit={(e) => {
@@ -411,14 +473,15 @@ const SearchSection = ({ isUpdate = false }) => {
             </form>
           </TabPanel>
 
+          {/* TRANSFER TAB - SENDS transferDirection */}
           <TabPanel>
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 const fromPlaceId = selectedPlaces.transferFrom?.place_id;
                 const toPlaceId = selectedPlaces.transferTo?.place_id;
-                if (!fromPlaceId || !toPlaceId || !transferDateTime) {
-                  alert('Complete all fields.');
+                if (!selectedCity || !fromPlaceId || !toPlaceId || !transferDateTime) {
+                  alert('Complete all fields: City, From, To, Date/Time.');
                   return;
                 }
                 const data = {
@@ -428,50 +491,130 @@ const SearchSection = ({ isUpdate = false }) => {
                   serviceType: 'transfer',
                   packageId: null,
                   pickupDateTime: transferDateTime.toISOString(),
+                  transferDirection,
                 };
                 handleSearch(data, 'Transfer');
               }}
               className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
             >
+              {/* Trip Direction */}
+              <div className="mb-4">
+                <label className="text-md font-grotesk font-semibold mb-2 block">Trip Direction</label>
+                <div className="flex gap-6">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="direction"
+                      value="home-to-station"
+                      checked={transferDirection === 'home-to-station'}
+                      onChange={(e) => setTransferDirection(e.target.value)}
+                      className="mr-2"
+                    />
+                    Home to Station
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="direction"
+                      value="station-to-home"
+                      checked={transferDirection === 'station-to-home'}
+                      onChange={(e) => setTransferDirection(e.target.value)}
+                      className="mr-2"
+                    />
+                    Station to Home
+                  </label>
+                </div>
+              </div>
+
+              {/* City Selection */}
+              <div className="mb-4">
+                <label className="text-md font-grotesk font-semibold mb-2 block">Select City</label>
+                <div className="relative">
+                  <Autocomplete
+                    onLoad={(ac) => (cityRef.current = ac)}
+                    onPlaceChanged={() => handlePlaceSelect(cityRef, 'transferCity', () => {
+                      setSelectedPlaces(prev => ({ ...prev, transferFrom: null, transferTo: null }));
+                    })}
+                    options={{
+                      types: ['(cities)'],
+                      componentRestrictions: { country: 'IN' }
+                    }}
+                  >
+                    <input
+                      type="text"
+                      placeholder="Type city name (e.g., Delhi)"
+                      defaultValue={selectedCity?.name || ''}
+                      className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                      required
+                    />
+                  </Autocomplete>
+                  <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                </div>
+              </div>
+
+              {/* From & To Fields */}
               <div className="flex flex-col md:flex-row gap-4">
+                {/* FROM */}
                 <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">From Location</label>
+                  <label className="text-md font-grotesk font-semibold mb-2">
+                    {transferDirection === 'home-to-station' ? `Home Address in ${selectedCity?.name || 'City'}` : 'Station in City'}
+                  </label>
                   <div className="relative">
                     <Autocomplete
                       onLoad={(ac) => (transferFromRef.current = ac)}
                       onPlaceChanged={() => handlePlaceSelect(transferFromRef, 'transferFrom')}
-                      options={{ componentRestrictions: { country: 'IN' }, types: ['geocode'] }}
+                      options={{
+                        bounds: selectedCity?.viewport || undefined,
+                        strictBounds: true,
+                        types: transferDirection === 'home-to-station' ? ['geocode'] : ['train_station', 'bus_station', 'airport'],
+                        componentRestrictions: { country: 'IN' }
+                      }}
+                      disabled={!selectedCity}
                     >
                       <input
                         type="text"
-                        placeholder="Type & select from"
+                        placeholder={selectedCity ? 'Type address' : 'Select city first'}
                         defaultValue={selectedPlaces.transferFrom?.name || ''}
                         className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                        disabled={!selectedCity}
                         required
                       />
                     </Autocomplete>
                     <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                   </div>
                 </div>
+
+                {/* TO */}
                 <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">To Location</label>
+                  <label className="text-md font-grotesk font-semibold mb-2">
+                    {transferDirection === 'home-to-station' ? 'Station in City' : `Home Address in ${selectedCity?.name || 'City'}`}
+                  </label>
                   <div className="relative">
                     <Autocomplete
                       onLoad={(ac) => (transferToRef.current = ac)}
                       onPlaceChanged={() => handlePlaceSelect(transferToRef, 'transferTo')}
-                      options={{ componentRestrictions: { country: 'IN' }, types: ['geocode'] }}
+                      options={{
+                        bounds: selectedCity?.viewport || undefined,
+                        strictBounds: true,
+                        types: transferDirection === 'home-to-station' ? ['train_station', 'bus_station', 'airport'] : ['geocode'],
+                        componentRestrictions: { country: 'IN' }
+                      }}
+                      disabled={!selectedCity}
                     >
                       <input
                         type="text"
-                        placeholder="Type & select to"
+                        placeholder={selectedCity ? 'Select station' : 'Select city first'}
                         defaultValue={selectedPlaces.transferTo?.name || ''}
                         className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                        disabled={!selectedCity}
                         required
                       />
                     </Autocomplete>
                     <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                   </div>
                 </div>
+
+                {/* Date/Time */}
                 <div className="flex flex-col w-full relative">
                   <label className="text-md font-grotesk font-semibold mb-2">Date/Time</label>
                   <DatePicker
@@ -484,6 +627,8 @@ const SearchSection = ({ isUpdate = false }) => {
                     required
                   />
                 </div>
+
+                {/* Submit */}
                 <div className="flex gap-3 items-end pb-3">
                   <button type="submit" className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600">
                     {buttonIcon} {buttonText}
@@ -493,6 +638,7 @@ const SearchSection = ({ isUpdate = false }) => {
             </form>
           </TabPanel>
 
+          {/* OUTSTATION TAB */}
           <TabPanel>
             <form
               onSubmit={(e) => {
@@ -748,6 +894,7 @@ const SearchSection = ({ isUpdate = false }) => {
             </form>
           </TabPanel>
 
+          {/* ACTIVITY TAB */}
           <TabPanel>
             <form
               onSubmit={(e) => {

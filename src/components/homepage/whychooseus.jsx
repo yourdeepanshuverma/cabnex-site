@@ -40,7 +40,7 @@ const WhyChooseUs = () => {
           <span className="text-sm uppercase text-center font-grotesk text-orange-500 tracking-widest">
             Why Choose Us
           </span>
-          <h2 className="text-3xl text-center md:text-5xl font-grotesk text-black font-extrabold leading-14 mt-2 mb-12">
+          <h2 className="text-3xl text-center md:text-5xl font-grotesk text-black font-extrabold sm:leading-14 mt-2 mb-12">
             Unmatched Quality <span className="text-orange-500">and Service</span> for Your Every Journey
           </h2>
         </div>
@@ -56,10 +56,10 @@ const WhyChooseUs = () => {
               >
                 <div className="flex-shrink-0 mt-2 feature-cion">{feature.icon}</div>
                 <div className="text-left">
-                  <h3 className="text-xl font-grotesk mb-3 font-semibold text-black">
+                  <h3 className="text-md md:text-xl font-grotesk mb-3 font-semibold text-black">
                     {feature.title}
                   </h3>
-                  <p className="text-md leading-6 font-grotesk text-gray-600">
+                  <p className="text-[12px] md:text-md sm:leading-6 font-grotesk text-gray-600">
                     {feature.description}
                   </p>
                 </div>
@@ -90,10 +90,10 @@ const WhyChooseUs = () => {
               >
                 <div className="flex-shrink-0 mt-2 feature-cion">{feature.icon}</div>
                 <div className="text-left">
-                  <h3 className="text-xl font-grotesk mb-3 font-semibold text-black">
+                  <h3 className="text-md md:text-xl font-grotesk mb-3 font-semibold text-black">
                     {feature.title}
                   </h3>
-                  <p className="text-md leading-6 font-grotesk text-gray-600">
+                  <p className="text-[12px] md:text-md sm:leading-6 font-grotesk text-gray-600">
                     {feature.description}
                   </p>
                 </div>

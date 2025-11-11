@@ -2,11 +2,15 @@
 import React, { useState } from "react";
 import { FaUser, FaBuilding, FaEnvelope, FaPhone, FaLock, FaKey, FaCheckCircle, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
 import logo from '../../assets/logo/logo-cab.png';
 import registrationImg from '../../assets/vendor/riseter.png';
 import { api } from '../../api/api-config';
 
+import { useVendorAuth } from '../context/VendorAuthContext';
+
 export default function VendorRegistration() {
+  const { setVendorUser, setIsVendorLoggedIn } = useVendorAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     contactPerson: "",
@@ -139,11 +143,10 @@ export default function VendorRegistration() {
       const response = await api.post('/api/v1/vendor/register', formDataToSend);
       console.log("Register response:", JSON.stringify(response.data, null, 2));
       if (response.data.statusCode === 201 && response.data.success) {
-        console.log('Registration successful, storing username and redirecting...');
+        console.log('Registration successful, redirecting...');
         alert(response.data.message || "Vendor registered successfully!");
-        localStorage.setItem('vendorToken', response.data.data.token);
-        localStorage.setItem('vendorName', response.data.data.contactPerson || 'Vendor');
-        console.log('Stored vendorName:', localStorage.getItem('vendorName'));
+        setVendorUser(response.data.data);
+        setIsVendorLoggedIn(true);
         setFormData({
           contactPerson: "",
           company: "",

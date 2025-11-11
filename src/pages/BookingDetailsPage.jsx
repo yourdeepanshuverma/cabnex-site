@@ -9,6 +9,7 @@ import {
   ClockIcon,
   UserIcon,
   EnvelopeIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/solid';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSearch } from '../context/SearchContext';
@@ -34,7 +35,6 @@ const BookingDetailsPage = () => {
   const navigate = useNavigate();
   const { item } = location.state || {};
 
-  // Redirect to login if not logged in
   useEffect(() => {
     if (!isLoggedIn) {
       toast.error('Please log in to proceed with booking.');
@@ -44,10 +44,8 @@ const BookingDetailsPage = () => {
 
   const isActivity = item?.type === 'activity';
 
-  // Transform features from strings to objects with descriptions (for cars)
   const transformFeatures = (features) => {
     if (!Array.isArray(features)) return [];
-    
     const featureMap = {
       'AC': { text: 'Air Conditioning', description: 'Stay cool with advanced climate control system.' },
       'Automatic': { text: 'Automatic Transmission', description: 'Smooth and effortless gear shifting.' },
@@ -58,14 +56,7 @@ const BookingDetailsPage = () => {
       'Manual': { text: 'Manual Transmission', description: 'Traditional gear shifting for experienced drivers.' },
       'Diesel': { text: 'Diesel Engine', description: 'High mileage for long distance travel.' },
     };
-
-    return features.map(feature => {
-      const matchedFeature = featureMap[feature] || { 
-        text: feature, 
-        description: 'Feature available for your journey.' 
-      };
-      return matchedFeature;
-    });
+    return features.map(f => featureMap[f] || { text: f, description: 'Feature available for your journey.' });
   };
 
   const defaultItem = {
@@ -87,7 +78,6 @@ const BookingDetailsPage = () => {
     cancellationPolicy: 'Non-refundable',
   };
 
-  // Transform the incoming item features if they exist
   const selectedItem = item ? {
     ...item,
     features: isActivity ? [] : transformFeatures(item.features || []),
@@ -97,12 +87,6 @@ const BookingDetailsPage = () => {
     image: item.image || defaultItem.image,
     cancellationPolicy: item.cancellationPolicy || 'Non-refundable',
   } : defaultItem;
-
-  // Debug logs
-  console.log('User Data:', user);
-  console.log('Transformed Features:', selectedItem.features);
-  console.log('Search Form Data:', searchFormData);
-  console.log('Selected Item Price Debug:', selectedItem.actualPrice);
 
   const formatDate = (date) => {
     if (!date) return 'Not specified';
@@ -116,26 +100,42 @@ const BookingDetailsPage = () => {
     return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
   };
 
-  // Determine pickup and dropoff based on serviceType
   const serviceType = searchFormData.serviceType || 'outstation';
   let pickupLocation = { name: 'Not specified', place_id: null };
   let dropoffLocation = { name: 'Not specified', place_id: null };
+  let pickupDateTimeForState = null;
+  let dropoffDateTimeForState = null;
 
   if (serviceType === 'rental') {
     pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.rentalPickup || pickupLocation;
     dropoffLocation = searchFormData.dropoffLocation || searchFormData.selectedPlaces?.rentalDropoff || pickupLocation;
+    pickupDateTimeForState = searchFormData.pickupDateTime;
   } else if (serviceType === 'city_taxi') {
     pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.cityTaxiPickup || pickupLocation;
     dropoffLocation = searchFormData.dropoffLocation || searchFormData.selectedPlaces?.cityTaxiDropoff || dropoffLocation;
+    pickupDateTimeForState = searchFormData.pickupDateTime;
   } else if (serviceType === 'transfer') {
     pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.transferFrom || pickupLocation;
     dropoffLocation = searchFormData.dropoffLocation || searchFormData.selectedPlaces?.transferTo || dropoffLocation;
+    pickupDateTimeForState = searchFormData.transferDateTime;
   } else if (serviceType === 'outstation') {
-    pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.outstationPickup || pickupLocation;
-    dropoffLocation = searchFormData.dropoffLocation || searchFormData.selectedPlaces?.outstationDropoff || dropoffLocation;
+    if (searchFormData.outstationTripType === 'multicity' && searchFormData.multicityStops?.length > 0) {
+      const firstStop = searchFormData.multicityStops[0];
+      const lastStop = searchFormData.multicityStops[searchFormData.multicityStops.length - 1];
+      pickupLocation = { name: firstStop.selectedPickupAddress, place_id: firstStop.pickupPlaceId };
+      dropoffLocation = { name: lastStop.selectedDropoffAddress, place_id: lastStop.dropoffPlaceId };
+      pickupDateTimeForState = firstStop.dateTime;
+      dropoffDateTimeForState = lastStop.dateTime;
+    } else {
+      pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.outstationPickup || pickupLocation;
+      dropoffLocation = searchFormData.dropoffLocation || searchFormData.selectedPlaces?.outstationDropoff || dropoffLocation;
+      pickupDateTimeForState = searchFormData.outstationPickupDateTime;
+      dropoffDateTimeForState = searchFormData.outstationReturnDateTime;
+    }
   } else if (serviceType === 'activity') {
     pickupLocation = searchFormData.pickupLocation || searchFormData.selectedPlaces?.activityLocation || pickupLocation;
     dropoffLocation = pickupLocation;
+    pickupDateTimeForState = searchFormData.activityDateTime;
   }
 
   const [travellerInfo, setTravellerInfo] = useState({
@@ -144,27 +144,23 @@ const BookingDetailsPage = () => {
     email: user?.email || '',
     exactPickupLocation: '',
     pickupLocation,
-    pickupDate: formatDate(
-      searchFormData.pickupDate ||
-        searchFormData.outstationPickupDateTime ||
-        searchFormData.transferDateTime ||
-        searchFormData.pickupDateTime ||
-        searchFormData.activityDateTime
-    ),
-    pickupTime: formatTime(
-      searchFormData.pickupDateTime ||
-        searchFormData.outstationPickupDateTime ||
-        searchFormData.transferDateTime ||
-        searchFormData.activityDateTime
-    ),
+    pickupDate: formatDate(pickupDateTimeForState),
+    pickupTime: formatTime(pickupDateTimeForState),
     dropoffLocation,
+    dropoffDate: formatDate(dropoffDateTimeForState),
+    dropoffTime: formatTime(dropoffDateTimeForState),
   });
+
+
+
 
   const [isBookingForOther, setIsBookingForOther] = useState(false);
   const [alternateName, setAlternateName] = useState('');
   const [alternatePhone, setAlternatePhone] = useState('');
   const [alternateEmail, setAlternateEmail] = useState('');
   const [paymentOption, setPaymentOption] = useState('half');
+  const [showFeatures, setShowFeatures] = useState(false);
+  const [showInclusions, setShowInclusions] = useState(false);
 
   const handleExactPickupLocationChange = (e) => {
     setTravellerInfo({ ...travellerInfo, exactPickupLocation: e.target.value });
@@ -174,364 +170,456 @@ const BookingDetailsPage = () => {
     setTravellerInfo({ ...travellerInfo, [field]: value });
   };
 
-const handlePayNow = async () => {
-  // Validation
-  if (!travellerInfo.exactPickupLocation) {
-    toast.error('Please enter exact pickup location.');
-    return;
-  }
-  if (!travellerInfo.mobile) {
-    toast.error('Please enter a mobile number.');
-    return;
-  }
-  if (!travellerInfo.email) {
-    toast.error('Please enter an email address.');
-    return;
-  }
-  if (isBookingForOther && (!alternateName || !alternatePhone || !alternateEmail)) {
-    toast.error('Please enter all alternate traveller details.');
-    return;
-  }
+  const handlePayNow = async () => {
+    if (!travellerInfo.exactPickupLocation) return toast.error('Please enter exact pickup location.');
+    if (!travellerInfo.mobile) return toast.error('Please enter a mobile number.');
+    if (!travellerInfo.email) return toast.error('Please enter an email address.');
+    if (isBookingForOther && (!alternateName || !alternatePhone || !alternateEmail)) {
+      return toast.error('Please enter all alternate traveller details.');
+    }
 
-  // Amount Calculation
-  const rawPayAmount = paymentOption === 'half' ? selectedItem.actualPrice / 2 : selectedItem.actualPrice;
-  const payAmount = parseFloat(rawPayAmount.toFixed(2));
-  console.log(`Payment Amount Calculation: Option=${paymentOption}, Raw=${rawPayAmount}, Fixed=${payAmount}`);
+    const rawPayAmount = paymentOption === 'half' ? totalAmount / 2 : totalAmount;
+    const payAmount = parseFloat(rawPayAmount.toFixed(2));
 
-  // Pickup DateTime ISO format
-  const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
-  const pickupDateObj = new Date(pickupDateTimeStr);
-  const pickupDateTimeISO = pickupDateObj.toISOString();
+    const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
+    const pickupDateTimeISO = new Date(pickupDateTimeStr).toISOString();
+  console.log("Activity ID being sent:", item.data._id);
+    const showDropoff = dropoffLocation.name !== 'Not specified';
+    let paymentParams;
 
-  // Helper to check if dropoff should be shown
-  const showDropoff = dropoffLocation.name !== 'Not specified';
+    if (isActivity) {
+      paymentParams = {
+        amount: payAmount,
+        activityId: item.data._id, // Pass activity ID
+        serviceType: 'activity',
+        exactLocation: travellerInfo.exactPickupLocation,
+        pickupDateTime: pickupDateTimeISO,
+        startLocation: {
+          address: travellerInfo.pickupLocation.name,
+          place_id: travellerInfo.pickupLocation.place_id || null,
+        },
+        totalAmount: totalAmount,
+        city: travellerInfo.pickupLocation.name.split(',')[0]?.trim() || 'Unknown',
+        user: {
+          _id: user?._id || null,
+          fullName: isBookingForOther ? alternateName : travellerInfo.name,
+          email: isBookingForOther ? alternateEmail : travellerInfo.email,
+          mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
+        },
+      };
+    } else {
+        const oneWay = serviceType === 'outstation' && 
+        (searchFormData.outstationTripType === 'round-trip' || searchFormData.outstationTripType === 'multicity')
+        ? false : true;
 
-  // Determine oneWay based on serviceType and outstationTripType
-  const oneWay = serviceType === 'outstation' && 
-    (searchFormData.outstationTripType === 'round-trip' || searchFormData.outstationTripType === 'multicity')
-    ? false
-    : true;
+      paymentParams = {
+        amount: payAmount,
+        carCategoryName: selectedItem.name || 'Default Car',
+        serviceType,
+        packageType: serviceType === 'rental' ? searchFormData.rentalPackage || null : null,
+        packageId: null,
+        exactLocation: travellerInfo.exactPickupLocation,
+        pickupDateTime: pickupDateTimeISO,
+        startLocation: {
+          address: travellerInfo.pickupLocation.name,
+          place_id: travellerInfo.pickupLocation.place_id || null,
+        },
+        destinations:
+          serviceType === 'outstation' && searchFormData.outstationTripType === 'multicity'
+            ? searchFormData.multicityStops.map(stop => ({
+                address: stop.selectedDropoffAddress,
+                place_id: stop.dropoffPlaceId || null,
+              }))
+            : showDropoff
+            ? [{
+                address: travellerInfo.dropoffLocation.name,
+                place_id: travellerInfo.dropoffLocation.place_id || null,
+              }]
+            : [],
+        returnDateTime: serviceType === 'outstation' && searchFormData.outstationTripType === 'round-trip'
+          ? searchFormData.outstationReturnDateTime
+          : serviceType === 'outstation' && searchFormData.outstationTripType === 'multicity' && searchFormData.multicityStops.length > 0
+          ? searchFormData.multicityStops[searchFormData.multicityStops.length - 1].dateTime
+          : null,
+        distance: searchFormData.distance || 0,
+        totalAmount: totalAmount,
+        city: travellerInfo.pickupLocation.name.split(',')[0]?.trim() || 'Unknown',
+        oneWay,
+        ...(serviceType === 'transfer' && { transferDirection: searchFormData.transferDirection }),
+        user: {
+          _id: user?._id || null,
+          fullName: isBookingForOther ? alternateName : travellerInfo.name,
+          email: isBookingForOther ? alternateEmail : travellerInfo.email,
+          mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
+        },
+      };
+    }
 
-  // Payment Params
-  const paymentParams = {
-    amount: payAmount,
-    carCategoryName: isActivity ? selectedItem.name : selectedItem.name || 'Default Car',
-    serviceType,
-    packageType: serviceType === 'rental' ? searchFormData.rentalPackage || null : null,
-    packageId: null,
-    exactLocation: travellerInfo.exactPickupLocation,
-    pickupDateTime: pickupDateTimeISO,
-    startLocation: {
-      address: travellerInfo.pickupLocation.name,
-      place_id: travellerInfo.pickupLocation.place_id || null,
-    },
-    destinations: showDropoff ? [{
-      address: travellerInfo.dropoffLocation.name,
-      place_id: travellerInfo.dropoffLocation.place_id || null,
-    }] : [],
-    returnDateTime: serviceType === 'outstation' && searchFormData.outstationTripType === 'round-trip'
-      ? searchFormData.outstationReturnDateTime
-      : serviceType === 'outstation' && searchFormData.outstationTripType === 'multicity' && searchFormData.multicityStops.length > 0
-      ? searchFormData.multicityStops[searchFormData.multicityStops.length - 1].dateTime
-      : null,
-    distance: searchFormData.distance || 0,
-    totalAmount: selectedItem.actualPrice,
-    city: travellerInfo.pickupLocation.name.split(',')[0]?.trim() || 'Unknown',
-    oneWay, // Added oneWay field
-    user: {
-      _id: user?._id || null,
-      fullName: isBookingForOther ? alternateName : travellerInfo.name,
-      email: isBookingForOther ? alternateEmail : travellerInfo.email,
-      mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
-    },
+    try {
+      await loadRazorpay(paymentParams);
+      toast.success('Payment initiated successfully!');
+    } catch (err) {
+      console.error('Payment Error:', err);
+      toast.error('Payment process interrupted.');
+    }
   };
 
-  console.log('Payment Params:', paymentParams);
+  // ==================== FARE BREAKDOWN (API SE) ====================
+  const apiCategory = item?.data?.categories?.[0];
 
-  try {
-    await loadRazorpay(paymentParams);
-    toast.success('Payment initiated successfully!');
-  } catch (err) {
-    console.error('Payment Error:', err);
-    toast.error('Payment process interrupted.');
-  }
-};
+  // Use API totalAmount, fallback to selectedItem.actualPrice
+  const totalAmount = isActivity ? selectedItem.actualPrice : (apiCategory?.totalAmount || selectedItem.actualPrice);
+
+  // Direct values from apiCategory
+  const baseFare = apiCategory?.baseFare || 0;
+  const taxAmount = apiCategory?.tax || 0; // Using 'tax' directly as requested
+  const extraKmCharges = apiCategory?.extraKmCharges || 0;
+  const totalNightCharge = apiCategory?.totalNightCharge || 0;
+  const hillCharge = apiCategory?.hillCharge || 0;
+  const totalDriverAllowance = apiCategory?.totalDriverAllowance || 0;
+  const tollCharges = apiCategory?.tollCharges || 0; // No change requested for this
+  const discount = apiCategory?.discount || 0; // No change requested for this
+
+  // ======================================================================
 
   return (
-    <section className="max-w-7xl mx-auto p-6">
-      <div className="text-black">
-        <Header />
-      </div>
+    <section className="max-w-7xl mx-auto p-4 sm:p-6">
+      <Header />
 
-      <div className="listing-head mb-8 mt-24">
-        <h3 className="text-xl font-grotesk font-semibold text-gray-700">
-          {selectedItem.name} | {serviceType.replace(/_/g, ' ').toUpperCase()} | {travellerInfo.pickupDate} - {travellerInfo.pickupTime}
+      {/* Breadcrumb Header */}
+      <div className="mt-16 sm:mt-20 mb-6">
+        <h3 className="text-lg sm:text-xl font-grotesk font-semibold text-gray-700">
+          {selectedItem.name} | {serviceType.replace(/_/g, ' ').toUpperCase()} |{' '}
+          {travellerInfo.pickupDate} - {travellerInfo.pickupTime}
         </h3>
       </div>
 
-      <div className="flex gap-6">
-        <main className="w-2/3 space-y-6">
-          {/* Item Details Card */}
-          <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-200 hover:shadow-lg transition">
-            <div className="flex gap-6 mb-4">
-              <div className="w-1/4 bg-[#F5F5F6] rounded-2xl px-5 py-7 h-40 flex justify-center items-center">
-                <img 
-                  src={selectedItem.image} 
-                  alt={selectedItem.name} 
-                  className="w-full h-auto max-h-full object-contain"
-                  onError={(e) => {
-                    e.target.src = 'https://via.placeholder.com/300x200?text=Item+Image';
-                  }}
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Main Content */}
+        <main className="flex-1 space-y-6">
+          {/* Item Card */}
+          <div className="bg-white rounded-2xl shadow-md border border-gray-200 overflow-hidden">
+            <div className="flex flex-col sm:flex-row">
+              <div className="sm:w-1/3 lg:w-1/4 bg-[#F5F5F6] p-6 flex items-center justify-center">
+                <img
+                  src={selectedItem.image}
+                  alt={selectedItem.name}
+                  className="w-full h-auto max-h-48 object-contain"
+                  onError={(e) => { e.target.src = 'https://via.placeholder.com/300x200?text=Item+Image'; }}
                 />
               </div>
-              <div className="w-3/4 pt-1">
-                <h3 className="text-3xl font-grotesk font-extrabold mb-4">{selectedItem.name}</h3>
-                {!isActivity && (
-                  <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                    {selectedItem.features.map((feature, index) => (
-                      <div key={index} className="flex items-start gap-3">
+              <div className="flex-1 p-5 sm:p-6">
+                <h3 className="text-2xl sm:text-3xl font-grotesk font-extrabold mb-3">{selectedItem.name}</h3>
+                {!isActivity && selectedItem.features.length > 0 && (
+                  <button
+                    onClick={() => setShowFeatures(!showFeatures)}
+                    className="flex items-center gap-2 text-orange-500 font-grotesk text-sm font-semibold mb-3 sm:hidden"
+                  >
+                    Features <ChevronDownIcon className={`h-5 w-5 transition-transform ${showFeatures ? 'rotate-180' : ''}`} />
+                  </button>
+                )}
+                <div className={`${showFeatures || window.innerWidth >= 640 ? 'block' : 'hidden'} sm:block`}>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {selectedItem.features.map((feature, i) => (
+                      <div key={i} className="flex items-start gap-2">
                         <CheckCircleIcon className="h-5 w-5 text-[#5143D9] flex-shrink-0 mt-0.5" />
-                        <div className="space-y-1">
-                          <p className="font-grotesk font-bold text-md text-black leading-tight">
-                            {feature.text}
-                          </p>
-                          <p className="font-grotesk text-sm text-gray-600 leading-snug break-words max-w-prose">
-                            {feature.description}
-                          </p>
+                        <div>
+                          <p className="font-grotesk font-bold text-sm text-black">{feature.text}</p>
+                          <p className="font-grotesk text-xs text-gray-600">{feature.description}</p>
                         </div>
                       </div>
                     ))}
                   </div>
-                )}
-                {isActivity && (
-                  <p className="font-grotesk text-md text-gray-600">{selectedItem.description}</p>
-                )}
+                </div>
+                {isActivity && <p className="text-gray-600 mt-3">{selectedItem.description}</p>}
               </div>
             </div>
-            <div className="bg-[#F5F5F6] rounded-md px-2 py-2">
-              <p className="text-gray-600 font-grotesk">{selectedItem.description}</p>
+            <div className="bg-[#F5F5F6] px-5 py-3">
+              <p className="text-sm text-gray-600 font-grotesk">{selectedItem.description}</p>
             </div>
           </div>
 
-          {/* Traveller Information */}
-          <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-200">
-            <h4 className="text-2xl font-grotesk font-extrabold mb-4">Traveller Information</h4>
-            <div className="grid grid-cols-2 gap-4 w-full">
-              <div className="flex items-center gap-2">
-                <UserIcon className="h-6 w-6 text-[#5143D9]" />
-                <div>
-                  <p className="font-grotesk font-semibold text-md text-black">Name</p>
-                  <input
-                    type="text"
-                    value={travellerInfo.name}
-                    onChange={(e) => handleTravellerInfoChange('name', e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
-                    placeholder="Enter traveller name"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <UserIcon className="h-6 w-6 text-[#5143D9]" />
-                <div>
-                  <p className="font-grotesk font-semibold text-md text-black">Phone Number</p>
-                  <input
-                    type="tel"
-                    value={travellerInfo.mobile}
-                    onChange={(e) => handleTravellerInfoChange('mobile', e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
-                    placeholder="Enter phone number"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <EnvelopeIcon className="h-6 w-6 text-[#5143D9]" />
-                <div>
-                  <p className="font-grotesk font-semibold text-md text-black">Email</p>
-                  <input
-                    type="email"
-                    value={travellerInfo.email}
-                    onChange={(e) => handleTravellerInfoChange('email', e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
-                    placeholder="Enter email address"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPinIcon className="h-6 w-6 text-[#5143D9]" />
-                <div>
-                  <p className="font-grotesk font-semibold text-md text-black">Pickup Location</p>
-                  <p className="font-grotesk text-sm text-gray-600">{travellerInfo.pickupLocation?.name || 'Not specified'}</p>
-                </div>
-              </div>
-              {dropoffLocation.name !== 'Not specified' && (
-                <div className="flex items-center gap-2">
-                  <MapPinIcon className="h-6 w-6 text-[#5143D9]" />
-                  <div>
-                    <p className="font-grotesk font-semibold text-md text-black">Drop-off Location</p>
-                    <p className="font-grotesk text-sm text-gray-600">{travellerInfo.dropoffLocation.name}</p>
+          {/* Traveller Info */}
+          <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-200 space-y-5">
+            <h4 className="text-xl sm:text-2xl font-grotesk font-extrabold">Traveller Information</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                { icon: UserIcon, label: 'Name', value: travellerInfo.name, field: 'name', type: 'text' },
+                { icon: UserIcon, label: 'Phone Number', value: travellerInfo.mobile, field: 'mobile', type: 'tel' },
+                { icon: EnvelopeIcon, label: 'Email', value: travellerInfo.email, field: 'email', type: 'email' },
+              ].map(({ icon: Icon, label, value, field, type }) => (
+                <div key={field} className="flex items-start gap-3">
+                  <Icon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />
+                  <div className="flex-1">
+                    <p className="font-grotesk font-semibold text-sm text-black">{label}</p>
+                    <input
+                      type={type}
+                      value={value}
+                      onChange={(e) => handleTravellerInfoChange(field, e.target.value)}
+                      className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                      placeholder={`Enter ${label.toLowerCase()}`}
+                    />
                   </div>
                 </div>
-              )}
-              <div className="flex items-start gap-2 col-span-2">
-                <MapPinIcon className="h-6 w-6 text-[#5143D9] mt-1 flex-shrink-0" />
-                <div className="w-full">
-                  <p className="font-grotesk font-semibold text-md text-black">Exact Pickup Location</p>
+              ))}
+
+              <div className="flex items-start gap-3 sm:col-span-2">
+                <MapPinIcon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="font-grotesk font-semibold text-sm text-black">Exact Pickup Location</p>
                   <input
                     type="text"
-                    placeholder="Enter exact pickup location (e.g., hotel, address)"
                     value={travellerInfo.exactPickupLocation}
                     onChange={handleExactPickupLocationChange}
-                    className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
+                    placeholder="Hotel name, building, landmark..."
+                    className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500"
                   />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="h-6 w-6 text-[#5143D9]" />
-                <div>
-                  <p className="font-grotesk font-semibold text-md text-black">Pickup Date</p>
-                  <p className="font-grotesk text-sm text-gray-600">{travellerInfo.pickupDate}</p>
+
+              {[
+                { icon: MapPinIcon, label: 'Pickup Location', value: travellerInfo.pickupLocation?.name },
+                travellerInfo.dropoffLocation.name !== 'Not specified' && { icon: MapPinIcon, label: 'Drop-off Location', value: travellerInfo.dropoffLocation.name },
+                { icon: CalendarIcon, label: 'Pickup Date', value: travellerInfo.pickupDate },
+                { icon: ClockIcon, label: 'Pickup Time', value: travellerInfo.pickupTime },
+                travellerInfo.dropoffDate !== 'Not specified' && { icon: CalendarIcon, label: 'Final Drop-off Date', value: travellerInfo.dropoffDate },
+                travellerInfo.dropoffTime !== 'Not specified' && { icon: ClockIcon, label: 'Final Drop-off Time', value: travellerInfo.dropoffTime },
+              ].filter(Boolean).map(({ icon: Icon, label, value }, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Icon className="h-6 w-6 text-[#5143D9] flex-shrink-0" />
+                  <div>
+                    <p className="font-grotesk font-semibold text-sm text-black">{label}</p>
+                    <p className="font-grotesk text-xs text-gray-600">{value || 'Not specified'}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <ClockIcon className="h-6 w-6 text-[#5143D9]" />
-                <div>
-                  <p className="font-grotesk font-semibold text-md text-black">Pickup Time</p>
-                  <p className="font-grotesk text-sm text-gray-600">{travellerInfo.pickupTime}</p>
+              ))}
+
+              {searchFormData.outstationTripType === 'multicity' && searchFormData.multicityStops.length > 0 && (
+                <div className="sm:col-span-2">
+                  <h5 className="font-grotesk font-semibold text-md text-black mb-2">Multi-City Itinerary</h5>
+                  <div className="space-y-4">
+                    {searchFormData.multicityStops.map((stop, index) => (
+                      <div key={index} className="p-3 border border-gray-200 rounded-md bg-gray-50">
+                        <p className="font-grotesk font-bold text-sm">Leg {index + 1}</p>
+                        <div className="flex items-center gap-3 mt-2">
+                          <MapPinIcon className="h-5 w-5 text-[#5143D9] flex-shrink-0" />
+                          <div>
+                            <p className="font-grotesk font-semibold text-xs text-black">From</p>
+                            <p className="font-grotesk text-xs text-gray-600">{stop.selectedPickupAddress}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <MapPinIcon className="h-5 w-5 text-[#5143D9] flex-shrink-0" />
+                          <div>
+                            <p className="font-grotesk font-semibold text-xs text-black">To</p>
+                            <p className="font-grotesk text-xs text-gray-600">{stop.selectedDropoffAddress}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 mt-2">
+                          <CalendarIcon className="h-5 w-5 text-[#5143D9] flex-shrink-0" />
+                          <div>
+                            <p className="font-grotesk font-semibold text-xs text-black">Departure</p>
+                            <p className="font-grotesk text-xs text-gray-600">
+                              {formatDate(stop.dateTime)} - {formatTime(stop.dateTime)}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
+
               {isActivity && selectedItem.cancellationPolicy && (
-                <div className="flex items-center gap-2 col-span-2">
+                <div className="flex items-center gap-3 sm:col-span-2">
                   <ArrowPathIcon className="h-6 w-6 text-[#5143D9]" />
                   <div>
-                    <p className="font-grotesk font-semibold text-md text-black">Cancellation Policy</p>
-                    <p className="font-grotesk text-sm text-gray-600">{selectedItem.cancellationPolicy}</p>
+                    <p className="font-grotesk font-semibold text-sm text-black">Cancellation Policy</p>
+                    <p className="font-grotesk text-xs text-gray-600">{selectedItem.cancellationPolicy}</p>
                   </div>
                 </div>
               )}
-              {isBookingForOther && (
-                <>
-                  <div className="flex items-start gap-2 col-span-2">
-                    <UserIcon className="h-6 w-6 text-[#5143D9] mt-1 flex-shrink-0" />
-                    <div className="w-full">
-                      <p className="font-grotesk font-semibold text-md text-black">Alternate Traveller Name</p>
-                      <input
-                        type="text"
-                        placeholder="Enter alternate traveller name"
-                        value={alternateName}
-                        onChange={(e) => setAlternateName(e.target.value)}
-                        className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2 col-span-2">
-                    <UserIcon className="h-6 w-6 text-[#5143D9] mt-1 flex-shrink-0" />
-                    <div className="w-full">
-                      <p className="font-grotesk font-semibold text-md text-black">Alternate Phone Number</p>
-                      <input
-                        type="tel"
-                        placeholder="Enter alternate phone number"
-                        value={alternatePhone}
-                        onChange={(e) => setAlternatePhone(e.target.value)}
-                        className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2 col-span-2">
-                    <EnvelopeIcon className="h-6 w-6 text-[#5143D9] mt-1 flex-shrink-0" />
-                    <div className="w-full">
-                      <p className="font-grotesk font-semibold text-md text-black">Alternate Email</p>
-                      <input
-                        type="email"
-                        placeholder="Enter alternate email address"
-                        value={alternateEmail}
-                        onChange={(e) => setAlternateEmail(e.target.value)}
-                        className="w-full bg-white border border-gray-300 rounded-md p-2 text-md font-grotesk mt-1"
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
             </div>
-            <div className="mt-4">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={isBookingForOther}
-                  onChange={() => setIsBookingForOther(!isBookingForOther)}
-                  className="accent-orange-500 h-4 w-4"
-                />
-                <span className="font-grotesk text-md text-gray-600">Book for someone else</span>
-              </label>
-            </div>
+
+            <label className="flex items-center gap-2 mt-4">
+              <input
+                type="checkbox"
+                checked={isBookingForOther}
+                onChange={() => setIsBookingForOther(!isBookingForOther)}
+                className="accent-orange-500 h-4 w-4 rounded"
+              />
+              <span className="font-grotesk text-sm text-gray-600">Book for someone else</span>
+            </label>
+
+            {isBookingForOther && (
+              <div className="mt-4 space-y-4 border-t pt-4">
+                {[
+                  { icon: UserIcon, label: 'Alternate Name', value: alternateName, setValue: setAlternateName },
+                  { icon: UserIcon, label: 'Alternate Phone', value: alternatePhone, setValue: setAlternatePhone },
+                  { icon: EnvelopeIcon, label: 'Alternate Email', value: alternateEmail, setValue: setAlternateEmail },
+                ].map(({ icon: Icon, label, value, setValue }) => (
+                  <div key={label} className="flex items-start gap-3">
+                    <Icon className="h-6 w-6 text-[#5143D9] mt-1 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-grotesk font-semibold text-sm text-black">{label}</p>
+                      <input
+                        type={label.includes('Email') ? 'email' : label.includes('Phone') ? 'tel' : 'text'}
+                        value={value}
+                        onChange={(e) => setValue(e.target.value)}
+                        className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500"
+                        placeholder={`Enter ${label.toLowerCase()}`}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Inclusions */}
           <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-200">
-            <h4 className="text-2xl font-grotesk font-extrabold mb-4">Inclusions</h4>
-            <div className="grid grid-cols-2 gap-4">
-              {selectedItem.inclusions.map((inclusion, index) => {
-                const IconComponent = iconMap[inclusion.icon];
-                return (
-                  <div key={index} className="flex items-center gap-2">
-                    {IconComponent ? (
-                      <IconComponent className="h-6 w-6 text-[#5143D9] flex-shrink-0" />
-                    ) : (
-                      <span className="h-6 w-6 text-[#5143D9]">[Icon]</span>
-                    )}
-                    <p className="font-grotesk text-sm text-black font-semibold break-words">
-                      {inclusion.text}
-                    </p>
-                  </div>
-                );
-              })}
+            <button
+              onClick={() => setShowInclusions(!showInclusions)}
+              className="flex items-center justify-between w-full text-left sm:hidden"
+            >
+              <h4 className="text-xl font-grotesk font-extrabold">Inclusions</h4>
+              <ChevronDownIcon className={`h-6 w-6 transition-transform ${showInclusions ? 'rotate-180' : ''}`} />
+            </button>
+            <h4 className="text-xl sm:text-2xl font-grotesk font-extrabold mb-4 hidden sm:block">Inclusions</h4>
+            <div className={`${showInclusions || window.innerWidth >= 640 ? 'block' : 'hidden'} sm:block`}>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {selectedItem.inclusions.map((inc, i) => {
+                  const Icon = iconMap[inc.icon];
+                  return (
+                    <div key={i} className="flex items-center gap-2">
+                      {Icon ? <Icon className="h-6 w-6 text-[#5143D9]" /> : <div className="h-6 w-6 bg-gray-300 rounded-full" />}
+                      <p className="font-grotesk text-sm font-semibold text-black">{inc.text}</p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </main>
 
-        {/* Payment Sidebar */}
-        <aside className="w-1/3">
-          <div className="sticky top-0">
-            <div className="bg-[#F5F5F6] rounded-2xl p-5 border border-gray-200">
-              <h6 className="text-orange-500 font-grotesk font-normal text-lg mb-4">Hurry! Limited {isActivity ? 'spots' : 'cars'} left</h6>
-              <ul className="mb-4 space-y-2">
-                <li className="flex justify-between font-grotesk font-semibold text-lg text-black">
-                  <span>Total</span>
-                  <span>₹{selectedItem.actualPrice?.toLocaleString('en-IN') || '0'}</span>
-                </li>
-              </ul>
-              <div className="mt-4 space-y-3">
-                <div className="flex items-start gap-2">
-                  <input
-                    type="radio"
-                    name="paymentOption"
-                    id="halfPayment"
-                    value="half"
-                    checked={paymentOption === 'half'}
-                    onChange={() => setPaymentOption('half')}
-                    className="accent-orange-500 mt-0.5 flex-shrink-0"
-                  />
-                  <label htmlFor="halfPayment" className="font-grotesk text-sm text-gray-600 cursor-pointer flex-1">
-                    Pay ₹{(selectedItem.actualPrice / 2)?.toLocaleString('en-IN')} now (Half Payment)
-                  </label>
+        {/* ==================== PAYMENT SIDEBAR ==================== */}
+        <aside className="lg:w-1/3 w-full">
+          <div className="sticky top-4 space-y-4">
+
+            {/* ==================== FARE BREAKDOWN CARD ==================== */}
+            {!isActivity && (
+            <div className="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm">
+              <h4 className="font-grotesk font-extrabold text-lg mb-3 text-gray-800">Fare Breakdown</h4>
+              <div className="space-y-2 text-sm font-grotesk">
+
+                {/* Base Fare - Always shown for non-activities */}
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Base Fare</span>
+                  <span className="font-semibold">
+                    ₹{apiCategory?.baseFare?.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}
+                  </span>
                 </div>
-                <div className="flex items-start gap-2">
-                  <input
-                    type="radio"
-                    name="paymentOption"
-                    id="fullPayment"
-                    value="full"
-                    checked={paymentOption === 'full'}
-                    onChange={() => setPaymentOption('full')}
-                    className="accent-orange-500 mt-0.5 flex-shrink-0"
-                  />
-                  <label htmlFor="fullPayment" className="font-grotesk text-sm text-gray-600 cursor-pointer flex-1">
-                    Pay ₹{selectedItem.actualPrice?.toLocaleString('en-IN')} now (Full Payment)
-                  </label>
+
+                {/* Extra KM Charges - For Transfer and Outstation */}
+                {(serviceType === 'transfer' || serviceType === 'outstation') && apiCategory?.extraKmCharges > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Extra KM Charges</span>
+                    <span className="font-semibold">
+                      ₹{apiCategory.extraKmCharges.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Total Driver Allowance - For Outstation */}
+                {serviceType === 'outstation' && apiCategory?.totalDriverAllowance > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Driver Allowance</span>
+                    <span className="font-semibold">
+                      ₹{apiCategory.totalDriverAllowance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Total Night Charge - For Outstation */}
+                {serviceType === 'outstation' && apiCategory?.totalNightCharge > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Night Charge</span>
+                    <span className="font-semibold">
+                      ₹{apiCategory.totalNightCharge.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Hill Charge - For Outstation */}
+                {serviceType === 'outstation' && apiCategory?.hillCharge > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Hill Charge</span>
+                    <span className="font-semibold">
+                      ₹{apiCategory.hillCharge.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Tax - For all non-activities */}
+                {apiCategory?.tax > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Tax</span>
+                    <span className="font-semibold">
+                      ₹{apiCategory.tax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Total Amount - Always shown for non-activities */}
+                <div className="border-t pt-2 mt-3 flex justify-between font-bold text-base text-black">
+                  <span>Total Amount</span>
+                  <span>₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
               </div>
+            </div>
+            )}
+
+            {/* ==================== PAYMENT OPTIONS CARD ==================== */}
+            <div className="bg-[#F5F5F6] rounded-2xl p-5 border border-gray-200">
+              <p className="text-orange-500 font-grotesk text-sm sm:text-base mb-3">
+                Hurry! Limited {isActivity ? 'spots' : 'cars'} left
+              </p>
+
+              <div className="flex justify-between items-center mb-4">
+                <span className="font-grotesk font-semibold text-lg sm:text-xl text-black">Total</span>
+                <span className="font-grotesk font-bold text-xl sm:text-2xl text-black">
+                  ₹{totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+
+              <div className="space-y-3">
+                {[
+                  {
+                    value: 'half',
+                    label: `Pay ₹${(totalAmount / 2).toLocaleString('en-IN', { minimumFractionDigits: 2 })} now (Half Payment)`,
+                  },
+                  {
+                    value: 'full',
+                    label: `Pay ₹${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })} now (Full Payment)`,
+                  },
+                ].map(({ value, label }) => (
+                  <label key={value} className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value={value}
+                      checked={paymentOption === value}
+                      onChange={() => setPaymentOption(value)}
+                      className="accent-orange-500 mt-0.5"
+                    />
+                    <span className="font-grotesk text-sm text-gray-700">{label}</span>
+                  </label>
+                ))}
+              </div>
+
               <button
                 onClick={handlePayNow}
-                className="w-full bg-orange-500 hover:bg-black text-white rounded-4xl cursor-pointer px-8 py-3 text-md font-grotesk font-semibold mt-4 transition-colors"
+                className="w-full mt-5 bg-orange-500 hover:bg-black text-white font-grotesk font-bold py-3 rounded-full text-base transition-colors"
               >
                 Pay Now
               </button>

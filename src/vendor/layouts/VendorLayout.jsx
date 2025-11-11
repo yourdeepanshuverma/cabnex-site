@@ -9,8 +9,6 @@ const VendorLayout = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem('vendorToken');
-    if (!token) navigate('/vendor-login');
     const handleResize = () => {
       if (window.innerWidth >= 768) setIsOpen(true);
       else setIsOpen(false);
@@ -18,7 +16,7 @@ const VendorLayout = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [navigate]);
+  }, []);
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900">

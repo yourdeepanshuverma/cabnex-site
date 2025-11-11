@@ -2,7 +2,11 @@ import React from 'react';
 import { FaHome, FaCar, FaUserCircle, FaPlus, FaUser } from 'react-icons/fa';
 import { NavLink } from 'react-router-dom';
 
+import { useVendorAuth } from '../context/VendorAuthContext';
+
 const Sidebar = ({ isOpen, setIsOpen }) => {
+  const { vendorUser } = useVendorAuth();
+  console.log('Sidebar vendorUser:', vendorUser);
   const menuItems = [
     { path: '/vendor', label: 'Dashboard', icon: FaHome },
     { path: '/vendor/car-list', label: 'Manage car ', icon: FaCar },
@@ -18,10 +22,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         }`}
       >
         <div className="py-2 px-4 h-[103px] border-b border-[#bebebe] flex flex-col items-center space-x-3 bg-gradient-to-r from-gray-50 to-gray-100">
-          <div className="w-14 h-14 mb-1 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
-            <FaUserCircle className="w-14 h-14 text-gray-500 " />
+          <div className="w-12 h-12 mb-1 bg-gray-300 rounded-full flex items-center justify-center overflow-hidden">
+            <FaUserCircle className=" text-gray-500 " />
           </div>
-          <span className="font-bold text-[#3A4A5B]  font-grotesk text-lg">Hey, ABC</span>
+          <span className="font-bold text-[#3A4A5B] text-center font-grotesk text-lg">Hey, {vendorUser?.contactPerson || 'Vendor'}</span>
         </div>
         <nav className="flex-1 mt-3">
           {menuItems.map((item) => (

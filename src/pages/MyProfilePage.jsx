@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useSearch } from '../context/SearchContext';
 import Header from '../components/header';
 import { toast } from 'sonner';
-import { UserIcon, EnvelopeIcon, DevicePhoneMobileIcon, KeyIcon } from '@heroicons/react/24/outline';
+import { UserIcon, EnvelopeIcon, DevicePhoneMobileIcon, KeyIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { api } from '../api/api-config';
+import { useNavigate } from 'react-router-dom';
 
 const MyProfilePage = () => {
   const { user, setUser, isLoggedIn } = useSearch();
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -17,6 +19,10 @@ const MyProfilePage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   const [isPasswordUpdating, setIsPasswordUpdating] = useState(false);
+  const [userStats, setUserStats] = useState(null);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -26,7 +32,26 @@ const MyProfilePage = () => {
         mobile: user.mobile || '',
       });
     }
-  }, [user]);
+
+    const fetchUserStats = async () => {
+      try {
+        const response = await api.get('/api/v1/auth/stats');
+        if (response.data.success) {
+          setUserStats(response.data.data);
+        }
+      } catch (error) {
+        console.error('Error fetching user stats:', error);
+      }
+    };
+
+    if (isLoggedIn) {
+      fetchUserStats();
+    }
+  }, [user, isLoggedIn]);
+
+  const handleStatClick = (status) => {
+    navigate('/my-bookings', { state: { status } });
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -72,7 +97,7 @@ const MyProfilePage = () => {
     setIsPasswordUpdating(true);
     try {
         // Assuming you have an endpoint to change password
-        const response = await api.post(`/api/v1/auth/change-password`, {
+        const response = await api.patch(`/api/v1/auth/me`, {
             currentPassword,
             newPassword,
         });
@@ -111,38 +136,60 @@ const MyProfilePage = () => {
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20">
         <h1 className="text-3xl font-extrabold text-gray-900 mb-8">My Profile</h1>
+
+        {userStats && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div 
+            className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 cursor-pointer hover:shadow-lg hover:border-orange-500 transition"
+            onClick={() => handleStatClick('all')}
+          >
+              <h3 className="text-lg font-semibold text-gray-700">Total Bookings</h3>
+              <p className="text-3xl font-bold text-gray-900">{userStats.totalBookings}</p>
+            </div>
+            <div 
+            className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 cursor-pointer hover:shadow-lg hover:border-orange-500 transition"
+            onClick={() => handleStatClick('confirmed')}
+          >
+              <h3 className="text-lg font-semibold text-gray-700">Completed Bookings</h3>
+              <p className="text-3xl font-bold text-gray-900">{userStats.completedBookings}</p>
+            </div>
+            <div 
+            className="bg-white p-6 rounded-2xl shadow-md border border-gray-200 cursor-pointer hover:shadow-lg hover:border-orange-500 transition"
+            onClick={() => handleStatClick('pending')}
+          >
+              <h3 className="text-lg font-semibold text-gray-700">Pending Bookings</h3>
+              <p className="text-3xl font-bold text-gray-900">{userStats.pendingBookings}</p>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Details Form */}
+          {/* Profile Details Display */}
           <div className="lg:col-span-2 bg-white p-8 rounded-2xl shadow-md border border-gray-200">
             <h2 className="text-2xl font-bold text-gray-800 mb-6">Personal Information</h2>
-            <form onSubmit={handleProfileUpdate} className="space-y-6">
+            <div className="space-y-6">
               <div>
-                <label htmlFor="fullName" className="block text-sm font-medium text-gray-700">Full Name</label>
-                <div className="mt-1 relative">
-                  <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input type="text" name="fullName" id="fullName" value={formData.fullName} onChange={handleInputChange} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                <label className="block text-sm font-medium text-gray-700">Full Name</label>
+                <div className="mt-1 relative flex items-center">
+                  <UserIcon className="absolute left-3 h-5 w-5 text-gray-400" />
+                  <p className="block w-full py-3 px-5 pl-10 rounded-full text-gray-900">{formData.fullName}</p>
                 </div>
               </div>
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">Email Address</label>
-                <div className="mt-1 relative">
-                  <EnvelopeIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input type="email" name="email" id="email" value={formData.email} disabled className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed" />
+                <label className="block text-sm font-medium text-gray-700">Email Address</label>
+                <div className="mt-1 relative flex items-center">
+                  <EnvelopeIcon className="absolute left-3 h-5 w-5 text-gray-400" />
+                  <p className="block w-full py-3 px-5 pl-10 rounded-full text-gray-900 bg-gray-100 cursor-not-allowed">{formData.email}</p>
                 </div>
               </div>
               <div>
-                <label htmlFor="mobile" className="block text-sm font-medium text-gray-700">Mobile Number</label>
-                <div className="mt-1 relative">
-                  <DevicePhoneMobileIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                  <input type="tel" name="mobile" id="mobile" value={formData.mobile} onChange={handleInputChange} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                <label className="block text-sm font-medium text-gray-700">Mobile Number</label>
+                <div className="mt-1 relative flex items-center">
+                  <DevicePhoneMobileIcon className="absolute left-3 h-5 w-5 text-gray-400" />
+                  <p className="block w-full py-3 px-5 pl-10 rounded-full text-gray-900">{formData.mobile}</p>
                 </div>
               </div>
-              <div className="text-right">
-                <button type="submit" disabled={isUpdating} className="bg-orange-500 hover:bg-black text-white font-bold py-3 px-6 rounded-full transition duration-300 disabled:opacity-50">
-                  {isUpdating ? 'Updating...' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+            </div>
           </div>
 
           {/* Change Password Form */}
@@ -153,21 +200,54 @@ const MyProfilePage = () => {
                 <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">Current Password</label>
                 <div className="mt-1 relative">
                     <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input type="password" name="currentPassword" id="currentPassword" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <input type={showCurrentPassword ? 'text' : 'password'} name="currentPassword" id="currentPassword" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showCurrentPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
                 </div>
               </div>
               <div>
                 <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
                 <div className="mt-1 relative">
                     <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input type="password" name="newPassword" id="newPassword" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <input type={showNewPassword ? 'text' : 'password'} name="newPassword" id="newPassword" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showNewPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
                 </div>
               </div>
               <div>
                 <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm New Password</label>
                 <div className="mt-1 relative">
                     <KeyIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <input type="password" name="confirmPassword" id="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" id="confirmPassword" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="block w-full py-3 px-5 pl-10 rounded-full border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeSlashIcon className="h-5 w-5" />
+                      ) : (
+                        <EyeIcon className="h-5 w-5" />
+                      )}
+                    </button>
                 </div>
               </div>
               <div className="text-right">

@@ -13,14 +13,14 @@ import {
 
 export default function AboutUsDark() {
   return (
-    <section className="bg-white text-white py-28">
+    <section className="bg-white text-white pt-12 md:py-28">
       <div className="container mx-auto px-6 md:px-12 flex flex-col-reverse md:flex-row items-center gap-10">
         {/* Left: Content */}
         <div className="md:w-1/2 space-y-6">
           <span className="text-sm uppercase font-grotesk text-orange-500 tracking-widest">
             Cabnex
           </span>
-          <h2 className="text-3xl md:text-5xl font-grotesk text-black font-extrabold leading-14 mt-2 mb-4">
+          <h2 className="text-3xl md:text-5xl font-grotesk text-black font-extrabold leading-10 md:leading-14 mt-2 mb-4">
             We Are More Than{" "}
             <span className="text-orange-500">A Car Rental Company</span>
           </h2>

@@ -61,7 +61,7 @@ export default function AgentRegistrationSection() {
 
         {/* Call to Action */}
         <a
-          href="/agent-registration"
+          href="/vendor-registration"
           className="inline-block bg-orange-500 text-white font-grotesk font-semibold py-3 px-8 rounded-full hover:bg-orange-600 transition"
         >
           Join as an Agent Now

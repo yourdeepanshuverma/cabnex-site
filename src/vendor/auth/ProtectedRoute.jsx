@@ -1,10 +1,15 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
+import { useVendorAuth } from '../context/VendorAuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const isAuthenticated = localStorage.getItem('vendorToken');
+  const { isVendorLoggedIn, loading } = useVendorAuth();
 
-  if (!isAuthenticated) {
+  if (loading) {
+    return <div>Loading...</div>; // Or a spinner component
+  }
+
+  if (!isVendorLoggedIn) {
     return <Navigate to="/vendor-login" />;
   }
 

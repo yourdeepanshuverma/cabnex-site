@@ -43,18 +43,18 @@ export default function CarTypesSection() {
   };
 
   return (
-    <section className="bg-white p-16">
+    <section className="bg-white pb-10 md:p-16">
       <div className="max-w-7xl mx-auto">
         {/* Heading */}
-        <div className="text-center mb-10">
+        <div className="text-center md:mb-10">
           <span className="text-sm uppercase font-grotesk text-orange-500 tracking-widest">
             Categories
           </span>
 
-          <h2 className="text-3xl md:text-5xl font-grotesk text-black font-extrabold leading-14 mt-2 mb-4">
+          <h2 className="text-3xl md:text-5xl font-grotesk text-black font-extrabold md:leading-14 mt-2 mb-4">
             Explore <span className="text-orange-600">Our </span>Fleets
           </h2>
-          <p className="mt-3 text-slate-600 max-w-5xl mx-auto">
+          <p className="mt-3 text-slate-600 max-w-5xl text-sm md:text-md mx-auto">
             Discover our wide range of vehicles designed for every purpose — from
             executive sedans and spacious MPVs to premium coaches and luxury vans.
             Each ride is maintained to perfection to deliver comfort, safety, and

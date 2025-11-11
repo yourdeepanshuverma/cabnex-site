@@ -3,23 +3,35 @@ import { FaBell, FaSignOutAlt, FaUserCircle, FaBars, FaSearch } from 'react-icon
 import { FaBarsStaggered } from "react-icons/fa6";
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import Cookies from 'js-cookie';
 import logo from '../../assets/logo/logo-cab.png';
+
+import { useVendorAuth } from '../context/VendorAuthContext';
+
+// This is a blank line to force a re-build
 
 const Header = ({ setIsOpen, isOpen }) => {
   const navigate = useNavigate();
+  const { vendorUser, setVendorUser, setIsVendorLoggedIn, vendorStats } = useVendorAuth();
   const [profileDropdown, setProfileDropdown] = useState(false);
-  const [username, setUsername] = useState(localStorage.getItem('vendorName') || 'Vendor');
+  const [notificationDropdown, setNotificationDropdown] = useState(false);
 
-  useEffect(() => {
-    const storedUsername = localStorage.getItem('vendorName');
-    if (storedUsername) {
-      setUsername(storedUsername);
-    }
-  }, []);
+  const notificationCount = vendorStats?.recentBookings?.length || 0;
+
+  const handleViewNotification = (bookingId) => {
+    navigate('/vendor/bookings', { state: { bookingId } });
+    setVendorStats((prevStats) => ({
+      ...prevStats,
+      recentBookings: prevStats.recentBookings.filter((booking) => booking.bookingId !== bookingId),
+    }));
+  };
 
   const handleLogout = () => {
-    localStorage.removeItem('vendorToken');
-    localStorage.removeItem('vendorName');
+    console.log('Logging out...');
+    Cookies.remove('cabnex_vendor');
+    Cookies.remove('userData');
+    setVendorUser(null);
+    setIsVendorLoggedIn(false);
     toast.success('Logged out successfully!');
     navigate('/vendor-login');
   };
@@ -55,12 +67,34 @@ const Header = ({ setIsOpen, isOpen }) => {
         <img src={logo} alt="logo" />
       </div>
       <div className="flex items-center gap-2 space-x-4">
-        <button className="bg-[#F3F4F6] cursor-pointer p-4 rounded-xl text-orange-500 hover:text-black relative" aria-label="Notifications">
-          <FaBell className="w-6 h-6" />
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-            3
-          </span>
-        </button>
+        <div className="relative">
+          <button onClick={() => setNotificationDropdown(!notificationDropdown)} className="bg-[#F3F4F6] cursor-pointer p-4 rounded-xl text-orange-500 hover:text-black relative" aria-label="Notifications">
+            <FaBell className="w-6 h-6" />
+            {notificationCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                {notificationCount}
+              </span>
+            )}
+          </button>
+          {notificationDropdown && (
+            <div className="absolute left-1/2 -translate-x-1/2 mt-2 w-80 bg-[#F3F4F6] dark:bg-gray-800 rounded-md shadow-lg z-10">
+              <div className="p-4 border-b dark:border-gray-700">
+                <h4 className="font-semibold">Recent Bookings</h4>
+              </div>
+              <div className="max-h-64 overflow-y-auto">
+                {vendorStats?.recentBookings?.map((booking) => (
+                  <div key={booking.bookingId} className="p-4 border-b dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 flex justify-between items-center">
+                    <div>
+                      <p className="text-sm font-semibold">{booking.bookingId}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{new Date(booking.pickupDateTime).toLocaleString()}</p>
+                    </div>
+                    <button onClick={() => handleViewNotification(booking.bookingId)} className="text-xs text-blue-500 hover:underline">View</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
         <button
           onClick={handleLogout}
           className="flex bg-[#F3F4F6] cursor-pointer p-4 rounded-xl text-orange-500 hover:text-black font-medium transition-colors duration-200"
@@ -75,7 +109,7 @@ const Header = ({ setIsOpen, isOpen }) => {
             aria-label="Profile menu"
           >
             <FaUserCircle className="w-5 h-5 text-gray-500 dark:text-gray-300" />
-            <span className="text-gray-700 dark:text-gray-200 font-grotesk font-medium">{username}</span>
+            <span className="text-gray-700 dark:text-gray-200 font-grotesk font-medium">{vendorUser?.contactPerson || 'Vendor'}</span>
           </button>
           {profileDropdown && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-md shadow-lg z-10">

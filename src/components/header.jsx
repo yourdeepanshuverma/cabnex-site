@@ -30,10 +30,11 @@ import {
   PhoneIcon,
   PlayCircleIcon,
 } from "@heroicons/react/20/solid";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 import Cookies from "js-cookie";
-import logo from "../assets/logo/logo-cab.png";
+import { useWebsiteSettings } from "../context/WebsiteSettingsContext";
 import loginImg from "../assets/login/login.jpg";
 import signupImg from "../assets/login/register.jpg";
 import { api, endpoints } from "../api/api-config";
@@ -46,31 +47,31 @@ const services = [
   {
     name: "Leisure & Holiday Travel",
     description: "Explore South India in comfort and style.",
-    href: "/services#leisure",
+    href: "/mobility-solutions",
     icon: GlobeAltIcon,
   },
   {
     name: "Corporate Travel",
     description: "Dependable mobility solutions for your business.",
-    href: "/services#corporate",
+    href: "/mobility-solutions",
     icon: BriefcaseIcon,
   },
   {
     name: "Events & Delegations",
     description: "Seamless multi-vehicle coordination for groups.",
-    href: "/services#events",
+    href: "/mobility-solutions",
     icon: UsersIcon,
   },
   {
     name: "City & Sightseeing Tours",
     description: "Discover the best of every destination.",
-    href: "/services#sightseeing",
+    href: "/mobility-solutions",
     icon: CameraIcon,
   },
     {
     name: "MICE Transport",
     description: "Tailored ground transport for large events.",
-    href: "/services#mice",
+    href: "/mobility-solutions",
     icon: CalendarIcon,
   },
 ];
@@ -85,6 +86,7 @@ const tourItineraries = [];
 const blogLinks = [];
 
 export default function Header() {
+  const { settings } = useWebsiteSettings();
   const { isLoggedIn, setIsLoggedIn, user, setUser } = useSearch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -111,6 +113,9 @@ export default function Header() {
   const [forgotOtp, setForgotOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isLoadingUser, setIsLoadingUser] = useState(true);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showRegisterPassword, setShowRegisterPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -360,7 +365,7 @@ export default function Header() {
 
   // Vendor Registration Navigation
   const handleVendorRegister = () => {
-    navigate("/vendor-registration");
+    navigate("/vendor-login");
   };
 
   // Forgot Password: Step 1 - Send OTP
@@ -496,7 +501,7 @@ export default function Header() {
         >
           <div className="flex lg:flex-1">
             <a href="/" className="-m-1.5 rounded-2xl">
-              <img alt="logo" src={logo} className="h-16 w-auto" />
+              <img alt="logo" src={settings?.logo?.url || ''} className="h-16 w-auto" />
             </a>
           </div>
           <div className="flex lg:hidden">
@@ -506,7 +511,7 @@ export default function Header() {
               className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white"
             >
               <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="h-6 w-6" />
+              <Bars3Icon aria-hidden="true" className="h-8 w-8 rounded-md text-orange-600 bg-orange-100 p-1" />
             </button>
           </div>
           <PopoverGroup className="hidden lg:flex lg:gap-x-12">
@@ -549,7 +554,7 @@ export default function Header() {
                 </div>
               </PopoverPanel>
             </Popover>
-            <Link to="/about" className="text-md font-grotesk font-semibold text-black">
+            <Link to="/about-us" className="text-md font-grotesk font-semibold text-black">
               About Us
             </Link>
           </PopoverGroup>
@@ -638,7 +643,7 @@ export default function Header() {
             <div className="flex items-center justify-between">
               <a href="#" className="-m-1.5 p-1.5">
                 <span className="sr-only">Your Company</span>
-                <img alt="" src={logo} className="h-8 w-auto" />
+                <img alt="" src={settings?.logo?.url || ''} className="h-8 w-auto" />
               </a>
               <button
                 type="button"
@@ -724,18 +729,18 @@ export default function Header() {
                       ))}
                     </DisclosurePanel>
                   </Disclosure>
-                  <a
-                    href="#"
+                  <Link
+                    to="/about-us"
                     className="block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
                   >
                     About
-                  </a>
-                  <a
-                    href="#"
+                  </Link>
+                  <Link
+                    to="/contact-us"
                     className="block rounded-lg px-3 py-2 text-base/7 font-semibold text-gray-900 hover:bg-gray-50"
                   >
                     Contact
-                  </a>
+                  </Link>
                 </div>
                 <div className="py-6">
                   {isLoggedIn && user && (
@@ -873,12 +878,23 @@ export default function Header() {
                       />
                       <input
                         id="password"
-                        type="password"
+                        type={showLoginPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50"
                         placeholder="Enter your password"
                       />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                      >
+                        {showLoginPassword ? (
+                          <EyeSlashIcon className="h-5 w-5" />
+                        ) : (
+                          <EyeIcon className="h-5 w-5" />
+                        )}
+                      </button>
                     </div>
                   </div>
                   {loginError && (
@@ -1106,12 +1122,23 @@ export default function Header() {
                         />
                         <input
                           id="reg-password"
-                          type="password"
+                          type={showRegisterPassword ? 'text' : 'password'}
                           value={registerPassword}
                           onChange={(e) => setRegisterPassword(e.target.value)}
                           className="block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50"
                           placeholder="Enter your password"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showRegisterPassword ? (
+                            <EyeSlashIcon className="h-5 w-5" />
+                          ) : (
+                            <EyeIcon className="h-5 w-5" />
+                          )}
+                        </button>
                       </div>
                     </div>
                     <div className="relative w-full">
@@ -1375,12 +1402,23 @@ export default function Header() {
                         />
                         <input
                           id="new-password"
-                          type="password"
+                          type={showNewPassword ? 'text' : 'password'}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
                           className="block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50"
                           placeholder="Enter new password (min 8 characters)"
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showNewPassword ? (
+                            <EyeSlashIcon className="h-5 w-5" />
+                          ) : (
+                            <EyeIcon className="h-5 w-5" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   )}

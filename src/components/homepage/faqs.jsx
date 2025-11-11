@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { FaChevronDown } from 'react-icons/fa';
+import { useWebsiteSettings } from '../../context/WebsiteSettingsContext';
 
 const FAQ = () => {
+  const { settings } = useWebsiteSettings();
   const [openIndex, setOpenIndex] = useState(null);
 
-  const faqs = [
+  const staticFaqs = [
     {
       question: 'How do I register as a Cabnex Agent?',
       answer:
@@ -52,6 +54,9 @@ const FAQ = () => {
     },
   ];
 
+  const faqs = settings?.faqs && settings.faqs.length > 0 ? settings.faqs : staticFaqs;
+
+
   const toggleFAQ = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
@@ -78,7 +83,7 @@ const FAQ = () => {
       onClick={() => toggleFAQ(index)}
     >
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-grotesk font-semibold text-black">
+        <h3 className="text-md md:text-lg font-grotesk font-semibold text-black">
           {faq.question}
         </h3>
         <div

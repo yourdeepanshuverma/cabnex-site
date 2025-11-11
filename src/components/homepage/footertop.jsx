@@ -17,7 +17,7 @@ export default function CallToActionSection() {
         <p className="text-sm font-grotesk uppercase mb-2">
           Ready to Move Your Business Forward?
         </p>
-        <h2 className="text-3xl lg:text-5xl font-grotesk font-bold mb-4 leading-14">
+        <h2 className="text-[25px] lg:text-5xl font-grotesk font-bold mb-4 md:leading-14">
           Connect with Cabnex for Seamless B2B Mobility Solutions
         </h2>
 

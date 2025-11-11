@@ -91,11 +91,11 @@ const BannerSlider = () => {
           {slides.map((slide, index) => (
             <div key={index} className="outline-none">
               <div
-                className="h-[60vh] lg:h-dvh pb-22 w-full bg-cover bg-center relative flex items-center justify-start"
+                className="h-full lg:h-dvh pt-28 pb-22 w-full bg-cover bg-center relative md:flex  items-center justify-start"
                 style={{ backgroundImage: `url(${slide.image})` }}
               >
                 <div className="absolute inset-0 bg-[#00000063]"></div>
-                <div className="relative z-10 w-full max-w-7xl px-4 md:px-28">
+                <div className="relative z-10 w-full max-w-7xl px-4 md:px-18">
                   <h1
                     className={`text-3xl md:text-5xl font-[800] font-grotesk text-white mb-4 text-shadow-md ${
                       activeSlide === index ? 'animate-heading' : 'reset-animation'
@@ -104,21 +104,23 @@ const BannerSlider = () => {
                     {slide.title}
                   </h1>
                   <p
-                    className={`text-lg md:text-xl text-white max-w-xl ${
+                    className={`hidden md:block text-lg md:text-xl text-white max-w-3xl ${
                       activeSlide === index ? 'animate-description' : 'reset-animation-description'
                     }`}
                   >
                     {slide.description}
                   </p>
                 </div>
+                 
               </div>
             </div>
           ))}
         </Slider>
-       <div className="lg:absolute lg:top-[52%] lg:left-[-20px] w-full ">
+      
+      </div>
+      <div className="md:absolute md:top-[60%] lg:left-[0] w-full ">
          <Searchsection/>
        </div>
-      </div>
     </div>
   );
 };

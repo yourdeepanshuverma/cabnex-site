@@ -3,7 +3,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 const API_URL = 'https://api.cabnex.in/api/v1';
-const BASE_URL = 'http://dev.cabnex.in';
+const BASE_URL = 'https://cabnex.in';
 
 export const loadRazorpay = async ({
   amount,
@@ -63,8 +63,7 @@ export const loadRazorpay = async ({
               razorpaySignature: response.razorpay_signature,
               carCategory:carCategoryName,
               serviceType,
-              packageType,
-              packageId,
+              packageId:packageType,
               exactLocation,
               pickupDateTime,
               startLocation: typeof startLocation === 'object' ? startLocation : { address: startLocation, place_id: null },
@@ -104,11 +103,11 @@ setTimeout(() => {
           } catch (err) {
             console.error('Verification Error:', err.response?.data || err);
             toast.error('Verification failed! Redirecting to failure page...');
-            // setTimeout(() => {
-            //   window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(
-            //     err.response?.data?.message || 'network_error'
-            //   )}`;
-            // }, 2000);
+            setTimeout(() => {
+              window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(
+                err.response?.data?.message || 'network_error'
+              )}`;
+            }, 2000);
           }
         },
         prefill: {

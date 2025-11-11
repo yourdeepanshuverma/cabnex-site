@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { FaEdit, FaTrash, FaEye, FaSearch } from 'react-icons/fa';
+import { FaEdit, FaTrash, FaEye, FaSearch,FaInfoCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 import { api } from '../../api/api-config';
+
+import CarDetailsModal from '../components/CarDetailsModal';
 
 const VendorCarList = () => {
   // State for categories fetched from API
@@ -17,6 +19,18 @@ const VendorCarList = () => {
   const carsPerPage = 10;
 
   const [cars, setCars] = useState([]);
+  const [selectedCar, setSelectedCar] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleViewCar = (car) => {
+    setSelectedCar(car);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setSelectedCar(null);
+    setIsModalOpen(false);
+  };
 
   useEffect(() => {
     const fetchCars = async () => {
@@ -346,9 +360,9 @@ const VendorCarList = () => {
                       <button onClick={() => handleDelete(car._id)} className="text-red-600 hover:text-red-900 block md:inline">
                         <FaTrash className="inline w-4 h-4" /> Delete
                       </button>
-                      <Link to={`/vendor/view-car/${car._id}`} className="text-green-600 hover:text-green-900 block md:inline">
+                      <button onClick={() => handleViewCar(car)} className="text-green-600 hover:text-green-900 block md:inline">
                         <FaEye className="inline w-4 h-4" /> View
-                      </Link>
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -357,6 +371,8 @@ const VendorCarList = () => {
           </table>
         </div>
       </div>
+
+      {isModalOpen && <CarDetailsModal car={selectedCar} onClose={handleCloseModal} />}
 
       {/* Pagination - responsive */}
       {totalPages > 1 && (

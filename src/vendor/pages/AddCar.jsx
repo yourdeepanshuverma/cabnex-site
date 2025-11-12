@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { FaArrowLeft, FaArrowRight, FaPlus } from 'react-icons/fa';
 import { api } from '../../api/api-config';
 import { useNavigate } from 'react-router-dom';
-import { Toaster, toast } from 'sonner'; // Use sonner toast instead of alerts
+import { Toaster, toast } from 'sonner';
 
 const VendorAddCar = () => {
   const navigate = useNavigate();
@@ -35,6 +35,13 @@ const VendorAddCar = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
+  // Cleanup object URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [imagePreviews]);
+
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -66,9 +73,24 @@ const VendorAddCar = () => {
 
   const handleImagesChange = (e) => {
     const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Clear input so same file can be re-selected
+    e.target.value = null;
+
     setFormData((prev) => ({ ...prev, images: [...prev.images, ...files] }));
     const newPreviews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews((prev) => [...prev, ...newPreviews]);
+  };
+
+  const removeImage = (index) => {
+    const urlToRevoke = imagePreviews[index];
+    setFormData((prev) => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index),
+    }));
+    setImagePreviews((prev) => prev.filter((_, i) => i !== index));
+    URL.revokeObjectURL(urlToRevoke);
   };
 
   const handleSubmit = async (e) => {
@@ -83,10 +105,7 @@ const VendorAddCar = () => {
     data.append('registrationNumber', formData.registrationNumber);
     data.append('registerationType', formData.registerationType);
     data.append('colour', formData.colour);
-
-    let apiStatus = formData.status === 'available' ? 'active' : formData.status;
-    data.append('status', apiStatus);
-
+    data.append('status', formData.status);
     data.append('seatingCapacity', formData.seatingCapacity.toString());
     data.append('fuelType', formData.fuelType.toLowerCase());
     data.append('airConditioning', formData.airConditioning === 'AC' ? 'true' : 'false');
@@ -106,11 +125,8 @@ const VendorAddCar = () => {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       console.log('API Success:', response.data);
-      
       toast.success('Car added successfully! Redirecting to car list...');
-      
       resetForm();
-      
       setTimeout(() => {
         navigate('/vendor/car-list');
       }, 2000);
@@ -267,6 +283,7 @@ const VendorAddCar = () => {
         <ProgressBar />
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* STEP 1 */}
           {currentStep === 1 && (
             <div>
               <div className="mb-6">
@@ -280,13 +297,7 @@ const VendorAddCar = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  >
+                  <select name="category" value={formData.category} onChange={handleChange} className="input-field block w-full" required>
                     <option value="">Select Category</option>
                     {categories.map((cat, idx) => (
                       <option key={idx} value={cat}>
@@ -297,25 +308,11 @@ const VendorAddCar = () => {
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Make / Brand</label>
-                  <input
-                    type="text"
-                    name="make"
-                    value={formData.make}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  />
+                  <input type="text" name="make" value={formData.make} onChange={handleChange} className="input-field block w-full" required />
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Model</label>
-                  <input
-                    type="text"
-                    name="model"
-                    value={formData.model}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  />
+                  <input type="text" name="model" value={formData.model} onChange={handleChange} className="input-field block w-full" required />
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Year of Manufacture</label>
@@ -334,6 +331,7 @@ const VendorAddCar = () => {
             </div>
           )}
 
+          {/* STEP 2 */}
           {currentStep === 2 && (
             <div>
               <div className="mb-6">
@@ -347,24 +345,11 @@ const VendorAddCar = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Registration Number</label>
-                  <input
-                    type="text"
-                    name="registrationNumber"
-                    value={formData.registrationNumber}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  />
+                  <input type="text" name="registrationNumber" value={formData.registrationNumber} onChange={handleChange} className="input-field block w-full" required />
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Registration Type</label>
-                  <select
-                    name="registerationType"
-                    value={formData.registerationType}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  >
+                  <select name="registerationType" value={formData.registerationType} onChange={handleChange} className="input-field block w-full" required>
                     <option value="Private">Private</option>
                     <option value="Commercial">Commercial</option>
                     <option value="Temporary">Temporary</option>
@@ -372,24 +357,11 @@ const VendorAddCar = () => {
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Color</label>
-                  <input
-                    type="text"
-                    name="colour"
-                    value={formData.colour}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  />
+                  <input type="text" name="colour" value={formData.colour} onChange={handleChange} className="input-field block w-full" required />
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Status</label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  >
+                  <select name="status" value={formData.status} onChange={handleChange} className="input-field block w-full" required>
                     <option value="available">Available</option>
                     <option value="rented">Rented</option>
                     <option value="unavailable">Unavailable</option>
@@ -397,25 +369,11 @@ const VendorAddCar = () => {
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Seating Capacity</label>
-                  <input
-                    type="number"
-                    name="seatingCapacity"
-                    value={formData.seatingCapacity}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    min="1"
-                    required
-                  />
+                  <input type="number" name="seatingCapacity" value={formData.seatingCapacity} onChange={handleChange} className="input-field block w-full" min="1" required />
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Fuel Type</label>
-                  <select
-                    name="fuelType"
-                    value={formData.fuelType}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  >
+                  <select name="fuelType" value={formData.fuelType} onChange={handleChange} className="input-field block w-full" required>
                     <option value="Petrol">Petrol</option>
                     <option value="Diesel">Diesel</option>
                     <option value="Electric">Electric</option>
@@ -424,13 +382,7 @@ const VendorAddCar = () => {
                 </div>
                 <div>
                   <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">AC / Non-AC</label>
-                  <select
-                    name="airConditioning"
-                    value={formData.airConditioning}
-                    onChange={handleChange}
-                    className="input-field block w-full"
-                    required
-                  >
+                  <select name="airConditioning" value={formData.airConditioning} onChange={handleChange} className="input-field block w-full" required>
                     <option value="AC">AC</option>
                     <option value="Non-AC">Non-AC</option>
                   </select>
@@ -439,6 +391,7 @@ const VendorAddCar = () => {
             </div>
           )}
 
+          {/* STEP 3 */}
           {currentStep === 3 && (
             <div>
               <div className="mb-6">
@@ -466,49 +419,51 @@ const VendorAddCar = () => {
                     ))}
                   </div>
                 </div>
+
                 <div className="flex justify-between gap-4">
                   <div className="w-full">
                     <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Insurance Expiry Date</label>
-                    <input
-                      type="date"
-                      name="insuranceExpiry"
-                      value={formData.insuranceExpiry}
-                      onChange={handleChange}
-                      className="input-field block w-full"
-                      required
-                    />
+                    <input type="date" name="insuranceExpiry" value={formData.insuranceExpiry} onChange={handleChange} className="input-field block w-full" required />
                   </div>
                   <div className="w-full">
                     <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Pollution Certification Expiry</label>
-                    <input
-                      type="date"
-                      name="pollutionExpiry"
-                      value={formData.pollutionExpiry}
-                      onChange={handleChange}
-                      className="input-field block w-full"
-                      required
-                    />
+                    <input type="date" name="pollutionExpiry" value={formData.pollutionExpiry} onChange={handleChange} className="input-field block w-full" required />
                   </div>
                 </div>
+
+                {/* IMAGES WITH REMOVE BUTTON */}
                 <div>
-                  <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Vehicle Images</label>
+                  <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Vehicle Images {formData.images.length > 0 && `(${formData.images.length})`}
+                  </label>
                   <input
                     type="file"
                     multiple
                     accept="image/*"
                     onChange={handleImagesChange}
                     className="input-field block w-full"
-                    required
+                    // required REMOVED — validation via state
                   />
                   {imagePreviews.length > 0 && (
                     <div className="mt-4 grid grid-cols-3 gap-4">
                       {imagePreviews.map((preview, idx) => (
-                        <img
-                          key={idx}
-                          src={preview}
-                          alt={`Preview ${idx + 1}`}
-                          className="w-full h-32 object-cover rounded-md shadow-md"
-                        />
+                        <div key={idx} className="relative group">
+                          <img
+                            src={preview}
+                            alt={`Preview ${idx + 1}`}
+                            className="w-full h-32 object-cover rounded-md shadow-md"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(idx)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                            title="Remove image"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -517,13 +472,10 @@ const VendorAddCar = () => {
             </div>
           )}
 
+          {/* NAVIGATION BUTTONS */}
           <div className="flex justify-between mt-6">
             {currentStep > 1 && (
-              <button
-                type="button"
-                onClick={prevStep}
-                className="btn-secondary inline-flex items-center"
-              >
+              <button type="button" onClick={prevStep} className="btn-secondary inline-flex items-center">
                 <FaArrowLeft className="mr-2 w-4 h-4" /> Previous
               </button>
             )}
@@ -542,19 +494,14 @@ const VendorAddCar = () => {
                 disabled={!validateStep(currentStep) || loading}
                 className="btn-primary inline-flex items-center disabled:opacity-50 disabled:cursor-not-allowed ml-auto"
               >
-                {loading ? (
-                  <>Adding...</>
-                ) : (
-                  <>
-                    <FaPlus className="mr-2 w-4 h-4" /> Add Car
-                  </>
-                )}
+                {loading ? <>Adding...</> : <><FaPlus className="mr-2 w-4 h-4" /> Add Car</>}
               </button>
             )}
           </div>
         </form>
       </div>
-      <Toaster position="top-center" richColors closeButton /> {/* Add Toaster here */}
+
+      <Toaster position="top-center" richColors closeButton />
     </div>
   );
 };

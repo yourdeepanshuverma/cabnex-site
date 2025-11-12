@@ -3,9 +3,8 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
 import 'react-toastify/dist/ReactToastify.css';
 import { SearchProvider } from './context/SearchContext';
-import { Toaster } from 'sonner'; // Add this import
+import { Toaster } from 'sonner';
 import { useWebsiteSettings } from './context/WebsiteSettingsContext';
-
 import { VendorAuthProvider } from './vendor/context/VendorAuthContext';
 
 function App() {
@@ -26,27 +25,26 @@ function App() {
   }, [settings]);
 
   return (
-    <SearchProvider>
-      <VendorAuthProvider>
-        <Router>
+    <Router>
+      <SearchProvider>
+        <VendorAuthProvider>
           <main className="min-h-screen">
             <AppRoutes />
-            {/* Add Toaster for notifications */}
             <Toaster 
               position="top-center" 
               richColors 
               closeButton 
               toastOptions={{
                 classNames: {
-                  toast: "font-grotesk", // Match your font
+                  toast: "font-grotesk",
                   description: "font-grotesk",
                 },
               }}
             />
           </main>
-        </Router>
-      </VendorAuthProvider>
-    </SearchProvider>
+        </VendorAuthProvider>
+      </SearchProvider>
+    </Router>
   );
 }
 

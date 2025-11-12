@@ -239,13 +239,14 @@ export default function Header() {
 
         // Handle redirect after login
         const { from, car, pendingSearch } = location.state || {};
-        if (pendingSearch) {
-          handleSearch(pendingSearch.data, pendingSearch.tab);
-        } else if (from === "/car-listing" && car) {
-          navigate("/car-details", { state: { car } });
-        } else {
-          navigate(from || "/");
-        }
+        if (pendingSearch && typeof handleSearch === 'function') {
+  handleSearch(pendingSearch.data, pendingSearch.tab);
+} else if (from === "/" && car) {
+  navigate("/car-listing", { state: { car } });
+} else {
+  navigate(from || "/");
+}
+        
       } else {
         setLoginError(response.data.message || "Login failed");
         toast.error(response.data.message || "Login failed");

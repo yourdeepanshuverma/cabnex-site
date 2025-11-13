@@ -12,7 +12,7 @@ import { useVendorAuth } from '../context/VendorAuthContext';
 
 const Header = ({ setIsOpen, isOpen }) => {
   const navigate = useNavigate();
-  const { vendorUser, setVendorUser, setIsVendorLoggedIn, vendorStats } = useVendorAuth();
+  const { vendorUser, setVendorUser, setIsVendorLoggedIn, vendorStats, setVendorStats } = useVendorAuth();
   const [profileDropdown, setProfileDropdown] = useState(false);
   const [notificationDropdown, setNotificationDropdown] = useState(false);
 

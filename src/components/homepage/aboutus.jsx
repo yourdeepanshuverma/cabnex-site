@@ -91,7 +91,7 @@ export default function AboutUsDark() {
           {/* Read More Button */}
           <Link
             to="/about-us"
-            className="bg-[#FF6900] text-white cursor-pointer px-8 py-3 rounded-4xl hover:bg-[#FF6900] transition font-semibold mt-1 hover:translate-y-[-10px] flex items-center gap-2"
+            className="bg-[#FF6900] text-white cursor-pointer px-8 w-fit py-3 rounded-4xl hover:bg-[#FF6900] transition font-semibold mt-1 hover:translate-y-[-10px] flex items-center gap-2"
           >
             Read More
             <FaArrowRight className="text-white" />

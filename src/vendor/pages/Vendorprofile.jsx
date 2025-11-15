@@ -131,15 +131,15 @@ const VendorProfile = () => {
             "Profile update partially failed: Unable to delete previous profile image from Cloudinary. Other fields may have updated."
           );
         }
-        const updatedVendor = response.data.data.vendor;
+        const updatedVendor = response?.data;
         setProfile({
-          name: updatedVendor.contactPerson || "",
-          email: updatedVendor.email || "",
-          phone: updatedVendor.contactPhone || "",
-          businessName: updatedVendor.company || "",
+          name: updatedVendor?.contactPerson || "",
+          email: updatedVendor?.email || "",
+          phone: updatedVendor?.contactPhone || "",
+          businessName: updatedVendor?.company || "",
           profileImage: null,
-          pan: updatedVendor.pan || "",
-          gst: updatedVendor.gst || "",
+          pan: updatedVendor?.pan || "",
+          gst: updatedVendor?.gst || "",
           // Update other fields as needed
         });
         setProfileImagePreview(updatedVendor.profile?.url || null);

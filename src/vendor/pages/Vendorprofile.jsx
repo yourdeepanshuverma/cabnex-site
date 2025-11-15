@@ -117,7 +117,7 @@ const VendorProfile = () => {
       const response = await api.put("/api/v1/vendor/me", formDataToSend, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log("PUT Response:", response.data);
+      console.log("PUT Response:", response?.data?.data);
 
       if (response.data.success) {
         // Check for Cloudinary-specific error
@@ -131,7 +131,7 @@ const VendorProfile = () => {
             "Profile update partially failed: Unable to delete previous profile image from Cloudinary. Other fields may have updated."
           );
         }
-        const updatedVendor = response?.data;
+        const updatedVendor = response?.data?.data;
         setProfile({
           name: updatedVendor?.contactPerson || "",
           email: updatedVendor?.email || "",

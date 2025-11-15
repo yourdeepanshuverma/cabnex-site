@@ -1,16 +1,28 @@
-import React, { useState, useEffect } from 'react';
-import { FaEdit, FaSave, FaTimes, FaUserCircle, FaUser, FaEnvelope, FaPhone, FaBuilding, FaImage, FaIdCard, FaFileAlt } from 'react-icons/fa';
-import { api } from '../../api/api-config';
+import React, { useState, useEffect } from "react";
+import {
+  FaEdit,
+  FaSave,
+  FaTimes,
+  FaUserCircle,
+  FaUser,
+  FaEnvelope,
+  FaPhone,
+  FaBuilding,
+  FaImage,
+  FaIdCard,
+  FaFileAlt,
+} from "react-icons/fa";
+import { api } from "../../api/api-config";
 
 const VendorProfile = () => {
   const [profile, setProfile] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    businessName: '',
+    name: "",
+    email: "",
+    phone: "",
+    businessName: "",
     profileImage: null,
-    pan: '',
-    gst: '',
+    pan: "",
+    gst: "",
     // Add other fields as needed (e.g., address, city, state, etc.)
   });
 
@@ -18,37 +30,40 @@ const VendorProfile = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [profileImagePreview, setProfileImagePreview] = useState(null);
 
-  
   useEffect(() => {
     const fetchProfile = async () => {
       setIsLoading(true);
       try {
-        const response = await api.get('/api/v1/vendor/me');
-        console.log('GET Response:', response.data);
+        const response = await api.get("/api/v1/vendor/me");
+        console.log("GET Response:", response.data);
         if (response.data.success) {
           const vendorData = response.data.data.vendor;
           setProfile({
-            name: vendorData.contactPerson || '',
-            email: vendorData.email || '',
-            phone: vendorData.contactPhone || '',
-            businessName: vendorData.company || '',
+            name: vendorData.contactPerson || "",
+            email: vendorData.email || "",
+            phone: vendorData.contactPhone || "",
+            businessName: vendorData.company || "",
             profileImage: null,
-            pan: vendorData.pan || '',
-            gst: vendorData.gst || '',
+            pan: vendorData.pan || "",
+            gst: vendorData.gst || "",
             // Add other fields from vendorData as needed
           });
           setProfileImagePreview(vendorData.profile?.url || null);
         } else {
-          alert('Failed to fetch profile: No data returned');
+          alert("Failed to fetch profile: No data returned");
         }
       } catch (err) {
-        console.error('Error fetching profile:', {
+        console.error("Error fetching profile:", {
           message: err.message,
           status: err.response?.status,
           response: err.response?.data,
           headers: err.response?.headers,
         });
-        alert(`Failed to fetch profile: ${err.response?.data?.message || err.message || 'Server error'}`);
+        alert(
+          `Failed to fetch profile: ${
+            err.response?.data?.message || err.message || "Server error"
+          }`
+        );
       } finally {
         setIsLoading(false);
       }
@@ -74,68 +89,84 @@ const VendorProfile = () => {
     try {
       // Validate required fields
       if (!profile.email || !/^\S+@\S+\.\S+$/.test(profile.email)) {
-        alert('Please enter a valid email');
+        alert("Please enter a valid email");
         setIsLoading(false);
         return;
       }
       if (!profile.phone || !/^\d{10}$/.test(profile.phone)) {
-        alert('Please enter a valid 10-digit phone number');
+        alert("Please enter a valid 10-digit phone number");
         setIsLoading(false);
         return;
       }
 
       const formDataToSend = new FormData();
-      formDataToSend.append('contactPerson', profile.name);
-      formDataToSend.append('email', profile.email);
-      formDataToSend.append('contactPhone', profile.phone);
-      formDataToSend.append('company', profile.businessName);
+      formDataToSend.append("contactPerson", profile.name);
+      formDataToSend.append("email", profile.email);
+      formDataToSend.append("contactPhone", profile.phone);
+      formDataToSend.append("company", profile.businessName);
       if (profile.profileImage instanceof File) {
-        formDataToSend.append('profile', profile.profileImage);
+        formDataToSend.append("profile", profile.profileImage);
       }
 
       // Debug: Log FormData contents
-      console.log('FormData being sent:');
+      console.log("FormData being sent:");
       for (let [key, value] of formDataToSend.entries()) {
         console.log(`${key}: ${value instanceof File ? value.name : value}`);
       }
 
-      const response = await api.put('/api/v1/vendor/me', formDataToSend, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const response = await api.put("/api/v1/vendor/me", formDataToSend, {
+        headers: { "Content-Type": "multipart/form-data" },
       });
-      console.log('PUT Response:', response.data);
+      console.log("PUT Response:", response.data);
 
       if (response.data.success) {
         // Check for Cloudinary-specific error
-        if (response.data.message && response.data.message.includes('Failed to delete files from Cloudinary')) {
-          alert('Profile update partially failed: Unable to delete previous profile image from Cloudinary. Other fields may have updated.');
+        if (
+          response.data.message &&
+          response.data.message.includes(
+            "Failed to delete files from Cloudinary"
+          )
+        ) {
+          alert(
+            "Profile update partially failed: Unable to delete previous profile image from Cloudinary. Other fields may have updated."
+          );
         }
         const updatedVendor = response.data.data.vendor;
         setProfile({
-          name: updatedVendor.contactPerson || '',
-          email: updatedVendor.email || '',
-          phone: updatedVendor.contactPhone || '',
-          businessName: updatedVendor.company || '',
+          name: updatedVendor.contactPerson || "",
+          email: updatedVendor.email || "",
+          phone: updatedVendor.contactPhone || "",
+          businessName: updatedVendor.company || "",
           profileImage: null,
-          pan: updatedVendor.pan || '',
-          gst: updatedVendor.gst || '',
+          pan: updatedVendor.pan || "",
+          gst: updatedVendor.gst || "",
           // Update other fields as needed
         });
         setProfileImagePreview(updatedVendor.profile?.url || null);
         setIsEditing(false);
-        if (!response.data.message || !response.data.message.includes('Failed to delete files from Cloudinary')) {
-          alert('Profile updated successfully!');
+        if (
+          !response.data.message ||
+          !response.data.message.includes(
+            "Failed to delete files from Cloudinary"
+          )
+        ) {
+          alert("Profile updated successfully!");
         }
       } else {
-        alert('Failed to update profile: No success response');
+        alert("Failed to update profile: No success response");
       }
     } catch (err) {
-      console.error('Error updating profile:', {
+      console.error("Error updating profile:", {
         message: err.message,
         status: err.response?.status,
         response: err.response?.data,
         headers: err.response?.headers,
       });
-      alert(`Failed to update profile: ${err.response?.data?.message || err.message || 'Server error'}`);
+      alert(
+        `Failed to update profile: ${
+          err.response?.data?.message || err.message || "Server error"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -145,30 +176,34 @@ const VendorProfile = () => {
     setIsEditing(false);
     setIsLoading(true);
     try {
-      const response = await api.get('/api/v1/vendor/me');
-      console.log('Cancel GET Response:', response.data);
+      const response = await api.get("/api/v1/vendor/me");
+      console.log("Cancel GET Response:", response.data);
       if (response.data.success) {
         const vendorData = response.data.data.vendor;
         setProfile({
-          name: vendorData.contactPerson || '',
-          email: vendorData.email || '',
-          phone: vendorData.contactPhone || '',
-          businessName: vendorData.company || '',
+          name: vendorData?.contactPerson || "",
+          email: vendorData?.email || "",
+          phone: vendorData?.contactPhone || "",
+          businessName: vendorData?.company || "",
           profileImage: null,
-          pan: vendorData.pan || '',
-          gst: vendorData.gst || '',
+          pan: vendorData?.pan || "",
+          gst: vendorData?.gst || "",
           // Update other fields as needed
         });
-        setProfileImagePreview(vendorData.profile?.url || null);
+        setProfileImagePreview(vendorData?.profile?.url || null);
       }
     } catch (err) {
-      console.error('Error refetching profile:', {
+      console.error("Error refetching profile:", {
         message: err.message,
         status: err.response?.status,
         response: err.response?.data,
         headers: err.response?.headers,
       });
-      alert(`Failed to refetch profile: ${err.response?.data?.message || err.message || 'Server error'}`);
+      alert(
+        `Failed to refetch profile: ${
+          err.response?.data?.message || err.message || "Server error"
+        }`
+      );
     } finally {
       setIsLoading(false);
     }
@@ -254,7 +289,9 @@ const VendorProfile = () => {
 
       <div className="profile-container p-6">
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-grotesk font-bold text-gray-800 dark:text-gray-200">Vendor Profile</h3>
+          <h3 className="text-2xl font-grotesk font-bold text-gray-800 dark:text-gray-200">
+            Vendor Profile
+          </h3>
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
@@ -270,7 +307,8 @@ const VendorProfile = () => {
                 className="btn-primary inline-flex items-center"
                 disabled={isLoading}
               >
-                <FaSave className="mr-2 w-4 h-4" /> {isLoading ? 'Saving...' : 'Save'}
+                <FaSave className="mr-2 w-4 h-4" />{" "}
+                {isLoading ? "Saving..." : "Save"}
               </button>
               <button
                 onClick={handleCancel}
@@ -283,7 +321,11 @@ const VendorProfile = () => {
           )}
         </div>
 
-        {isLoading && <p className="text-center text-gray-600 dark:text-gray-400">Loading...</p>}
+        {isLoading && (
+          <p className="text-center text-gray-600 dark:text-gray-400">
+            Loading...
+          </p>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Profile Image */}
@@ -315,7 +357,9 @@ const VendorProfile = () => {
 
           {/* Contact Person */}
           <div className="input-container">
-            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Contact Person</label>
+            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Contact Person
+            </label>
             {isEditing ? (
               <div className="relative">
                 <FaUser className="input-icon" />
@@ -330,13 +374,15 @@ const VendorProfile = () => {
                 />
               </div>
             ) : (
-              <p className="view-mode">{profile.name || 'N/A'}</p>
+              <p className="view-mode">{profile.name || "N/A"}</p>
             )}
           </div>
 
           {/* Email */}
           <div className="input-container">
-            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Email</label>
+            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Email
+            </label>
             {isEditing ? (
               <div className="relative">
                 <FaEnvelope className="input-icon" />
@@ -351,13 +397,15 @@ const VendorProfile = () => {
                 />
               </div>
             ) : (
-              <p className="view-mode">{profile.email || 'N/A'}</p>
+              <p className="view-mode">{profile.email || "N/A"}</p>
             )}
           </div>
 
           {/* Phone */}
           <div className="input-container">
-            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Phone</label>
+            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Phone
+            </label>
             {isEditing ? (
               <div className="relative">
                 <FaPhone className="input-icon" />
@@ -372,13 +420,15 @@ const VendorProfile = () => {
                 />
               </div>
             ) : (
-              <p className="view-mode">{profile.phone || 'N/A'}</p>
+              <p className="view-mode">{profile.phone || "N/A"}</p>
             )}
           </div>
 
           {/* Business Name */}
           <div className="input-container">
-            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Business Name</label>
+            <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Business Name
+            </label>
             {isEditing ? (
               <div className="relative">
                 <FaBuilding className="input-icon" />
@@ -393,23 +443,27 @@ const VendorProfile = () => {
                 />
               </div>
             ) : (
-              <p className="view-mode">{profile.businessName || 'N/A'}</p>
+              <p className="view-mode">{profile.businessName || "N/A"}</p>
             )}
           </div>
 
           {/* PAN (View Mode Only) */}
           {!isEditing && (
             <div className="input-container">
-              <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">PAN</label>
-              <p className="view-mode">{profile.pan || 'N/A'}</p>
+              <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+                PAN
+              </label>
+              <p className="view-mode">{profile.pan || "N/A"}</p>
             </div>
           )}
 
           {/* GST (View Mode Only) */}
           {!isEditing && (
             <div className="input-container">
-              <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">GST</label>
-              <p className="view-mode">{profile.gst || 'N/A'}</p>
+              <label className="block text-md font-medium text-gray-700 dark:text-gray-300 mb-2">
+                GST
+              </label>
+              <p className="view-mode">{profile.gst || "N/A"}</p>
             </div>
           )}
         </div>

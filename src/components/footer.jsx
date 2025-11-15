@@ -1,17 +1,23 @@
 import React from "react";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import { useWebsiteSettings } from "../context/WebsiteSettingsContext";
-import { FaYoutube, FaFacebookF, FaTwitter, FaInstagram, FaLinkedinIn } from "react-icons/fa";
-
+import {
+  FaYoutube,
+  FaFacebookF,
+  FaTwitter,
+  FaInstagram,
+  FaLinkedinIn,
+} from "react-icons/fa";
 
 export default function Footer() {
   const { settings } = useWebsiteSettings();
   return (
-    <footer className=" bg-[#000000] mt-18  text-white pt-20 pb-8 relative  overflow-hidden"  style={{
-          backgroundImage: "url('src/assets/footer/footer-bg.svg')", // Replace with actual image path
-        }}>
-     
-
+    <footer
+      className=" bg-[#000000] mt-18  text-white pt-20 pb-8 relative  overflow-hidden"
+      style={{
+        backgroundImage: "url('src/assets/footer/footer-bg.svg')", // Replace with actual image path
+      }}
+    >
       <div className=" px-4 relative max-w-7xl mx-auto z-10">
         {/* Contact Section */}
         <div className="flex flex-col md:flex-row justify-between gap-8 bg-[#1b1b1bee] items-start md:items-center py-5 mb-20 px-6 md:px-8 border border-[#202020] rounded-2xl">
@@ -33,11 +39,13 @@ export default function Footer() {
               </svg>
             </div>
             <div className="ml-4">
-                <p className="text-2xl font-bold font-grotesk ">Call us</p>
-            <p className="text-xs font-grotesk  text-gray-400">{settings?.contactPhone || ''}</p>
+              <p className="text-2xl font-bold font-grotesk ">Call us</p>
+              <p className="text-xs font-grotesk  text-gray-400">
+                {settings?.contactPhone || ""}
+              </p>
             </div>
           </div>
-             <div className="text-start flex  items-center ">
+          <div className="text-start flex  items-center ">
             <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
               <svg
                 className="w-6 h-6 text-white"
@@ -55,11 +63,13 @@ export default function Footer() {
               </svg>
             </div>
             <div className="ml-4">
-                <p className="text-2xl font-bold font-grotesk ">Write to us</p>
-                <p className="text-xs font-grotesk  text-gray-400">{settings?.contactEmail || ''}</p>
+              <p className="text-2xl font-bold font-grotesk ">Write to us</p>
+              <p className="text-xs font-grotesk  text-gray-400">
+                {settings?.contactEmail || ""}
+              </p>
             </div>
           </div>
-             <div className="text-start flex  items-center ">
+          <div className="text-start flex  items-center ">
             <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-2">
               <svg
                 className="w-6 h-6 text-white"
@@ -77,53 +87,82 @@ export default function Footer() {
               </svg>
             </div>
             <div className="ml-4">
-                <p className="text-2xl font-bold font-grotesk ">Address</p>
-            {settings?.addresses?.map((address, index) => (
-              <p key={index} className="text-xs font-grotesk  text-gray-400">{address}</p>
-            ))}
+              <p className="text-2xl font-bold font-grotesk ">Address</p>
+              {settings?.addresses?.map((address, index) => (
+                <p key={index} className="text-xs font-grotesk  text-gray-400">
+                  {address}
+                </p>
+              ))}
             </div>
           </div>
-        
-        
         </div>
 
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-20 mt-8">
           {/* NOVARIDE Section */}
           <div>
-            <img src={settings?.logo?.url || ''}  className="w-52 rounded-2xl bg-white p-3 mb-3" alt="footer logo" />
+            <img
+              src={settings?.logo?.url || ""}
+              className="w-52 rounded-2xl bg-white p-3 mb-3"
+              alt="footer logo"
+            />
             <p className="text-sm font-grotesk ">
-              Enjoy seamless and reliable travel experiences with {settings?.siteName}.
+              Enjoy seamless and reliable travel experiences with{" "}
+              {settings?.siteName}.
             </p>
           </div>
 
           {/* Legal Policy Section */}
           <div>
-            <h4 className="text-2xl font-bold font-grotesk  mb-5">Legal Policy</h4>
+            <h4 className="text-2xl font-bold font-grotesk  mb-5">
+              Legal Policy
+            </h4>
             <ul className="space-y-2 font-grotesk  text-sm">
-              <li><Link to="/terms-and-conditions">Term & Condition</Link></li>
-              <li><Link to="/privacy-policy">Privacy Policy</Link></li>
-              <li><Link to="/legal-notice">Legal Notice</Link></li>
-              <li><Link to="/accessibility">Accessibility</Link></li>
-              <li><Link to="/payment-policy">Payment Policy</Link></li>
+              <li>
+                <Link to="/terms-and-conditions">Term & Condition</Link>
+              </li>
+              <li>
+                <Link to="/privacy-policy">Privacy Policy</Link>
+              </li>
+              <li>
+                <Link to="/legal-notice">Legal Notice</Link>
+              </li>
+              <li>
+                <Link to="/accessibility">Accessibility</Link>
+              </li>
+              <li>
+                <Link to="/payment-policy">Payment Policy</Link>
+              </li>
             </ul>
           </div>
 
           {/* Quick Links Section */}
           <div>
-            <h4 className="text-2xl font-bold font-grotesk  mb-5">Quick Links</h4>
+            <h4 className="text-2xl font-bold font-grotesk  mb-5">
+              Quick Links
+            </h4>
             <ul className="space-y-2 font-grotesk  text-sm">
-              <li><Link to="/">Home</Link></li>
-              <li><Link to="/about-us">About Us</Link></li>
-              <li><Link to="/mobility-solutions">Service</Link></li>
-              <li><Link to="/contact-us">Contact Us</Link></li>
+              <li>
+                <Link to="/">Home</Link>
+              </li>
+              <li>
+                <Link to="/about-us">About Us</Link>
+              </li>
+              <li>
+                <Link to="/mobility-solutions">Service</Link>
+              </li>
+              <li>
+                <Link to="/contact-us">Contact Us</Link>
+              </li>
             </ul>
           </div>
 
           {/* Subscribe Section */}
           <div>
-            <h4 className="text-2xl font-bold font-grotesk  mb-5">Subscribe To The Newsletter</h4>
-            <div className="flex items-center">
+            <h4 className="text-2xl font-bold font-grotesk  mb-5">
+              Subscribe To The Newsletter
+            </h4>
+            <div className="flex items-center space-x-2">
               <input
                 type="email"
                 placeholder="Email..."
@@ -151,37 +190,46 @@ export default function Footer() {
 
         {/* Bottom Section with Social Icons */}
         <div className="mt-8 flex flex-col md:flex-row justify-between items-center border-t border-gray-700 pt-4">
-          <p className="text-lg font-grotesk ">© {new Date().getFullYear()} {settings?.siteName}. All rights reserved.</p>
-         
-<div className="flex space-x-4 mt-4 md:mt-0">
-  {settings?.socials?.map((social) => {
-    let icon;
-    switch (social.platform) {
-      case "facebook":
-        icon = <FaFacebookF />;
-        break;
-      case "twitter":
-        icon = <FaTwitter />;
-        break;
-      case "instagram":
-        icon = <FaInstagram />;
-        break;
-      case "linkedin":
-        icon = <FaLinkedinIn />;
-        break;
-      case "youtube":
-        icon = <FaYoutube />;
-        break;
-      default:
-        icon = null;
-    }
-    return (
-      <a key={social._id} href={social.url} target="_blank" rel="noopener noreferrer" className="text-white hover:text-gray-300">
-        {icon}
-      </a>
-    );
-  })}
-</div>
+          <p className="text-lg font-grotesk ">
+            © {new Date().getFullYear()} {settings?.siteName}. All rights
+            reserved.
+          </p>
+
+          <div className="flex space-x-4 mt-4 md:mt-0">
+            {settings?.socials?.map((social) => {
+              let icon;
+              switch (social.platform) {
+                case "facebook":
+                  icon = <FaFacebookF />;
+                  break;
+                case "twitter":
+                  icon = <FaTwitter />;
+                  break;
+                case "instagram":
+                  icon = <FaInstagram />;
+                  break;
+                case "linkedin":
+                  icon = <FaLinkedinIn />;
+                  break;
+                case "youtube":
+                  icon = <FaYoutube />;
+                  break;
+                default:
+                  icon = null;
+              }
+              return (
+                <a
+                  key={social._id}
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-white hover:text-gray-300"
+                >
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
         </div>
       </div>
     </footer>

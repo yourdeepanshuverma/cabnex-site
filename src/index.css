@@ -221,7 +221,7 @@ body {
 .br-left-top {
   position: absolute;
   top: -43px;
-  left: 11px;
+  left: 10px;
   -webkit-transform: rotate(270deg);
   -ms-transform: rotate(270deg);
   transform: rotate(270deg);

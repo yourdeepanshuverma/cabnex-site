@@ -10,6 +10,7 @@ import {
   FaMapMarkedAlt,
   FaPlane,
 } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 export default function AboutUsDark() {
   return (
@@ -26,10 +27,10 @@ export default function AboutUsDark() {
           </h2>
           <p className="text-gray-800">
             At Cabnex, we redefine corporate and leisure mobility with comfort,
-            reliability, and style. Our premium fleet and professional chauffeurs
-            ensure seamless travel experiences for every occasion — from business
-            meetings to city tours and special events. Discover how we bring
-            efficiency, safety, and sophistication to every ride.
+            reliability, and style. Our premium fleet and professional
+            chauffeurs ensure seamless travel experiences for every occasion —
+            from business meetings to city tours and special events. Discover
+            how we bring efficiency, safety, and sophistication to every ride.
           </p>
 
           {/* Services Cards */}
@@ -41,7 +42,8 @@ export default function AboutUsDark() {
                   Corporates
                 </h4>
                 <p className="text-gray-700 text-sm">
-                  Reliable travel solutions for business professionals and executives.
+                  Reliable travel solutions for business professionals and
+                  executives.
                 </p>
               </div>
             </div>
@@ -53,7 +55,8 @@ export default function AboutUsDark() {
                   Special Events
                 </h4>
                 <p className="text-gray-700 text-sm">
-                  Stylish and punctual transfers for meetings, conferences, and celebrations.
+                  Stylish and punctual transfers for meetings, conferences, and
+                  celebrations.
                 </p>
               </div>
             </div>
@@ -65,7 +68,8 @@ export default function AboutUsDark() {
                   City Tours
                 </h4>
                 <p className="text-gray-700 text-sm">
-                  Explore destinations with ease and comfort in our well-maintained fleet.
+                  Explore destinations with ease and comfort in our
+                  well-maintained fleet.
                 </p>
               </div>
             </div>
@@ -77,17 +81,21 @@ export default function AboutUsDark() {
                   Airport Transfers
                 </h4>
                 <p className="text-gray-700 text-sm">
-                  Timely, stress-free pickups and drop-offs for travelers and guests.
+                  Timely, stress-free pickups and drop-offs for travelers and
+                  guests.
                 </p>
               </div>
             </div>
           </div>
 
           {/* Read More Button */}
-          <button className="bg-[#FF6900] text-white cursor-pointer px-8 py-3 rounded-4xl hover:bg-[#FF6900] transition font-semibold mt-1 hover:translate-y-[-10px] flex items-center gap-2">
+          <Link
+            to="/about-us"
+            className="bg-[#FF6900] text-white cursor-pointer px-8 py-3 rounded-4xl hover:bg-[#FF6900] transition font-semibold mt-1 hover:translate-y-[-10px] flex items-center gap-2"
+          >
             Read More
             <FaArrowRight className="text-white" />
-          </button>
+          </Link>
         </div>
 
         {/* Right: Image */}

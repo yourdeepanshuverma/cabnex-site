@@ -75,8 +75,10 @@ export default function VendorRegistration() {
   const validate = () => {
     const newErrors = {};
 
-    if (!formData.contactPerson.trim()) newErrors.contactPerson = "Name is required";
-    if (!formData.company.trim()) newErrors.company = "Company Name is required";
+    if (!formData.contactPerson.trim())
+      newErrors.contactPerson = "Name is required";
+    if (!formData.company.trim())
+      newErrors.company = "Company Name is required";
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
@@ -95,13 +97,16 @@ export default function VendorRegistration() {
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters long.";
     } else if (!/(?=.*[a-z])/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one lowercase letter.";
+      newErrors.password =
+        "Password must contain at least one lowercase letter.";
     } else if (!/(?=.*[A-Z])/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one uppercase letter.";
+      newErrors.password =
+        "Password must contain at least one uppercase letter.";
     } else if (!/(?=.*\d)/.test(formData.password)) {
       newErrors.password = "Password must contain at least one number.";
     } else if (!/(?=.*[@$!%*?&])/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one special character.";
+      newErrors.password =
+        "Password must contain at least one special character.";
     }
 
     if (!formData.confirmPassword) {
@@ -118,7 +123,9 @@ export default function VendorRegistration() {
 
     if (
       formData.gst.trim() &&
-      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(formData.gst)
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(
+        formData.gst
+      )
     ) {
       newErrors.gst = "Invalid GST number format.";
     }
@@ -131,7 +138,10 @@ export default function VendorRegistration() {
   const handleOtpVerification = async () => {
     if (!formData.contactPhone.trim()) {
       toast.error("Phone number is required to send OTP");
-      setErrors((prev) => ({ ...prev, contactPhone: "Phone number is required" }));
+      setErrors((prev) => ({
+        ...prev,
+        contactPhone: "Phone number is required",
+      }));
       return;
     }
     if (!/^\d{10}$/.test(formData.contactPhone)) {
@@ -149,7 +159,9 @@ export default function VendorRegistration() {
 
       if (response.data.success) {
         setFormData((prev) => ({ ...prev, showOtp: true }));
-        toast.info(`OTP sent to ${formData.contactPhone}. Use 1234 for testing.`);
+        toast.info(
+          `OTP sent to ${formData.contactPhone}. Use 1234 for testing.`
+        );
       } else {
         toast.error(response.data.message || "Failed to send OTP");
       }
@@ -176,7 +188,10 @@ export default function VendorRegistration() {
 
     try {
       setIsLoading(true);
-      const payload = { phone: formData.contactPhone, otp: formData.otp.join("") };
+      const payload = {
+        phone: formData.contactPhone,
+        otp: formData.otp.join(""),
+      };
       console.log("Verifying OTP:", payload);
       const response = await api.post("/api/v1/otp/verify", payload);
       console.log("OTP Verified:", response.data);
@@ -233,11 +248,16 @@ export default function VendorRegistration() {
     try {
       setIsLoading(true);
       console.log("Submitting Vendor Registration:", formDataToSend);
-      const response = await api.post("/api/v1/vendor/register", formDataToSend);
+      const response = await api.post(
+        "/api/v1/vendor/register",
+        formDataToSend
+      );
       console.log("Registration Response:", response.data);
 
       if (response.data.statusCode === 201 && response.data.success) {
-        toast.success(response.data.message || "Vendor registered successfully!");
+        toast.success(
+          response.data.message || "Vendor registered successfully!"
+        );
         setVendorUser(response.data.data);
         setIsVendorLoggedIn(true);
 
@@ -303,7 +323,10 @@ export default function VendorRegistration() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {/* Contact Person */}
                   <div className="relative">
-                    <label htmlFor="contactPerson" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="contactPerson"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Name *
                     </label>
                     <div className="mt-1 relative">
@@ -321,13 +344,18 @@ export default function VendorRegistration() {
                       />
                     </div>
                     {errors.contactPerson && (
-                      <p className="text-red-500 text-xs mt-1">{errors.contactPerson}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.contactPerson}
+                      </p>
                     )}
                   </div>
 
                   {/* Company */}
                   <div className="relative">
-                    <label htmlFor="company" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="company"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Company Name *
                     </label>
                     <div className="mt-1 relative">
@@ -344,12 +372,19 @@ export default function VendorRegistration() {
                         placeholder="Enter your company name"
                       />
                     </div>
-                    {errors.company && <p className="text-red-500 text-xs mt-1">{errors.company}</p>}
+                    {errors.company && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.company}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
                   <div className="relative">
-                    <label htmlFor="email" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="email"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Email Address *
                     </label>
                     <div className="mt-1 relative">
@@ -366,12 +401,19 @@ export default function VendorRegistration() {
                         placeholder="Enter your email"
                       />
                     </div>
-                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Phone + OTP */}
                   <div className="relative">
-                    <label htmlFor="contactPhone" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="contactPhone"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Phone Number *
                     </label>
                     <div className="mt-1 relative flex items-center">
@@ -380,6 +422,8 @@ export default function VendorRegistration() {
                         id="contactPhone"
                         type="tel"
                         name="contactPhone"
+                        minLength={10}
+                        maxLength={10}
                         value={formData.contactPhone}
                         onChange={handleChange}
                         className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
@@ -403,7 +447,9 @@ export default function VendorRegistration() {
                       )}
                     </div>
                     {errors.contactPhone && (
-                      <p className="text-red-500 text-xs mt-1">{errors.contactPhone}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.contactPhone}
+                      </p>
                     )}
 
                     {/* OTP Input */}
@@ -426,19 +472,26 @@ export default function VendorRegistration() {
                         <button
                           type="button"
                           onClick={handleSubmitOtp}
-                          disabled={isLoading || formData.otp.join("").length !== 4}
+                          disabled={
+                            isLoading || formData.otp.join("").length !== 4
+                          }
                           className="ml-2 bg-[#FF6900] text-white py-2 px-4 rounded-xl hover:bg-[#CC5500] font-grotesk font-semibold disabled:opacity-50"
                         >
                           {isLoading ? "Verifying..." : "Submit"}
                         </button>
                       </div>
                     )}
-                    {errors.otp && <p className="text-red-500 text-xs mt-1">{errors.otp}</p>}
+                    {errors.otp && (
+                      <p className="text-red-500 text-xs mt-1">{errors.otp}</p>
+                    )}
                   </div>
 
                   {/* Password */}
                   <div className="relative">
-                    <label htmlFor="password" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="password"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Password *
                     </label>
                     <div className="mt-1 relative">
@@ -462,19 +515,28 @@ export default function VendorRegistration() {
                         {formData.showPassword ? <FaEyeSlash /> : <FaEye />}
                       </button>
                     </div>
-                    {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
+                    {errors.password && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.password}
+                      </p>
+                    )}
                   </div>
 
                   {/* Confirm Password */}
                   <div className="relative">
-                    <label htmlFor="confirmPassword" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="confirmPassword"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Confirm Password *
                     </label>
                     <div className="mt-1 relative">
                       <FaKey className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#9e9e9e]" />
                       <input
                         id="confirmPassword"
-                        type={formData.showConfirmPassword ? "text" : "password"}
+                        type={
+                          formData.showConfirmPassword ? "text" : "password"
+                        }
                         name="confirmPassword"
                         value={formData.confirmPassword}
                         onChange={handleChange}
@@ -485,20 +547,31 @@ export default function VendorRegistration() {
                       />
                       <button
                         type="button"
-                        onClick={() => togglePasswordVisibility("showConfirmPassword")}
+                        onClick={() =>
+                          togglePasswordVisibility("showConfirmPassword")
+                        }
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-orange-400"
                       >
-                        {formData.showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+                        {formData.showConfirmPassword ? (
+                          <FaEyeSlash />
+                        ) : (
+                          <FaEye />
+                        )}
                       </button>
                     </div>
                     {errors.confirmPassword && (
-                      <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.confirmPassword}
+                      </p>
                     )}
                   </div>
 
                   {/* GST */}
                   <div className="relative">
-                    <label htmlFor="gst" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="gst"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       GST Number (Optional)
                     </label>
                     <div className="mt-1 relative">
@@ -507,18 +580,25 @@ export default function VendorRegistration() {
                         id="gst"
                         type="text"
                         name="gst"
+                        minLength={15}
+                        maxLength={15}
                         value={formData.gst}
                         onChange={handleChange}
                         className="block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50"
                         placeholder="Enter GST number (if applicable)"
                       />
                     </div>
-                    {errors.gst && <p className="text-red-500 text-xs mt-1">{errors.gst}</p>}
+                    {errors.gst && (
+                      <p className="text-red-500 text-xs mt-1">{errors.gst}</p>
+                    )}
                   </div>
 
                   {/* PAN */}
                   <div className="relative">
-                    <label htmlFor="pan" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="pan"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       PAN Number *
                     </label>
                     <div className="mt-1 relative">
@@ -527,6 +607,8 @@ export default function VendorRegistration() {
                         id="pan"
                         type="text"
                         name="pan"
+                        minLength={10}
+                        maxLength={10}
                         value={formData.pan}
                         onChange={handleChange}
                         className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
@@ -535,7 +617,9 @@ export default function VendorRegistration() {
                         placeholder="Enter PAN number"
                       />
                     </div>
-                    {errors.pan && <p className="text-red-500 text-xs mt-1">{errors.pan}</p>}
+                    {errors.pan && (
+                      <p className="text-red-500 text-xs mt-1">{errors.pan}</p>
+                    )}
                   </div>
                 </div>
 
@@ -553,7 +637,10 @@ export default function VendorRegistration() {
               <div className="text-center mt-8">
                 <p className="text-slate-600 text-sm">
                   Already registered?{" "}
-                  <a href="/vendor-login" className="text-orange-500 font-medium hover:underline">
+                  <a
+                    href="/vendor-login"
+                    className="text-orange-500 font-medium hover:underline"
+                  >
                     Login here
                   </a>
                 </p>

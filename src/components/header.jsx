@@ -41,7 +41,13 @@ import { api, endpoints } from "../api/api-config";
 import { useSearch } from "../context/SearchContext";
 import "react-toastify/dist/ReactToastify.css";
 
-import { GlobeAltIcon, BriefcaseIcon, UsersIcon, CameraIcon, CalendarIcon } from '@heroicons/react/24/outline';
+import {
+  GlobeAltIcon,
+  BriefcaseIcon,
+  UsersIcon,
+  CameraIcon,
+  CalendarIcon,
+} from "@heroicons/react/24/outline";
 
 const services = [
   {
@@ -68,7 +74,7 @@ const services = [
     href: "/mobility-solutions",
     icon: CameraIcon,
   },
-    {
+  {
     name: "MICE Transport",
     description: "Tailored ground transport for large events.",
     href: "/mobility-solutions",
@@ -87,7 +93,8 @@ const blogLinks = [];
 
 export default function Header() {
   const { settings } = useWebsiteSettings();
-  const { isLoggedIn, setIsLoggedIn, user, setUser, handleSearch } = useSearch();
+  const { isLoggedIn, setIsLoggedIn, user, setUser, handleSearch } =
+    useSearch();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
@@ -219,61 +226,62 @@ export default function Header() {
     }
   }, [location.state]);
 
- const handleLogin = async (e) => {
-  e.preventDefault();
-  setLoginErrors({}); // Clear previous errors
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginErrors({}); // Clear previous errors
 
-  if (!validateLogin()) {
-    Object.values(loginErrors).forEach(error => toast.error(error));
-    return;
-  }
-
-  const isValidEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(identifier);
-  const loginData = isValidEmail
-    ? { email: identifier, password }
-    : { mobile: identifier, password };
-
-  try {
-    setIsLoading(true);
-    console.log("Logging in with data:", loginData);
-    const response = await api.post("/api/v1/auth/login", loginData);
-    console.log("Login response:", response.data);
-
-    if (response.data.success) {
-      const userData = response.data.data;
-      if (!userData.fullName || !userData.email || !userData.mobile) {
-        throw new Error("Incomplete user data received from server");
-      }
-
-      localStorage.setItem("userData", JSON.stringify(userData));
-      Cookies.set("userName", userData.fullName, { expires: 7 });
-      setUser(userData);
-      setIsLoggedIn(true);
-      toast.success(response.data.message || "Login successful!");
-
-      setIdentifier("");
-      setPassword("");
-      setLoginOpen(false);
-
-      const { from, car } = location.state || {};
-      if (from === "/" && car) {
-        navigate("/car-listing", { state: { car } });
-      } else {
-        navigate(from || "/");
-      }
-    } else {
-      setLoginErrors({ general: response.data.message || "Login failed" });
-      toast.error(response.data.message || "Login failed");
+    if (!validateLogin()) {
+      Object.values(loginErrors).forEach((error) => toast.error(error));
+      return;
     }
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message;
-    setLoginErrors({ general: "Login failed: " + errorMessage });
-    toast.error("Login failed: " + errorMessage);
-    console.error("Login error:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    const isValidEmail =
+      /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(identifier);
+    const loginData = isValidEmail
+      ? { email: identifier, password }
+      : { mobile: identifier, password };
+
+    try {
+      setIsLoading(true);
+      console.log("Logging in with data:", loginData);
+      const response = await api.post("/api/v1/auth/login", loginData);
+      console.log("Login response:", response.data);
+
+      if (response.data.success) {
+        const userData = response.data.data;
+        if (!userData.fullName || !userData.email || !userData.mobile) {
+          throw new Error("Incomplete user data received from server");
+        }
+
+        localStorage.setItem("userData", JSON.stringify(userData));
+        Cookies.set("userName", userData.fullName, { expires: 7 });
+        setUser(userData);
+        setIsLoggedIn(true);
+        toast.success(response.data.message || "Login successful!");
+
+        setIdentifier("");
+        setPassword("");
+        setLoginOpen(false);
+
+        const { from, car } = location.state || {};
+        if (from === "/" && car) {
+          navigate("/car-listing", { state: { car } });
+        } else {
+          navigate(from || "/");
+        }
+      } else {
+        setLoginErrors({ general: response.data.message || "Login failed" });
+        toast.error(response.data.message || "Login failed");
+      }
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message;
+      setLoginErrors({ general: "Login failed: " + errorMessage });
+      toast.error("Login failed: " + errorMessage);
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Logout Function
   const handleLogout = () => {
@@ -291,12 +299,15 @@ export default function Header() {
   const validateLogin = () => {
     const newErrors = {};
     if (!identifier.trim()) {
-      newErrors.identifier = 'Email or Phone is required';
-    } else if (!/\S+@\S+\.\S+/.test(identifier) && !/^\d{10}$/.test(identifier)) {
-      newErrors.identifier = 'Enter a valid email or 10-digit phone number';
+      newErrors.identifier = "Email or Phone is required";
+    } else if (
+      !/\S+@\S+\.\S+/.test(identifier) &&
+      !/^\d{10}$/.test(identifier)
+    ) {
+      newErrors.identifier = "Enter a valid email or 10-digit phone number";
     }
     if (!password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     }
     setLoginErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -304,31 +315,40 @@ export default function Header() {
 
   const validateForgotPassword = (stage) => {
     const newErrors = {};
-    if (stage === 'sendOtp') {
+    if (stage === "sendOtp") {
       if (!forgotIdentifier.trim()) {
-        newErrors.forgotIdentifier = 'Email or Mobile Number is required';
-      } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(forgotIdentifier) && !/^\d{10}$/.test(forgotIdentifier)) {
-        newErrors.forgotIdentifier = 'Enter a valid email or 10-digit mobile number';
+        newErrors.forgotIdentifier = "Email or Mobile Number is required";
+      } else if (
+        !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
+          forgotIdentifier
+        ) &&
+        !/^\d{10}$/.test(forgotIdentifier)
+      ) {
+        newErrors.forgotIdentifier =
+          "Enter a valid email or 10-digit mobile number";
       }
-    } else if (stage === 'verifyOtp') {
+    } else if (stage === "verifyOtp") {
       if (!forgotOtp.join("").trim()) {
-        newErrors.forgotOtp = 'OTP is required';
+        newErrors.forgotOtp = "OTP is required";
       } else if (forgotOtp.join("").length !== 4) {
-        newErrors.forgotOtp = 'OTP must be 4 digits';
+        newErrors.forgotOtp = "OTP must be 4 digits";
       }
-    } else if (stage === 'resetPassword') {
+    } else if (stage === "resetPassword") {
       if (!newPassword.trim()) {
-        newErrors.newPassword = 'New password is required';
+        newErrors.newPassword = "New password is required";
       } else if (newPassword.length < 8) {
         newErrors.newPassword = "Password must be at least 8 characters long.";
       } else if (!/(?=.*[a-z])/.test(newPassword)) {
-        newErrors.newPassword = "Password must contain at least one lowercase letter.";
+        newErrors.newPassword =
+          "Password must contain at least one lowercase letter.";
       } else if (!/(?=.*[A-Z])/.test(newPassword)) {
-        newErrors.newPassword = "Password must contain at least one uppercase letter.";
+        newErrors.newPassword =
+          "Password must contain at least one uppercase letter.";
       } else if (!/(?=.*\d)/.test(newPassword)) {
         newErrors.newPassword = "Password must contain at least one number.";
       } else if (!/(?=.*[@$!%*?&])/.test(newPassword)) {
-        newErrors.newPassword = "Password must contain at least one special character.";
+        newErrors.newPassword =
+          "Password must contain at least one special character.";
       }
     }
     setForgotPasswordErrors(newErrors);
@@ -349,28 +369,35 @@ export default function Header() {
       newErrors.mobile = "Mobile number must be 10 digits";
     }
     if (!registerPassword) {
-        newErrors.registerPassword = "Password is required";
+      newErrors.registerPassword = "Password is required";
     } else if (registerPassword.length < 8) {
-        newErrors.registerPassword = "Password must be at least 8 characters long.";
+      newErrors.registerPassword =
+        "Password must be at least 8 characters long.";
     } else if (!/(?=.*[a-z])/.test(registerPassword)) {
-        newErrors.registerPassword = "Password must contain at least one lowercase letter.";
+      newErrors.registerPassword =
+        "Password must contain at least one lowercase letter.";
     } else if (!/(?=.*[A-Z])/.test(registerPassword)) {
-        newErrors.registerPassword = "Password must contain at least one uppercase letter.";
+      newErrors.registerPassword =
+        "Password must contain at least one uppercase letter.";
     } else if (!/(?=.*\d)/.test(registerPassword)) {
-        newErrors.registerPassword = "Password must contain at least one number.";
+      newErrors.registerPassword = "Password must contain at least one number.";
     } else if (!/(?=.*[@$!%*?&])/.test(registerPassword)) {
-        newErrors.registerPassword = "Password must contain at least one special character.";
+      newErrors.registerPassword =
+        "Password must contain at least one special character.";
     }
     if (!pan.trim()) {
-        newErrors.pan = "PAN Number is required";
+      newErrors.pan = "PAN Number is required";
     } else if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(pan)) {
-        newErrors.pan = "Invalid PAN number format.";
+      newErrors.pan = "Invalid PAN number format.";
     }
-    if (gst.trim() && !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gst)) {
-        newErrors.gst = "Invalid GST number format.";
+    if (
+      gst.trim() &&
+      !/^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/.test(gst)
+    ) {
+      newErrors.gst = "Invalid GST number format.";
     }
     if (!acceptedTerms) {
-        newErrors.acceptedTerms = "You must accept the terms and conditions.";
+      newErrors.acceptedTerms = "You must accept the terms and conditions.";
     }
 
     setRegisterErrors(newErrors);
@@ -381,8 +408,8 @@ export default function Header() {
   const handleRegister = async (e) => {
     e.preventDefault();
     if (!validateRegister()) {
-        Object.values(registerErrors).forEach(error => toast.error(error));
-        return;
+      Object.values(registerErrors).forEach((error) => toast.error(error));
+      return;
     }
     if (!showPhoneOTP && !phoneVerified) {
       if (!mobile) {
@@ -390,7 +417,7 @@ export default function Header() {
         return;
       }
       setShowPhoneOTP(true);
-      toast.info(`Enter any 4-digit OTP for ${mobile} (use 1234 for testing)`);
+      toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
       return;
     }
     if (showPhoneOTP && !phoneVerified) {
@@ -472,19 +499,19 @@ export default function Header() {
   const handleSendForgotOTP = async (e) => {
     e.preventDefault();
     setForgotPasswordErrors({}); // Clear previous errors
-    if (!validateForgotPassword('sendOtp')) {
-      Object.values(forgotPasswordErrors).forEach(error => toast.error(error));
+    if (!validateForgotPassword("sendOtp")) {
+      Object.values(forgotPasswordErrors).forEach((error) =>
+        toast.error(error)
+      );
       return;
     }
     const payload = { phone: forgotIdentifier }; // Assuming backend takes 'identifier'
     try {
       setIsLoading(true);
       console.log("Sending OTP with data:", payload);
-      const response = await api.post(
-  "/api/v1/auth/send-forget-otp",
-  payload,
-  { withCredentials: false }  
-);
+      const response = await api.post("/api/v1/auth/send-forget-otp", payload, {
+        withCredentials: false,
+      });
       console.log("Send OTP response:", response.data);
       if (response.data.success) {
         toast.info(`Enter any 4-digit OTP for ${forgotIdentifier}.`);
@@ -504,11 +531,13 @@ export default function Header() {
   const handleVerifyForgotOTP = async (e) => {
     e.preventDefault();
     setForgotPasswordErrors({}); // Clear previous errors
-    if (!validateForgotPassword('verifyOtp')) {
-      Object.values(forgotPasswordErrors).forEach(error => toast.error(error));
+    if (!validateForgotPassword("verifyOtp")) {
+      Object.values(forgotPasswordErrors).forEach((error) =>
+        toast.error(error)
+      );
       return;
     }
-    const payload = { phone: forgotIdentifier, otp: forgotOtp.join("") }; 
+    const payload = { phone: forgotIdentifier, otp: forgotOtp.join("") };
     try {
       setIsLoading(true);
       console.log("Verifying OTP:", forgotOtp);
@@ -532,13 +561,14 @@ export default function Header() {
     }
   };
 
-
   // Forgot Password: Step 3 - Reset Password
   const handleResetPassword = async (e) => {
     e.preventDefault();
     setForgotPasswordErrors({}); // Clear previous errors
-    if (!validateForgotPassword('resetPassword')) {
-      Object.values(forgotPasswordErrors).forEach(error => toast.error(error));
+    if (!validateForgotPassword("resetPassword")) {
+      Object.values(forgotPasswordErrors).forEach((error) =>
+        toast.error(error)
+      );
       return;
     }
     const isValidEmail =
@@ -597,7 +627,11 @@ export default function Header() {
         >
           <div className="flex lg:flex-1">
             <a href="/" className="-m-1.5 rounded-2xl">
-              <img alt="logo" src={settings?.logo?.url || ''} className="h-16 w-auto" />
+              <img
+                alt="logo"
+                src={settings?.logo?.url || ""}
+                className="h-16 w-auto"
+              />
             </a>
           </div>
           <div className="flex lg:hidden">
@@ -607,7 +641,10 @@ export default function Header() {
               className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-white"
             >
               <span className="sr-only">Open main menu</span>
-              <Bars3Icon aria-hidden="true" className="h-8 w-8 rounded-md text-orange-600 bg-orange-100 p-1" />
+              <Bars3Icon
+                aria-hidden="true"
+                className="h-8 w-8 rounded-md text-orange-600 bg-orange-100 p-1"
+              />
             </button>
           </div>
           <PopoverGroup className="hidden lg:flex lg:gap-x-12">
@@ -650,7 +687,10 @@ export default function Header() {
                 </div>
               </PopoverPanel>
             </Popover>
-            <Link to="/about-us" className="text-md font-grotesk font-semibold text-black">
+            <Link
+              to="/about-us"
+              className="text-md font-grotesk font-semibold text-black"
+            >
               About Us
             </Link>
           </PopoverGroup>
@@ -739,7 +779,11 @@ export default function Header() {
             <div className="flex items-center justify-between">
               <a href="#" className="-m-1.5 p-1.5">
                 <span className="sr-only">Your Company</span>
-                <img alt="" src={settings?.logo?.url || ''} className="h-8 w-auto" />
+                <img
+                  alt=""
+                  src={settings?.logo?.url || ""}
+                  className="h-8 w-auto"
+                />
               </a>
               <button
                 type="button"
@@ -955,11 +999,12 @@ export default function Header() {
                         type="text"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${loginErrors.identifier ? 'border-red-500' : ''}`}
+                        className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                          loginErrors.identifier ? "border-red-500" : ""
+                        }`}
                         placeholder="Enter your email or phone"
                       />
                     </div>
-
                   </div>
                   <div className="relative">
                     <label
@@ -975,10 +1020,12 @@ export default function Header() {
                       />
                       <input
                         id="password"
-                        type={showLoginPassword ? 'text' : 'password'}
+                        type={showLoginPassword ? "text" : "password"}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${loginErrors.password ? 'border-red-500' : ''}`}
+                        className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                          loginErrors.password ? "border-red-500" : ""
+                        }`}
                         placeholder="Enter your password"
                       />
                       <button
@@ -993,7 +1040,6 @@ export default function Header() {
                         )}
                       </button>
                     </div>
-
                   </div>
                   <div className="text-right">
                     <button
@@ -1096,13 +1142,14 @@ export default function Header() {
                         <input
                           id="full-name"
                           type="text"
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${registerErrors.fullName ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            registerErrors.fullName ? "border-red-500" : ""
+                          }`}
                           placeholder="Enter your full name"
                           value={fullName}
                           onChange={(e) => setFullName(e.target.value)}
                         />
                       </div>
-
                     </div>
                     <div className="relative w-full">
                       <label
@@ -1121,11 +1168,12 @@ export default function Header() {
                           type="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${registerErrors.email ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            registerErrors.email ? "border-red-500" : ""
+                          }`}
                           placeholder="Enter your email"
                         />
                       </div>
-
                     </div>
                   </div>
                   <div className="relative">
@@ -1144,8 +1192,12 @@ export default function Header() {
                         id="mobile"
                         type="tel"
                         value={mobile}
+                        minLength={10}
+                        maxLength={10}
                         onChange={(e) => setMobile(e.target.value)}
-                        className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${registerErrors.mobile ? 'border-red-500' : ''}`}
+                        className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                          registerErrors.mobile ? "border-red-500" : ""
+                        }`}
                         placeholder="Enter your mobile number"
                       />
                       {!phoneVerified && !showPhoneOTP && (
@@ -1157,16 +1209,25 @@ export default function Header() {
                             }
                             try {
                               setIsLoading(true);
-                              const response = await api.post('/api/v1/otp/send', { phone: mobile },
-                              { withCredentials: false } );
+                              const response = await api.post(
+                                "/api/v1/otp/send",
+                                { phone: mobile },
+                                { withCredentials: false }
+                              );
                               if (response.data.success) {
                                 setShowPhoneOTP(true);
                                 toast.info(`OTP sent to ${mobile}.`);
                               } else {
-                                toast.error(response.data.message || "Failed to send OTP");
+                                toast.error(
+                                  response.data.message || "Failed to send OTP"
+                                );
                               }
                             } catch (error) {
-                              toast.error("Error: " + (error.response?.data?.message || error.message));
+                              toast.error(
+                                "Error: " +
+                                  (error.response?.data?.message ||
+                                    error.message)
+                              );
                               console.error("Send OTP error:", error);
                             } finally {
                               setIsLoading(false);
@@ -1195,7 +1256,9 @@ export default function Header() {
                             type="text"
                             maxLength={1}
                             value={phoneOtp[index]}
-                            onChange={(e) => handleRegisterOtpChange(e.target, index)}
+                            onChange={(e) =>
+                              handleRegisterOtpChange(e.target, index)
+                            }
                             onFocus={(e) => e.target.select()}
                             className="block w-12 h-12 text-center text-xl rounded-md border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50"
                           />
@@ -1208,17 +1271,27 @@ export default function Header() {
                             }
                             try {
                               setIsLoading(true);
-                              const response = await api.post('/api/v1/otp/verify', { phone: mobile, otp: phoneOtp.join("") }); // Assuming a verify-otp endpoint
+                              const response = await api.post(
+                                "/api/v1/otp/verify",
+                                { phone: mobile, otp: phoneOtp.join("") }
+                              ); // Assuming a verify-otp endpoint
                               if (response.data.success) {
                                 setPhoneVerified(true);
                                 setVerifiedRegisterOtp(phoneOtp.join(""));
                                 setShowPhoneOTP(false);
                                 toast.success("Phone number verified!");
                               } else {
-                                toast.error(response.data.message || "Failed to verify OTP");
+                                toast.error(
+                                  response.data.message ||
+                                    "Failed to verify OTP"
+                                );
                               }
                             } catch (error) {
-                              toast.error("Error: " + (error.response?.data?.message || error.message));
+                              toast.error(
+                                "Error: " +
+                                  (error.response?.data?.message ||
+                                    error.message)
+                              );
                               console.error("Verify OTP error:", error);
                             } finally {
                               setIsLoading(false);
@@ -1247,15 +1320,21 @@ export default function Header() {
                         />
                         <input
                           id="reg-password"
-                          type={showRegisterPassword ? 'text' : 'password'}
+                          type={showRegisterPassword ? "text" : "password"}
                           value={registerPassword}
                           onChange={(e) => setRegisterPassword(e.target.value)}
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${registerErrors.registerPassword ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            registerErrors.registerPassword
+                              ? "border-red-500"
+                              : ""
+                          }`}
                           placeholder="Enter your password"
                         />
                         <button
                           type="button"
-                          onClick={() => setShowRegisterPassword(!showRegisterPassword)}
+                          onClick={() =>
+                            setShowRegisterPassword(!showRegisterPassword)
+                          }
                           className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
                         >
                           {showRegisterPassword ? (
@@ -1265,7 +1344,6 @@ export default function Header() {
                           )}
                         </button>
                       </div>
-
                     </div>
                     <div className="relative w-full">
                       <label
@@ -1283,12 +1361,15 @@ export default function Header() {
                           id="pan"
                           type="text"
                           value={pan}
+                          minLength={10}
+                          maxLength={10}
                           onChange={(e) => setPan(e.target.value)}
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${registerErrors.pan ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            registerErrors.pan ? "border-red-500" : ""
+                          }`}
                           placeholder="Enter your PAN number"
                         />
                       </div>
-
                     </div>
                   </div>
                   <div className="flex gap-2 justify-between">
@@ -1307,13 +1388,16 @@ export default function Header() {
                         <input
                           id="gst"
                           type="text"
+                          minLength={15}
+                          maxLength={15}
                           value={gst}
                           onChange={(e) => setGst(e.target.value)}
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${registerErrors.gst ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            registerErrors.gst ? "border-red-500" : ""
+                          }`}
                           placeholder="Enter your GST number"
                         />
                       </div>
-
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -1424,7 +1508,11 @@ export default function Header() {
                           type="text"
                           value={forgotIdentifier}
                           onChange={(e) => setForgotIdentifier(e.target.value)}
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${forgotPasswordErrors.forgotIdentifier ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            forgotPasswordErrors.forgotIdentifier
+                              ? "border-red-500"
+                              : ""
+                          }`}
                           placeholder="Enter your email or mobile number"
                           disabled={showForgotOTP}
                         />
@@ -1462,7 +1550,6 @@ export default function Header() {
                           </button>
                         )}
                       </div>
-
                     </div>
                   )}
                   {showForgotOTP && !forgotVerified && (
@@ -1481,14 +1568,22 @@ export default function Header() {
                             type="text"
                             maxLength={1}
                             value={forgotOtp[index]}
-                            onChange={(e) => handleForgotOtpChange(e.target, index)}
+                            onChange={(e) =>
+                              handleForgotOtpChange(e.target, index)
+                            }
                             onFocus={(e) => e.target.select()}
-                            className={`block w-12 h-12 text-center text-xl rounded-md border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${forgotPasswordErrors.forgotOtp ? 'border-red-500' : ''}`}
+                            className={`block w-12 h-12 text-center text-xl rounded-md border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                              forgotPasswordErrors.forgotOtp
+                                ? "border-red-500"
+                                : ""
+                            }`}
                           />
                         ))}
                         <button
                           onClick={handleVerifyForgotOTP}
-                          disabled={isLoading || forgotOtp.join("").length !== 4}
+                          disabled={
+                            isLoading || forgotOtp.join("").length !== 4
+                          }
                           className="ml-2 bg-[#FF6900] text-white py-2 px-4 rounded-xl hover:bg-[#CC5500] font-grotesk font-semibold disabled:opacity-50"
                         >
                           {isLoading ? (
@@ -1518,7 +1613,6 @@ export default function Header() {
                           )}
                         </button>
                       </div>
-
                     </div>
                   )}
                   {forgotVerified && (
@@ -1536,10 +1630,14 @@ export default function Header() {
                         />
                         <input
                           id="new-password"
-                          type={showNewPassword ? 'text' : 'password'}
+                          type={showNewPassword ? "text" : "password"}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${forgotPasswordErrors.newPassword ? 'border-red-500' : ''}`}
+                          className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
+                            forgotPasswordErrors.newPassword
+                              ? "border-red-500"
+                              : ""
+                          }`}
                           placeholder="Enter new password (min 8 characters)"
                         />
                         <button
@@ -1554,7 +1652,6 @@ export default function Header() {
                           )}
                         </button>
                       </div>
-
                     </div>
                   )}
                   {forgotVerified && (

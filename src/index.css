@@ -2,6 +2,8 @@
 @import "tailwindcss";
 /* index.css */
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --font-roboto: "Roboto", sans-serif;
   --font-grotesk: "Space Grotesk", sans-serif;

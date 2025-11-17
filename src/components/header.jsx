@@ -1496,7 +1496,7 @@ export default function Header() {
                         htmlFor="forgot-identifier"
                         className="block font-grotesk text-sm font-medium text-black"
                       >
-                        Email or Mobile Number
+                        Mobile Number
                       </label>
                       <div className="mt-1 relative flex items-center">
                         <EnvelopeIcon
@@ -1513,7 +1513,7 @@ export default function Header() {
                               ? "border-red-500"
                               : ""
                           }`}
-                          placeholder="Enter your email or mobile number"
+                          placeholder="Enter your mobile number"
                           disabled={showForgotOTP}
                         />
                         {!showForgotOTP && (

@@ -1,11 +1,5 @@
 import React, { useState } from "react";
-import {
-  FaEnvelope,
-  FaLock,
-  FaKey,
-  FaEye,
-  FaEyeSlash,
-} from "react-icons/fa";
+import { FaEnvelope, FaLock, FaKey, FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import logo from "../../assets/logo/logo-cab.png";
@@ -81,13 +75,16 @@ export default function VendorLogin() {
     } else if (formData.password.length < 8) {
       newErrors.password = "Password must be at least 8 characters long.";
     } else if (!/(?=.*[a-z])/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one lowercase letter.";
+      newErrors.password =
+        "Password must contain at least one lowercase letter.";
     } else if (!/(?=.*[A-Z])/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one uppercase letter.";
+      newErrors.password =
+        "Password must contain at least one uppercase letter.";
     } else if (!/(?=.*\d)/.test(formData.password)) {
       newErrors.password = "Password must contain at least one number.";
     } else if (!/(?=.*[@$!%*?&])/.test(formData.password)) {
-      newErrors.password = "Password must contain at least one special character.";
+      newErrors.password =
+        "Password must contain at least one special character.";
     }
     setErrors(newErrors);
     Object.values(newErrors).forEach((error) => toast.error(error));
@@ -116,14 +113,29 @@ export default function VendorLogin() {
       newErrors.newPassword = "New password is required";
     } else if (forgotData.forgotVerified && forgotData.newPassword.length < 8) {
       newErrors.newPassword = "Password must be at least 8 characters";
-    } else if (forgotData.forgotVerified && !/(?=.*[a-z])/.test(forgotData.newPassword)) {
-      newErrors.newPassword = "Password must contain at least one lowercase letter.";
-    } else if (forgotData.forgotVerified && !/(?=.*[A-Z])/.test(forgotData.newPassword)) {
-      newErrors.newPassword = "Password must contain at least one uppercase letter.";
-    } else if (forgotData.forgotVerified && !/(?=.*\d)/.test(forgotData.newPassword)) {
+    } else if (
+      forgotData.forgotVerified &&
+      !/(?=.*[a-z])/.test(forgotData.newPassword)
+    ) {
+      newErrors.newPassword =
+        "Password must contain at least one lowercase letter.";
+    } else if (
+      forgotData.forgotVerified &&
+      !/(?=.*[A-Z])/.test(forgotData.newPassword)
+    ) {
+      newErrors.newPassword =
+        "Password must contain at least one uppercase letter.";
+    } else if (
+      forgotData.forgotVerified &&
+      !/(?=.*\d)/.test(forgotData.newPassword)
+    ) {
       newErrors.newPassword = "Password must contain at least one number.";
-    } else if (forgotData.forgotVerified && !/(?=.*[@$!%*?&])/.test(forgotData.newPassword)) {
-      newErrors.newPassword = "Password must contain at least one special character.";
+    } else if (
+      forgotData.forgotVerified &&
+      !/(?=.*[@$!%*?&])/.test(forgotData.newPassword)
+    ) {
+      newErrors.newPassword =
+        "Password must contain at least one special character.";
     }
 
     setForgotErrors(newErrors);
@@ -154,10 +166,15 @@ export default function VendorLogin() {
         ? { email: forgotData.identifier }
         : { phone: forgotData.identifier };
 
-      const response = await api.post("/api/v1/vendor/send-forget-otp", payload);
+      const response = await api.post(
+        "/api/v1/vendor/send-forget-otp",
+        payload
+      );
       if (response.data.success) {
         setForgotData((prev) => ({ ...prev, showForgotOTP: true }));
-        toast.info(`OTP sent to ${forgotData.identifier}. Use 1234 for testing.`);
+        toast.info(
+          `OTP sent to ${forgotData.identifier}. Use 1234 for testing.`
+        );
       } else {
         toast.error(response.data.message || "Failed to send OTP");
       }
@@ -192,7 +209,10 @@ export default function VendorLogin() {
         ? { email: forgotData.identifier, otp: otpString }
         : { phone: forgotData.identifier, otp: otpString };
 
-      const response = await api.post("/api/v1/vendor/verify-forget-otp", payload);
+      const response = await api.post(
+        "/api/v1/vendor/verify-forget-otp",
+        payload
+      );
       if (response.data.success) {
         setForgotData((prev) => ({
           ...prev,
@@ -309,7 +329,10 @@ export default function VendorLogin() {
                 <div className="space-y-6">
                   {/* Identifier */}
                   <div className="relative">
-                    <label htmlFor="login-identifier" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="login-identifier"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Email or Phone *
                     </label>
                     <div className="mt-1 relative">
@@ -327,13 +350,18 @@ export default function VendorLogin() {
                       />
                     </div>
                     {errors.identifier && (
-                      <p className="text-red-500 text-xs mt-1">{errors.identifier}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.identifier}
+                      </p>
                     )}
                   </div>
 
                   {/* Password */}
                   <div className="relative">
-                    <label htmlFor="password" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="password"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       Password *
                     </label>
                     <div className="mt-1 relative">
@@ -358,7 +386,9 @@ export default function VendorLogin() {
                       </button>
                     </div>
                     {errors.password && (
-                      <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.password}
+                      </p>
                     )}
                   </div>
 
@@ -416,8 +446,18 @@ export default function VendorLogin() {
                 }}
                 className="absolute top-4 right-4 text-gray-700 hover:text-gray-900"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
 
@@ -432,8 +472,11 @@ export default function VendorLogin() {
               <form className="space-y-4">
                 {!forgotData.forgotVerified && (
                   <div className="relative">
-                    <label htmlFor="forgot-identifier" className="block font-grotesk text-sm font-medium text-black">
-                      Email or Phone *
+                    <label
+                      htmlFor="forgot-identifier"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
+                      Phone Number
                     </label>
                     <div className="mt-1 relative flex items-center">
                       <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -446,7 +489,7 @@ export default function VendorLogin() {
                         className={`block w-full py-3 px-5 pl-10 rounded-full border-gray-200 border focus:border-[#FF6900] focus:ring focus:ring-[#FF6900] focus:ring-opacity-50 ${
                           forgotErrors.identifier ? "border-red-500" : ""
                         }`}
-                        placeholder="Enter your email or phone"
+                        placeholder="Enter your phone number"
                         disabled={forgotData.showForgotOTP}
                       />
                       {!forgotData.showForgotOTP && (
@@ -461,7 +504,9 @@ export default function VendorLogin() {
                       )}
                     </div>
                     {forgotErrors.identifier && (
-                      <p className="text-red-500 text-xs mt-1">{forgotErrors.identifier}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {forgotErrors.identifier}
+                      </p>
                     )}
                   </div>
                 )}
@@ -481,7 +526,9 @@ export default function VendorLogin() {
                           onChange={(e) => handleOtpChange(e.target, index)}
                           onFocus={(e) => e.target.select()}
                           className={`w-12 h-12 text-center text-xl font-semibold rounded-lg border ${
-                            forgotErrors.otp ? "border-red-500" : "border-gray-300"
+                            forgotErrors.otp
+                              ? "border-red-500"
+                              : "border-gray-300"
                           } focus:border-[#FF6900] focus:outline-none focus:ring-2 focus:ring-[#FF6900]`}
                         />
                       ))}
@@ -490,21 +537,28 @@ export default function VendorLogin() {
                       <button
                         type="button"
                         onClick={handleVerifyForgotOTP}
-                        disabled={isLoading || forgotData.otp.join("").length !== 4}
+                        disabled={
+                          isLoading || forgotData.otp.join("").length !== 4
+                        }
                         className="bg-[#FF6900] text-white py-2 px-6 rounded-full hover:bg-[#CC5500] font-grotesk font-semibold disabled:opacity-50"
                       >
                         {isLoading ? "Verifying..." : "Verify OTP"}
                       </button>
                     </div>
                     {forgotErrors.otp && (
-                      <p className="text-red-500 text-xs mt-2 text-center">{forgotErrors.otp}</p>
+                      <p className="text-red-500 text-xs mt-2 text-center">
+                        {forgotErrors.otp}
+                      </p>
                     )}
                   </div>
                 )}
 
                 {forgotData.forgotVerified && (
                   <div className="relative">
-                    <label htmlFor="new-password" className="block font-grotesk text-sm font-medium text-black">
+                    <label
+                      htmlFor="new-password"
+                      className="block font-grotesk text-sm font-medium text-black"
+                    >
                       New Password *
                     </label>
                     <div className="mt-1 relative">
@@ -529,7 +583,9 @@ export default function VendorLogin() {
                       </button>
                     </div>
                     {forgotErrors.newPassword && (
-                      <p className="text-red-500 text-xs mt-1">{forgotErrors.newPassword}</p>
+                      <p className="text-red-500 text-xs mt-1">
+                        {forgotErrors.newPassword}
+                      </p>
                     )}
                   </div>
                 )}

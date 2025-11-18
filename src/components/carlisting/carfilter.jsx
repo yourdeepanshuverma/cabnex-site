@@ -26,7 +26,8 @@ const iconMap = {
 };
 
 const ListingPage = () => {
-  const { searchResult, setSearchResult, setSearchFormData, searchFormData } = useSearch();
+  const { searchResult, setSearchResult, setSearchFormData, searchFormData } =
+    useSearch();
   const [items, setItems] = useState([]);
   const [filteredItems, setFilteredItems] = useState([]);
   const [summary, setSummary] = useState({
@@ -90,7 +91,8 @@ const ListingPage = () => {
             name: activityData.title || "Unnamed Activity",
             description: activityData.description || "No description available",
             actualPrice:
-              activityData.pricingOptions && activityData.pricingOptions.length > 0
+              activityData.pricingOptions &&
+              activityData.pricingOptions.length > 0
                 ? activityData.pricingOptions[0].price
                 : activityData.price || 0,
             inclusions:
@@ -100,7 +102,8 @@ const ListingPage = () => {
                     { text: "Guided Tour", icon: "CheckCircleIcon" },
                     { text: "Entry Fees Included", icon: "MapPinIcon" },
                   ],
-            cancellationPolicy: activityData.cancellationPolicy || "Non-refundable",
+            cancellationPolicy:
+              activityData.cancellationPolicy || "Non-refundable",
           };
         });
 
@@ -115,8 +118,13 @@ const ListingPage = () => {
         setSummary({
           total: data.categories ? data.categories.length : 0,
           distance: data.distance || "-",
-          time: isTransfer ? "-" : (data.time ? `${Math.floor(data.time / 60)} hrs` : "-"),
-          serviceType: currentServiceType.toUpperCase().replace(/_/g, " ") + " TRIP",
+          time: isTransfer
+            ? "-"
+            : data.time
+            ? `${Math.floor(data.time / 60)} hrs`
+            : "-",
+          serviceType:
+            currentServiceType.toUpperCase().replace(/_/g, " ") + " TRIP",
           city: "",
           showTime: !isTransfer,
           showAdults: !isTransfer,
@@ -209,9 +217,9 @@ const ListingPage = () => {
   }, [searchResult, setSearchResult]);
 
   useEffect(() => {
-    if (items.length === 0 || items[0].type === 'activity') {
-        setFilteredItems(items);
-        return;
+    if (items.length === 0 || items[0].type === "activity") {
+      setFilteredItems(items);
+      return;
     }
 
     let tempItems = [...items];
@@ -257,13 +265,9 @@ const ListingPage = () => {
           {summary.total} {isActivity ? "Activities" : "Cars"} Available
         </h3>
         <ul className="flex flex-wrap mt-2 gap-3 text-sm sm:text-lg text-gray-700">
-          <li className="font-grotesk font-semibold">
-            {summary.serviceType}
-          </li>
+          <li className="font-grotesk font-semibold">{summary.serviceType}</li>
           {isActivity ? (
-            <li className="font-grotesk font-semibold">
-              City: {summary.city}
-            </li>
+            <li className="font-grotesk font-semibold">City: {summary.city}</li>
           ) : (
             <>
               <li className="font-grotesk font-semibold">
@@ -292,7 +296,7 @@ const ListingPage = () => {
           <aside className="hidden lg:block w-1/4">
             <div className="sticky top-0">
               <div className="bg-[#F5F5F6] rounded-2xl p-5 border border-gray-200">
-                <div className="bg-white p-4 rounded-2xl mb-4">
+                {/* <div className="bg-white p-4 rounded-2xl mb-4">
                   <div className="flex items-center border-b border-gray-300 pb-3">
                     <div className="bg-blue-100 rounded-full p-2 mr-2">
                       <FunnelIcon className="h-5 w-5 text-blue-600" />
@@ -300,15 +304,15 @@ const ListingPage = () => {
                     <h2 className="text-xl font-semibold">Filters</h2>
                   </div>
                   <div className="mt-3 relative">
-                    {/* <input
+                    <input
                       type="text"
                       placeholder="Search ......"
                       className="w-full bg-[#F5F5F6] border-none rounded-full py-2 px-4 text-md pl-10"
                       style={{ borderRadius: "30px" }}
                     />
-                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" /> */}
+                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
                   </div>
-                </div>
+                </div> */}
                 <div className="space-y-3">
                   <div className="bg-white px-4 pt-4 pb-1 rounded-2xl mb-4">
                     <FilterSection
@@ -415,7 +419,11 @@ const ListingPage = () => {
           ) : (
             <>
               {currentFilteredItems.map((item) => (
-                <ItemCard key={item.id} item={item} serviceType={searchFormData.serviceType || 'rental'} />
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  serviceType={searchFormData.serviceType || "rental"}
+                />
               ))}
               <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
                 <button
@@ -499,13 +507,19 @@ const ListingPage = () => {
                */}
               </div>
 
-              <FilterSection title="Price Range" defaultOpen={true} icon={CurrencyDollarIcon}>
+              <FilterSection
+                title="Price Range"
+                defaultOpen={true}
+                icon={CurrencyDollarIcon}
+              >
                 <input
                   type="range"
                   min="0"
                   max="5000"
                   value={priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                  onChange={(e) =>
+                    setPriceRange([priceRange[0], parseInt(e.target.value)])
+                  }
                   className="w-full"
                 />
                 <div className="flex justify-between text-sm text-gray-600 mt-2">
@@ -514,7 +528,11 @@ const ListingPage = () => {
                 </div>
               </FilterSection>
 
-              <FilterSection title="Seats" defaultOpen={false} icon={FunnelIcon}>
+              <FilterSection
+                title="Seats"
+                defaultOpen={false}
+                icon={FunnelIcon}
+              >
                 {["4 Seats", "5 Seats", "7 Seats"].map((seat) => (
                   <label key={seat} className="flex items-center gap-3 py-1">
                     <input
@@ -523,7 +541,9 @@ const ListingPage = () => {
                       onChange={(e) =>
                         e.target.checked
                           ? setSelectedSeats([...selectedSeats, seat])
-                          : setSelectedSeats(selectedSeats.filter((s) => s !== seat))
+                          : setSelectedSeats(
+                              selectedSeats.filter((s) => s !== seat)
+                            )
                       }
                       className="accent-orange-500"
                     />
@@ -532,22 +552,33 @@ const ListingPage = () => {
                 ))}
               </FilterSection>
 
-              <FilterSection title="Car Category" defaultOpen={false} icon={FunnelIcon}>
-                {["HATCH BACK", "SEDAN", "PREMIUM SEDAN", "SUV", "MINIVAN"].map((cat) => (
-                  <label key={cat} className="flex items-center gap-3 py-1">
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(cat)}
-                      onChange={(e) =>
-                        e.target.checked
-                          ? setSelectedCategories([...selectedCategories, cat])
-                          : setSelectedCategories(selectedCategories.filter((c) => c !== cat))
-                      }
-                      className="accent-orange-500"
-                    />
-                    <span className="text-sm">{cat}</span>
-                  </label>
-                ))}
+              <FilterSection
+                title="Car Category"
+                defaultOpen={false}
+                icon={FunnelIcon}
+              >
+                {["HATCH BACK", "SEDAN", "PREMIUM SEDAN", "SUV", "MINIVAN"].map(
+                  (cat) => (
+                    <label key={cat} className="flex items-center gap-3 py-1">
+                      <input
+                        type="checkbox"
+                        checked={selectedCategories.includes(cat)}
+                        onChange={(e) =>
+                          e.target.checked
+                            ? setSelectedCategories([
+                                ...selectedCategories,
+                                cat,
+                              ])
+                            : setSelectedCategories(
+                                selectedCategories.filter((c) => c !== cat)
+                              )
+                        }
+                        className="accent-orange-500"
+                      />
+                      <span className="text-sm">{cat}</span>
+                    </label>
+                  )
+                )}
               </FilterSection>
             </div>
           </div>
@@ -595,9 +626,9 @@ const ItemCard = ({ item, serviceType }) => {
   const { searchResult, setSearchFormData } = useSearch();
 
   const handleBookNow = () => {
-    if (item.type === 'activity') {
+    if (item.type === "activity") {
       const originalActivity = searchResult?.data?.activities?.find(
-        act => (act._doc?._id || act._id) === item.id
+        (act) => (act._doc?._id || act._id) === item.id
       );
 
       const bookingItem = {
@@ -605,9 +636,8 @@ const ItemCard = ({ item, serviceType }) => {
         // Ensure the full activity data is passed, handling the _doc structure
         data: originalActivity?._doc || originalActivity,
       };
-      
-      navigate('/booking-details', { state: { item: bookingItem } });
 
+      navigate("/booking-details", { state: { item: bookingItem } });
     } else {
       // Existing logic for car bookings
       setSearchFormData((prev) => ({
@@ -616,14 +646,14 @@ const ItemCard = ({ item, serviceType }) => {
       }));
 
       const originalCategory = searchResult?.data?.categories?.find(
-        cat => cat._id === item.id
+        (cat) => cat._id === item.id
       );
 
       const bookingItem = {
         ...item,
         data: {
-          categories: [originalCategory]
-        }
+          categories: [originalCategory],
+        },
       };
 
       navigate("/booking-details", { state: { item: bookingItem } });
@@ -648,21 +678,23 @@ const ItemCard = ({ item, serviceType }) => {
           </div>
           <div className="p-4 space-y-3">
             <h3 className="text-xl font-extrabold font-grotesk">{item.name}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2">{item.description}</p>
+            <p className="text-sm text-gray-600 line-clamp-2">
+              {item.description}
+            </p>
             <p className="text-xs text-gray-500">
               Cancellation: {item.cancellationPolicy}
             </p>
-              <div className="flex justify-between items-center">
-                <p className="text-2xl font-extrabold font-grotesk">
-                  ₹{item.actualPrice.toLocaleString("en-IN")}
-                </p>
-                <button
-                  onClick={handleBookNow}
-                  className="bg-orange-500 hover:bg-black text-white px-6 py-2 rounded-full text-sm font-grotesk font-bold"
-                >
-                  Book Now
-                </button>
-              </div>
+            <div className="flex justify-between items-center">
+              <p className="text-2xl font-extrabold font-grotesk">
+                ₹{item.actualPrice.toLocaleString("en-IN")}
+              </p>
+              <button
+                onClick={handleBookNow}
+                className="bg-orange-500 hover:bg-black text-white px-6 py-2 rounded-full text-sm font-grotesk font-bold"
+              >
+                Book Now
+              </button>
+            </div>
             {item.inclusions.length > 0 && (
               <>
                 <button
@@ -671,7 +703,9 @@ const ItemCard = ({ item, serviceType }) => {
                 >
                   <span>View Inclusions</span>
                   <ChevronRightIcon
-                    className={`h-5 w-5 transition-transform ${showDetails ? "rotate-90" : ""}`}
+                    className={`h-5 w-5 transition-transform ${
+                      showDetails ? "rotate-90" : ""
+                    }`}
                   />
                 </button>
                 {showDetails && (
@@ -681,13 +715,18 @@ const ItemCard = ({ item, serviceType }) => {
                       {item.inclusions.map((inc, i) => {
                         const IconComponent = iconMap[inc.icon];
                         return (
-                          <div key={i} className="flex items-center gap-2 text-sm">
+                          <div
+                            key={i}
+                            className="flex items-center gap-2 text-sm"
+                          >
                             {IconComponent ? (
                               <IconComponent className="h-6 w-6 text-[#5143D9]" />
                             ) : (
                               <div className="h-6 w-6 bg-gray-300 rounded-full" />
                             )}
-                            <span className="font-grotesk font-medium">{inc.text}</span>
+                            <span className="font-grotesk font-medium">
+                              {inc.text}
+                            </span>
                           </div>
                         );
                       })}
@@ -721,8 +760,8 @@ const ItemCard = ({ item, serviceType }) => {
               Cancellation Policy: {item.cancellationPolicy}
             </p>
             <p className="mt-2 text-2xl font-grotesk font-bold text-black">
-                ₹{item.actualPrice.toLocaleString("en-IN")}
-              </p>
+              ₹{item.actualPrice.toLocaleString("en-IN")}
+            </p>
           </div>
         </div>
         <div className="hidden lg:flex justify-end">
@@ -830,7 +869,9 @@ const ItemCard = ({ item, serviceType }) => {
               >
                 <span>View Inclusions</span>
                 <ChevronRightIcon
-                  className={`h-5 w-5 transition-transform ${showDetails ? "rotate-90" : ""}`}
+                  className={`h-5 w-5 transition-transform ${
+                    showDetails ? "rotate-90" : ""
+                  }`}
                 />
               </button>
               {showDetails && (
@@ -840,13 +881,18 @@ const ItemCard = ({ item, serviceType }) => {
                     {item.inclusions.map((inc, i) => {
                       const IconComponent = iconMap[inc.icon];
                       return (
-                        <div key={i} className="flex items-center gap-2 text-sm">
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 text-sm"
+                        >
                           {IconComponent ? (
                             <IconComponent className="h-6 w-6 text-[#5143D9]" />
                           ) : (
                             <div className="h-6 w-6 bg-gray-300 rounded-full" />
                           )}
-                          <span className="font-grotesk font-medium">{inc.text}</span>
+                          <span className="font-grotesk font-medium">
+                            {inc.text}
+                          </span>
                         </div>
                       );
                     })}
@@ -891,7 +937,7 @@ const ItemCard = ({ item, serviceType }) => {
           <p className="mt-2 text-gray-600">{item.description}</p>
         </div>
         <div className="w-1/4 flex flex-col justify-center items-end text-right border-l border-[#d4d4d4]">
-          {serviceType !== 'transfer' && (
+          {serviceType !== "transfer" && (
             <div className="flex gap-2">
               <p className="text-gray-600 font-grotesk line-through">
                 ₹{item.marketFare}/km

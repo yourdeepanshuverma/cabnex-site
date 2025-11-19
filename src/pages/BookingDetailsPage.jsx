@@ -30,7 +30,7 @@ const iconMap = {
 };
 
 const BookingDetailsPage = () => {
-  const { user, searchFormData, isLoggedIn } = useSearch();
+  const { user, searchFormData, isLoggedIn, searchResult } = useSearch();
   const location = useLocation();
   const navigate = useNavigate();
   const { item } = location.state || {};
@@ -139,6 +139,8 @@ const BookingDetailsPage = () => {
       hour12: true,
     });
   };
+
+  const distance = searchResult?.data?.distance || 0;
 
   const serviceType = searchFormData.serviceType || "outstation";
   let pickupLocation = { name: "Not specified", place_id: null };
@@ -703,6 +705,17 @@ const BookingDetailsPage = () => {
                 <h4 className="font-grotesk font-extrabold text-lg mb-3 text-gray-800">
                   Fare Breakdown
                 </h4>
+
+                <div className="space-y-2 my-2 text-sm font-grotesk">
+                  {/* Total Distance - Always shown for non-activities */}
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Total Distance</span>
+                    <span className="font-semibold">
+                      {distance.toLocaleString("en-IN")} km
+                    </span>
+                  </div>
+                </div>
+
                 <div className="space-y-2 text-sm font-grotesk">
                   {/* Base Fare - Always shown for non-activities */}
                   <div className="flex justify-between">
@@ -721,7 +734,12 @@ const BookingDetailsPage = () => {
                     serviceType === "outstation") &&
                     apiCategory?.extraKmCharges > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Extra KM Charges</span>
+                        <span className="text-gray-600">
+                          Extra KM Charges (
+                          {distance -
+                            apiCategory?.freeKmPerDay * apiCategory?.totalDays}
+                          km)
+                        </span>
                         <span className="font-semibold">
                           ₹
                           {apiCategory.extraKmCharges.toLocaleString("en-IN", {
@@ -736,7 +754,12 @@ const BookingDetailsPage = () => {
                   {serviceType === "outstation" &&
                     apiCategory?.totalDriverAllowance > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Driver Allowance</span>
+                        <span className="text-gray-600">
+                          Driver Allowance{" "}
+                          {`(${apiCategory?.totalDays} day${
+                            apiCategory?.totalDays > 1 ? "s" : ""
+                          })`}
+                        </span>
                         <span className="font-semibold">
                           ₹
                           {apiCategory.totalDriverAllowance.toLocaleString(
@@ -754,7 +777,12 @@ const BookingDetailsPage = () => {
                   {serviceType === "outstation" &&
                     apiCategory?.totalNightCharge > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">Night Charge</span>
+                        <span className="text-gray-600">
+                          Night Charge{" "}
+                          {`(${apiCategory?.totalNights} night${
+                            apiCategory?.totalNights > 1 ? "s" : ""
+                          })`}
+                        </span>
                         <span className="font-semibold">
                           ₹
                           {apiCategory.totalNightCharge.toLocaleString(
@@ -786,7 +814,9 @@ const BookingDetailsPage = () => {
                   {/* Tax - For all non-activities */}
                   {apiCategory?.tax > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Tax</span>
+                      <span className="text-gray-600">
+                        Tax ({apiCategory?.taxSlab}%)
+                      </span>
                       <span className="font-semibold">
                         ₹
                         {apiCategory.tax.toLocaleString("en-IN", {

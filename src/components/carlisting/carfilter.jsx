@@ -169,11 +169,14 @@ const ListingPage = () => {
               )}`,
               inclusions: [
                 { text: "24/7 Roadside Assistance", icon: "CheckCircleIcon" },
-                { text: "Free Cancellation", icon: "ArrowPathIcon" },
+                {
+                  text: "Free Cancellation",
+                  icon: "ArrowPathIcon",
+                },
                 ...(cat.freeKmPerDay
                   ? [
                       {
-                        text: `Free ${cat.freeKmPerDay} Km included. After that ₹${cat.extraKmCharge}/Km`,
+                        text: `Free ${cat.freeKmPerDay} Km included Per Day. After that ₹${cat.extraKmCharge}/Km`,
                         icon: "MapPinIcon",
                       },
                     ]
@@ -189,7 +192,7 @@ const ListingPage = () => {
                 ...(cat.driverAllowance
                   ? [
                       {
-                        text: `Driver Allowance: ₹${cat.driverAllowance}`,
+                        text: `Driver Allowance Per Day: ₹${cat.driverAllowance}`,
                         icon: "BriefcaseIcon",
                       },
                     ]
@@ -197,7 +200,7 @@ const ListingPage = () => {
                 ...(cat.nightCharge
                   ? [
                       {
-                        text: `Night Charge: ₹${cat.nightCharge}`,
+                        text: `Night Charge Per Night: ₹${cat.nightCharge}`,
                         icon: "CalendarIcon",
                       },
                     ]

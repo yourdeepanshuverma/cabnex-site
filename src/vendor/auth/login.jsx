@@ -280,6 +280,8 @@ export default function VendorLogin() {
         : { contactPhone: formData.identifier, password: formData.password };
 
       const response = await api.post("/api/v1/vendor/login", payload);
+      console.log(response.data);
+
       if (response.data.statusCode === 200 && response.data.success) {
         setVendorUser(response.data.data);
         setIsVendorLoggedIn(true);
@@ -288,7 +290,7 @@ export default function VendorLogin() {
         setErrors({});
         navigate("/vendor", { replace: true });
       } else {
-        toast.error("Login failed. Please try again.");
+        toast.error(response.error.message || "Login failed");
       }
     } catch (error) {
       const msg = error.response?.data?.message || error.message;

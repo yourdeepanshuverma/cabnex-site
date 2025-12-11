@@ -137,13 +137,14 @@ export default function Header() {
 
   // Check for existing user session from cookies or localStorage
   useEffect(() => {
-    const userData = localStorage.getItem("userData");
-    const userName = Cookies.get("userName");
+    const storedUserData = localStorage.getItem("userData"); // Renamed to avoid confusion with parameter
+    const userNameCookie = Cookies.get("userName"); // Renamed
     setIsLoadingUser(true);
-    if (userData) {
+
+    if (storedUserData) {
       try {
-        const parsedUserData = JSON.parse(userData);
-        // Validate required fields
+        const parsedUserData = JSON.parse(storedUserData);
+        // Validate required fields (already there)
         if (
           parsedUserData &&
           parsedUserData.fullName &&
@@ -152,38 +153,43 @@ export default function Header() {
         ) {
           setUser(parsedUserData);
           setIsLoggedIn(true);
-          console.log("User restored from localStorage:", parsedUserData);
-          // Sync cookie with fullName
-          if (userName !== parsedUserData.fullName) {
-            console.warn(
-              "Cookie userName mismatch:",
-              userName,
-              "vs",
-              parsedUserData.fullName
-            );
+          console.log("User restored from localStorage with full data:", parsedUserData);
+          // Sync cookie with fullName - keep this as it updates the cookie if necessary
+          if (userNameCookie !== parsedUserData.fullName) {
             Cookies.set("userName", parsedUserData.fullName, { expires: 7 });
           }
         } else {
-          console.warn("Invalid user data in localStorage:", parsedUserData);
-          localStorage.removeItem("userData"); // Clean up invalid data
+          console.warn("Invalid user data in localStorage, clearing:", parsedUserData);
+          localStorage.removeItem("userData");
           setIsLoggedIn(false);
           setUser(null);
+          // If invalid, try fallback to cookie if it exists (though it will be incomplete)
+          if (userNameCookie) {
+             setUser({ fullName: userNameCookie });
+             setIsLoggedIn(true);
+             console.log("User partially restored from cookies after invalid localStorage data:", userNameCookie);
+          }
         }
       } catch (error) {
-        console.error("Error parsing userData from localStorage:", error);
-        localStorage.removeItem("userData"); // Clean up corrupted data
+        console.error("Error parsing userData from localStorage, clearing:", error);
+        localStorage.removeItem("userData");
         setIsLoggedIn(false);
         setUser(null);
+         // If error, try fallback to cookie if it exists
+        if (userNameCookie) {
+           setUser({ fullName: userNameCookie });
+           setIsLoggedIn(true);
+           console.log("User partially restored from cookies after error in localStorage parsing:", userNameCookie);
+        }
       }
-    } else if (userName) {
-      // Fallback for old cookie-based session
-      setUser({ fullName: userName });
+    } else if (userNameCookie) { // Only fallback to userName cookie if NO userData in localStorage
+      setUser({ fullName: userNameCookie });
       setIsLoggedIn(true);
-      console.log("User restored from cookies:", userName);
-    } else {
+      console.log("User restored from cookies (no localStorage userData):", userNameCookie);
+    } else { // No user data anywhere
       setIsLoggedIn(false);
       setUser(null);
-      console.log("No user found in cookies or localStorage");
+      console.log("No user found in cookies or localStorage.");
     }
     setIsLoadingUser(false);
   }, [setIsLoggedIn, setUser]);

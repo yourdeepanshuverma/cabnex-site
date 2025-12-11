@@ -14,7 +14,7 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
 import Header from "../components/header";
-import { loadRazorpay } from "../utils/payment";
+import { loadRazorpay, createOfflineBooking } from "../utils/payment";
 import { toast } from "sonner";
 
 const iconMap = {
@@ -34,6 +34,8 @@ const BookingDetailsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { item } = location.state || {};
+
+
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -266,14 +268,14 @@ const BookingDetailsPage = () => {
 
     const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
     const pickupDateTimeISO = new Date(pickupDateTimeStr).toISOString();
-    console.log("Activity ID being sent:", item.data._id);
+
     const showDropoff = dropoffLocation.name !== "Not specified";
-    let paymentParams;
+    let bookingDetails; // Renamed from paymentParams for clarity
 
     if (isActivity) {
-      paymentParams = {
+      bookingDetails = {
         amount: payAmount,
-        activityId: item.data._id, // Pass activity ID
+        activityId: item.data._id,
         serviceType: "activity",
         exactLocation: travellerInfo.exactPickupLocation,
         pickupDateTime: pickupDateTimeISO,
@@ -290,6 +292,8 @@ const BookingDetailsPage = () => {
           email: isBookingForOther ? alternateEmail : travellerInfo.email,
           mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
         },
+        paymentMethod: paymentOption, // Add payment method
+        paymentStatus: paymentOption === "offline" ? "pending" : "paid", // Set status based on option
       };
     } else {
       const oneWay =
@@ -299,15 +303,18 @@ const BookingDetailsPage = () => {
           ? false
           : true;
 
-      paymentParams = {
+      bookingDetails = {
         amount: payAmount,
         carCategoryName: selectedItem.name || "Default Car",
+        carCategory: selectedItem.name || null,
         serviceType,
         packageType:
           serviceType === "rental"
             ? searchFormData.rentalPackage || null
             : null,
-        packageId: null,
+        packageId: serviceType === "rental"
+            ? searchFormData.rentalPackage || null
+            : null,
         exactLocation: travellerInfo.exactPickupLocation,
         pickupDateTime: pickupDateTimeISO,
         startLocation: {
@@ -354,15 +361,22 @@ const BookingDetailsPage = () => {
           email: isBookingForOther ? alternateEmail : travellerInfo.email,
           mobile: isBookingForOther ? alternatePhone : travellerInfo.mobile,
         },
+        paymentMethod: paymentOption, // Add payment method
+        paymentStatus: paymentOption === "offline" ? "pending" : "paid", // Set status based on option
       };
     }
 
     try {
-      await loadRazorpay(paymentParams);
-      toast.success("Payment initiated successfully!");
+      if (paymentOption === "offline") {
+        await createOfflineBooking(bookingDetails);
+        toast.success("Booking requested! Awaiting offline payment.");
+      } else {
+        await loadRazorpay(bookingDetails);
+        toast.success("Payment initiated successfully!");
+      }
     } catch (err) {
-      console.error("Payment Error:", err);
-      toast.error("Payment process interrupted.");
+      console.error("Payment/Booking Error:", err);
+      toast.error("Process interrupted.");
     }
   };
 
@@ -874,6 +888,10 @@ const BookingDetailsPage = () => {
                     label: `Pay ₹${totalAmount.toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                     })} now (Full Payment)`,
+                  },
+                  {
+                    value: "offline",
+                    label: "Book Now Pay Later",
                   },
                 ].map(({ value, label }) => (
                   <label

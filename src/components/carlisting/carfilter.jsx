@@ -40,8 +40,7 @@ const ListingPage = () => {
     showAdults: true,
   });
   const [isActivity, setIsActivity] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
+
 
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -241,24 +240,12 @@ const ListingPage = () => {
       );
     }
     setFilteredItems(tempItems);
-    setCurrentPage(1);
+
   }, [priceRange, selectedSeats, selectedCategories, items]);
 
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentFilteredItems = filteredItems.slice(
-    indexOfFirstItem,
-    indexOfLastItem
-  );
+  const currentFilteredItems = filteredItems;
 
-  const handlePageChange = (pageNumber) => setCurrentPage(pageNumber);
-  const handlePrevious = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
-  const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
+
 
   return (
     <section className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -428,43 +415,7 @@ const ListingPage = () => {
                   serviceType={searchFormData.serviceType || "rental"}
                 />
               ))}
-              <div className="flex justify-center items-center gap-2 mt-8 flex-wrap">
-                <button
-                  onClick={handlePrevious}
-                  disabled={currentPage === 1}
-                  className={`px-4 py-2 rounded-md font-grotesk text-sm ${
-                    currentPage === 1
-                      ? "bg-gray-300 text-gray-500"
-                      : "bg-orange-500 text-white hover:bg-black"
-                  }`}
-                >
-                  Prev
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => (
-                  <button
-                    key={i + 1}
-                    onClick={() => handlePageChange(i + 1)}
-                    className={`px-3 py-1 rounded-md text-sm ${
-                      currentPage === i + 1
-                        ? "bg-orange-500 text-white"
-                        : "bg-white border"
-                    }`}
-                  >
-                    {i + 1}
-                  </button>
-                ))}
-                <button
-                  onClick={handleNext}
-                  disabled={currentPage === totalPages}
-                  className={`px-4 py-2 rounded-md font-grotesk text-sm ${
-                    currentPage === totalPages
-                      ? "bg-gray-300 text-gray-500"
-                      : "bg-orange-500 text-white hover:bg-black"
-                  }`}
-                >
-                  Next
-                </button>
-              </div>
+
             </>
           )}
         </main>

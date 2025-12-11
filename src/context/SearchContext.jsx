@@ -2,6 +2,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 
+const getDefaultDateTime = () => {
+  const now = new Date();
+  now.setHours(8, 0, 0, 0);
+  return now;
+};
+
 const SearchContext = createContext();
 
 export const useSearch = () => useContext(SearchContext);
@@ -9,46 +15,39 @@ export const useSearch = () => useContext(SearchContext);
 export const SearchProvider = ({ children }) => {
   // 1. searchFormData – localStorage se load + save
   const [searchFormData, setSearchFormData] = useState(() => {
-    const saved = localStorage.getItem('searchFormData');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse searchFormData', e);
-      }
-    }
+    const defaultDateTimeISO = getDefaultDateTime().toISOString();
+
     return {
       pickupDate: null,
       dropoffDate: null,
-      pickupDateTime: null,
-      transferDateTime: null,
+      pickupDateTime: defaultDateTimeISO,
+      transferDateTime: defaultDateTimeISO,
       outstationTripType: 'one-way',
-      outstationPickupDateTime: null,
-      outstationReturnDateTime: null,
+      outstationPickupDateTime: defaultDateTimeISO,
+      outstationReturnDateTime: defaultDateTimeISO,
       selectedPlaces: {},
       rentalPackage: '',
-      multicityStops: [],
+      multicityStops: [
+        {
+          pickupPlaceId: null,
+          dropoffPlaceId: null,
+          dateTime: defaultDateTimeISO,
+          selectedPickupAddress: '',
+          selectedDropoffAddress: '',
+        }
+      ],
       serviceType: 'rental',
       dropoffLocation: null,
       pickupLocation: null,
       transferDirection: 'home-to-station',
       selectedCity: null,
       distance: 0,
+      activityDateTime: defaultDateTimeISO,
     };
   });
 
   // 2. searchResult – localStorage se load
-  const [searchResult, setSearchResult] = useState(() => {
-    const saved = localStorage.getItem('lastSearch');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error('Failed to parse lastSearch', e);
-      }
-    }
-    return null;
-  });
+  const [searchResult, setSearchResult] = useState(null);
 
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     const userData = Cookies.get('userData') || localStorage.getItem('userData');
@@ -71,10 +70,7 @@ export const SearchProvider = ({ children }) => {
     return null;
   });
 
-  // SAVE searchFormData on change
-  useEffect(() => {
-    localStorage.setItem('searchFormData', JSON.stringify(searchFormData));
-  }, [searchFormData]);
+
 
   // SAVE searchResult on change
   useEffect(() => {

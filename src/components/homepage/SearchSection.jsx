@@ -12,6 +12,12 @@ import { useSearch } from '../../context/SearchContext';
 
 registerLocale('en-US', enUS);
 
+const getDefaultDateTime = () => {
+  const now = new Date();
+  now.setHours(8, 0, 0, 0);
+  return now;
+};
+
 const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   const { searchFormData, setSearchFormData, setSearchResult, isLoggedIn } = useSearch();
   const navigate = useNavigate();
@@ -43,28 +49,28 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   const activityLocationRef = useRef(null);
 
   // States
-  const [pickupDateTime, setPickupDateTime] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : null);
+  const [pickupDateTime, setPickupDateTime] = useState(searchFormData.pickupDate ? new Date(searchFormData.pickupDate) : getDefaultDateTime());
   const [transferDateTime, setTransferDateTime] = useState(
-    searchFormData.transferDateTime ? new Date(searchFormData.transferDateTime) : null
+    searchFormData.transferDateTime ? new Date(searchFormData.transferDateTime) : getDefaultDateTime()
   );
   const [outstationTripType, setOutstationTripType] = useState(searchFormData.outstationTripType || 'one-way');
   const [outstationPickupDateTime, setOutstationPickupDateTime] = useState(
-    searchFormData.outstationPickupDateTime ? new Date(searchFormData.outstationPickupDateTime) : null
+    searchFormData.outstationPickupDateTime ? new Date(searchFormData.outstationPickupDateTime) : getDefaultDateTime()
   );
   const [outstationReturnDateTime, setOutstationReturnDateTime] = useState(
-    searchFormData.outstationReturnDateTime ? new Date(searchFormData.outstationReturnDateTime) : null
+    searchFormData.outstationReturnDateTime ? new Date(searchFormData.outstationReturnDateTime) : getDefaultDateTime()
   );
   const [selectedPlaces, setSelectedPlaces] = useState(searchFormData.selectedPlaces || {});
   const [rentalPackage, setRentalPackage] = useState(searchFormData.rentalPackage || '');
   const [packages, setPackages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [activityDateTime, setActivityDateTime] = useState(null);
+  const [activityDateTime, setActivityDateTime] = useState(searchFormData.activityDateTime ? new Date(searchFormData.activityDateTime) : getDefaultDateTime());
 
   const createInitialStop = () => ({
     pickupPlaceId: null,
     dropoffPlaceId: null,
-    dateTime: null,
+    dateTime: getDefaultDateTime(),
     pickupRef: React.createRef(),
     dropoffRef: React.createRef(),
     selectedPickupAddress: '',
@@ -326,39 +332,48 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
 
   const handleTabSwitch = (index) => {
     const newServiceType = tabs[index].toLowerCase().replace(' ', '_');
+    const defaultDateTime = getDefaultDateTime(); // Get default date/time once
+    const defaultDateTimeISO = defaultDateTime.toISOString();
 
     // Reset internal component state
-    setPickupDateTime(null);
-    setTransferDateTime(null);
+    setPickupDateTime(defaultDateTime);
+    setTransferDateTime(defaultDateTime);
     setOutstationTripType('one-way');
-    setOutstationPickupDateTime(null);
-    setOutstationReturnDateTime(null);
+    setOutstationPickupDateTime(defaultDateTime);
+    setOutstationReturnDateTime(defaultDateTime);
     setSelectedPlaces({});
     setRentalPackage('');
-    setMulticityStops([createInitialStop()]);
-    setActivityDateTime(null);
+    setMulticityStops([createInitialStop()]); // createInitialStop already uses getDefaultDateTime()
+    setActivityDateTime(defaultDateTime);
     setSelectedCity(null);
     setTransferDirection('home-to-station');
 
-    // Reset the context state, preserving only the new service type
+    // Reset the context state, preserving only the new service type and setting default times
     setSearchFormData(prev => ({
       ...prev,
       pickupDate: null,
       dropoffDate: null,
-      pickupDateTime: null,
-      transferDateTime: null,
+      pickupDateTime: defaultDateTimeISO,
+      transferDateTime: defaultDateTimeISO,
       outstationTripType: 'one-way',
-      outstationPickupDateTime: null,
-      outstationReturnDateTime: null,
+      outstationPickupDateTime: defaultDateTimeISO,
+      outstationReturnDateTime: defaultDateTimeISO,
       selectedPlaces: {},
       rentalPackage: '',
-      multicityStops: [],
+      multicityStops: [{ // Default multicity stop with default time
+        pickupPlaceId: null,
+        dropoffPlaceId: null,
+        dateTime: defaultDateTimeISO,
+        selectedPickupAddress: '',
+        selectedDropoffAddress: '',
+      }],
       serviceType: newServiceType,
       dropoffLocation: null,
       pickupLocation: null,
       transferDirection: 'home-to-station',
       selectedCity: null,
       distance: 0,
+      activityDateTime: defaultDateTimeISO,
     }));
 
     // Set the new tab as active

@@ -2,6 +2,7 @@ import React from "react";
 import BannerSection from "../components/homepage/BannerSection";
 import Aboutussection from "../components/homepage/aboutus";
 import Holidaysection from "../components/homepage/holidays";
+// import ActivitySection from "../components/homepage/ActivitySection";
 import CarTypesSection from "../components/homepage/cartype";
 import HowItWorks from "../components/homepage/howitwork";
 import Faqssection from "../components/homepage/faqs";
@@ -25,6 +26,7 @@ const Home = () => {
       <BannerSection />
       <Aboutussection />
       <Holidaysection />
+      {/* <ActivitySection /> */}
       <CarTypesSection />
       <HowItWorks />
       <AgentRegistrationSection />

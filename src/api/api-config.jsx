@@ -27,7 +27,8 @@ const endpoints = {
   WebsiteContent:"/api/v1/admin/website-setting",
   Sendotp:"/api/v1/otp/send",
   Verifyotp:"/api/v1/otp/verify",
-  ContactUs:"/api/v1/admin/contact-us"
+  ContactUs:"/api/v1/admin/contact-us",
+  offlineBooking:"/api/v1/auth/bookings/without-payment"
 };
 
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '';

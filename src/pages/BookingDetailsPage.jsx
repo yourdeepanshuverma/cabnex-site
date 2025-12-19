@@ -10,6 +10,7 @@ import {
   UserIcon,
   EnvelopeIcon,
   ChevronDownIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
@@ -240,6 +241,31 @@ const BookingDetailsPage = () => {
   const [showFeatures, setShowFeatures] = useState(false);
   const [showInclusions, setShowInclusions] = useState(false);
 
+  // State for selected add-on activities
+  const [selectedActivities, setSelectedActivities] = useState([]);
+  const [activitiesTotal, setActivitiesTotal] = useState(0);
+  const [selectedActivityForDetails, setSelectedActivityForDetails] = useState(null);
+
+  // Extract cityActivities from searchResult
+  const cityActivities = searchResult?.data?.cityActivities || [];
+
+  // Calculate activitiesTotal whenever selectedActivities changes
+  useEffect(() => {
+    const total = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
+    setActivitiesTotal(total);
+  }, [selectedActivities]);
+
+  // Handler for selecting/deselecting activities
+  const handleActivitySelection = (activity) => {
+    setSelectedActivities((prevSelected) => {
+      if (prevSelected.some((selected) => selected._id === activity._id)) {
+        return prevSelected.filter((selected) => selected._id !== activity._id);
+      } else {
+        return [...prevSelected, activity];
+      }
+    });
+  };
+
   const handleExactPickupLocationChange = (e) => {
     setTravellerInfo({ ...travellerInfo, exactPickupLocation: e.target.value });
   };
@@ -263,7 +289,7 @@ const BookingDetailsPage = () => {
     }
 
     const rawPayAmount =
-      paymentOption === "half" ? totalAmount / 2 : totalAmount;
+      paymentOption === "half" ? finalTotalAmount / 2 : finalTotalAmount;
     const payAmount = parseFloat(rawPayAmount.toFixed(2));
 
     const pickupDateTimeStr = `${travellerInfo.pickupDate} ${travellerInfo.pickupTime}`;
@@ -283,7 +309,7 @@ const BookingDetailsPage = () => {
           address: travellerInfo.pickupLocation.name,
           place_id: travellerInfo.pickupLocation.place_id || null,
         },
-        totalAmount: totalAmount,
+        totalAmount: finalTotalAmount,
         city:
           travellerInfo.pickupLocation.name.split(",")[0]?.trim() || "Unknown",
         user: {
@@ -348,7 +374,7 @@ const BookingDetailsPage = () => {
               ].dateTime
             : null,
         distance: searchFormData.distance || 0,
-        totalAmount: totalAmount,
+        totalAmount: finalTotalAmount,
         city:
           travellerInfo.pickupLocation.name.split(",")[0]?.trim() || "Unknown",
         oneWay,
@@ -363,6 +389,14 @@ const BookingDetailsPage = () => {
         },
         paymentMethod: paymentOption, // Add payment method
         paymentStatus: paymentOption === "offline" ? "pending" : "paid", // Set status based on option
+        ...(selectedActivities.length > 0 && {
+          addons: selectedActivities.map(a => ({
+            activityId: a._id,
+            title: a.title,
+            price: a.price
+          })),
+          addonsTotal: activitiesTotal,
+        })
       };
     }
 
@@ -384,9 +418,14 @@ const BookingDetailsPage = () => {
   const apiCategory = item?.data?.categories?.[0];
 
   // Use API totalAmount, fallback to selectedItem.actualPrice
-  const totalAmount = isActivity
+  const carOrActivityBaseTotal = isActivity
     ? selectedItem.actualPrice
     : apiCategory?.totalAmount || selectedItem.actualPrice;
+
+  // Calculate finalTotalAmount including activities
+  const finalTotalAmount = isActivity
+    ? carOrActivityBaseTotal
+    : carOrActivityBaseTotal + activitiesTotal;
 
   // Direct values from apiCategory
   const baseFare = apiCategory?.baseFare || 0;
@@ -841,12 +880,26 @@ const BookingDetailsPage = () => {
                     </div>
                   )}
 
+                  {/* Add-on Total - Only show if activities are selected */}
+                  {activitiesTotal > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Add-on Total</span>
+                      <span className="font-semibold">
+                        ₹
+                        {activitiesTotal.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
                   {/* Total Amount - Always shown for non-activities */}
                   <div className="border-t pt-2 mt-3 flex justify-between font-bold text-base text-black">
                     <span>Total Amount</span>
                     <span>
                       ₹
-                      {totalAmount.toLocaleString("en-IN", {
+                      {finalTotalAmount.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       })}
@@ -856,19 +909,61 @@ const BookingDetailsPage = () => {
               </div>
             )}
 
+            <p className="text-orange-500 font-grotesk text-sm sm:text-base mb-3 text-center">
+              Hurry! Limited {isActivity ? "spots" : "cars"} left
+            </p>
+
+            {/* Add-on Activities */}
+            {!isActivity && cityActivities && cityActivities.length > 0 && (
+              <div className="bg-white rounded-2xl shadow-md p-5 border border-gray-200 space-y-5">
+                <h4 className="text-xl sm:text-2xl font-grotesk font-extrabold">
+                  Add-on Activities
+                </h4>
+                <div className="space-y-4">
+                  {cityActivities.map((activity) => (
+                    <div key={activity._id} className="flex items-center justify-between">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={selectedActivities.some(
+                            (selected) => selected._id === activity._id
+                          )}
+                          onChange={() => handleActivitySelection(activity)}
+                          className="accent-orange-500 h-5 w-5"
+                        />
+                        <p className="font-grotesk font-semibold text-base text-black line-clamp-1">
+                          {activity.title}
+                        </p>
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <span className="font-grotesk font-bold text-base text-orange-500">
+                          ₹{activity.price.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                        <button 
+                          onClick={() => setSelectedActivityForDetails(activity)}
+                          className="text-sm text-blue-500 hover:underline"
+                        >
+                          View Details
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* ==================== PAYMENT OPTIONS CARD ==================== */}
             <div className="bg-[#F5F5F6] rounded-2xl p-5 border border-gray-200">
-              <p className="text-orange-500 font-grotesk text-sm sm:text-base mb-3">
-                Hurry! Limited {isActivity ? "spots" : "cars"} left
-              </p>
-
               <div className="flex justify-between items-center mb-4">
                 <span className="font-grotesk font-semibold text-lg sm:text-xl text-black">
                   Total
                 </span>
                 <span className="font-grotesk font-bold text-xl sm:text-2xl text-black">
                   ₹
-                  {totalAmount.toLocaleString("en-IN", {
+                  {finalTotalAmount.toLocaleString("en-IN", {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
@@ -879,13 +974,13 @@ const BookingDetailsPage = () => {
                 {[
                   {
                     value: "half",
-                    label: `Pay ₹${(totalAmount / 2).toLocaleString("en-IN", {
+                    label: `Pay ₹${(finalTotalAmount / 2).toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                     })} now (Half Payment)`,
                   },
                   {
                     value: "full",
-                    label: `Pay ₹${totalAmount.toLocaleString("en-IN", {
+                    label: `Pay ₹${finalTotalAmount.toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                     })} now (Full Payment)`,
                   },
@@ -923,6 +1018,46 @@ const BookingDetailsPage = () => {
           </div>
         </aside>
       </div>
+
+      {/* Activity Details Modal */}
+      {selectedActivityForDetails && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
+            <div className="p-5 border-b border-gray-200 flex justify-between items-center">
+              <h4 className="text-xl sm:text-2xl font-grotesk font-extrabold">
+                {selectedActivityForDetails.title}
+              </h4>
+              <button onClick={() => setSelectedActivityForDetails(null)}>
+                <XMarkIcon className="h-6 w-6 text-gray-600" />
+              </button>
+            </div>
+            <div className="p-5">
+              <p className="text-gray-600 mb-4">
+                {selectedActivityForDetails.description || "No description available."}
+              </p>
+              <span className="font-grotesk font-bold text-lg text-orange-500">
+                Price: ₹{selectedActivityForDetails.price.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+            <div className="p-5 bg-gray-50 rounded-b-2xl flex justify-end">
+              <button
+                onClick={() => {
+                  handleActivitySelection(selectedActivityForDetails);
+                  setSelectedActivityForDetails(null);
+                }}
+                className="bg-orange-500 hover:bg-black text-white font-grotesk font-bold py-2 px-4 rounded-full text-base transition-colors"
+              >
+                {selectedActivities.some(a => a._id === selectedActivityForDetails._id)
+                  ? 'Remove from Booking'
+                  : 'Add to Booking'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

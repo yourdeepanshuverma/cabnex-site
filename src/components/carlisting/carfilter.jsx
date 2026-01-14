@@ -802,9 +802,7 @@ const ItemCard = ({ item, serviceType }) => {
               </span>
             ))}
           </div>
-          <p className="text-xs text-gray-600">
-            Market: ₹{item.marketFare}/km • Base: ₹{item.baseFare}
-          </p>
+          <p className="text-xs text-gray-600">Per Km: ₹{item.baseFare}</p>
           <div className="flex justify-between items-center">
             <p className="text-2xl font-extrabold font-grotesk">
               ₹{item.actualPrice.toLocaleString("en-IN")}
@@ -893,9 +891,6 @@ const ItemCard = ({ item, serviceType }) => {
         <div className="w-1/4 flex flex-col justify-center items-end text-right border-l border-[#d4d4d4]">
           {serviceType !== "transfer" && (
             <div className="flex gap-2">
-              <p className="text-gray-600 font-grotesk line-through">
-                ₹{item.marketFare}/km
-              </p>
               <p className="text-red-600">Per Km: ₹{item.perKmCharge}</p>
             </div>
           )}

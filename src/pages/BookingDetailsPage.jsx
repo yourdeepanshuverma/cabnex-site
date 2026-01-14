@@ -10,7 +10,9 @@ import {
   UserIcon,
   EnvelopeIcon,
   ChevronDownIcon,
-  XMarkIcon,
+  FunnelIcon,
+  BanknotesIcon,
+  TicketIcon,
 } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
@@ -28,6 +30,9 @@ const iconMap = {
   ClockIcon,
   UserIcon,
   EnvelopeIcon,
+  FunnelIcon,
+  BanknotesIcon,
+  TicketIcon,
 };
 
 const BookingDetailsPage = () => {
@@ -35,8 +40,6 @@ const BookingDetailsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { item } = location.state || {};
-
-
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -52,35 +55,21 @@ const BookingDetailsPage = () => {
     const featureMap = {
       AC: {
         text: "Air Conditioning",
-        description: "Stay cool with advanced climate control system.",
       },
       Automatic: {
         text: "Automatic Transmission",
-        description: "Smooth and effortless gear shifting.",
+      },
+      Comfort: {
+        text: " Comfortable for Outstation Travel",
       },
       Petrol: {
         text: "Petrol Engine",
-        description: "Fuel efficient engine for city and highway driving.",
-      },
-      "4 Seats": {
-        text: "4 Seater",
-        description: "Compact seating for small groups or families.",
-      },
-      "5 Seats": {
-        text: "5 Seater",
-        description: "Spacious seating for family or business travel.",
-      },
-      "7 Seats": {
-        text: "7 Seater",
-        description: "Large capacity for groups and luggage.",
       },
       Manual: {
         text: "Manual Transmission",
-        description: "Traditional gear shifting for experienced drivers.",
       },
       Diesel: {
         text: "Diesel Engine",
-        description: "High mileage for long distance travel.",
       },
     };
     return features.map(
@@ -106,7 +95,6 @@ const BookingDetailsPage = () => {
       { text: "Free waiting up to 45 minutes", icon: "ClockIcon" },
     ],
     actualPrice: 4500,
-    description: "Comfortable item perfect for your needs.",
     type: "car",
     cancellationPolicy: "Non-refundable",
   };
@@ -116,7 +104,7 @@ const BookingDetailsPage = () => {
         ...item,
         features: isActivity ? [] : transformFeatures(item.features || []),
         actualPrice: item.actualPrice || 4500,
-        description: item.description || "Selected item for your booking.",
+        description: item.description || "Selected car for your booking.",
         inclusions: item.inclusions || defaultItem.inclusions,
         image: item.image || defaultItem.image,
         cancellationPolicy: item.cancellationPolicy || "Non-refundable",
@@ -244,14 +232,18 @@ const BookingDetailsPage = () => {
   // State for selected add-on activities
   const [selectedActivities, setSelectedActivities] = useState([]);
   const [activitiesTotal, setActivitiesTotal] = useState(0);
-  const [selectedActivityForDetails, setSelectedActivityForDetails] = useState(null);
+  const [selectedActivityForDetails, setSelectedActivityForDetails] =
+    useState(null);
 
   // Extract cityActivities from searchResult
   const cityActivities = searchResult?.data?.cityActivities || [];
 
   // Calculate activitiesTotal whenever selectedActivities changes
   useEffect(() => {
-    const total = selectedActivities.reduce((sum, activity) => sum + activity.price, 0);
+    const total = selectedActivities.reduce(
+      (sum, activity) => sum + activity.price,
+      0
+    );
     setActivitiesTotal(total);
   }, [selectedActivities]);
 
@@ -338,7 +330,8 @@ const BookingDetailsPage = () => {
           serviceType === "rental"
             ? searchFormData.rentalPackage || null
             : null,
-        packageId: serviceType === "rental"
+        packageId:
+          serviceType === "rental"
             ? searchFormData.rentalPackage || null
             : null,
         exactLocation: travellerInfo.exactPickupLocation,
@@ -390,13 +383,13 @@ const BookingDetailsPage = () => {
         paymentMethod: paymentOption, // Add payment method
         paymentStatus: paymentOption === "offline" ? "pending" : "paid", // Set status based on option
         ...(selectedActivities.length > 0 && {
-          addons: selectedActivities.map(a => ({
+          addons: selectedActivities.map((a) => ({
             activityId: a._id,
             title: a.title,
-            price: a.price
+            price: a.price,
           })),
           addonsTotal: activitiesTotal,
-        })
+        }),
       };
     }
 
@@ -499,9 +492,6 @@ const BookingDetailsPage = () => {
                         <div>
                           <p className="font-grotesk font-bold text-sm text-black">
                             {feature.text}
-                          </p>
-                          <p className="font-grotesk text-xs text-gray-600">
-                            {feature.description}
                           </p>
                         </div>
                       </div>
@@ -921,7 +911,10 @@ const BookingDetailsPage = () => {
                 </h4>
                 <div className="space-y-4">
                   {cityActivities.map((activity) => (
-                    <div key={activity._id} className="flex items-center justify-between">
+                    <div
+                      key={activity._id}
+                      className="flex items-center justify-between"
+                    >
                       <label className="flex items-center gap-3 cursor-pointer">
                         <input
                           type="checkbox"
@@ -937,13 +930,16 @@ const BookingDetailsPage = () => {
                       </label>
                       <div className="flex items-center gap-4">
                         <span className="font-grotesk font-bold text-base text-orange-500">
-                          ₹{activity.price.toLocaleString("en-IN", {
+                          ₹
+                          {activity.price.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
                         </span>
-                        <button 
-                          onClick={() => setSelectedActivityForDetails(activity)}
+                        <button
+                          onClick={() =>
+                            setSelectedActivityForDetails(activity)
+                          }
                           className="text-sm text-blue-500 hover:underline"
                         >
                           View Details
@@ -974,9 +970,12 @@ const BookingDetailsPage = () => {
                 {[
                   {
                     value: "half",
-                    label: `Pay ₹${(finalTotalAmount / 2).toLocaleString("en-IN", {
-                      minimumFractionDigits: 2,
-                    })} now (Half Payment)`,
+                    label: `Pay ₹${(finalTotalAmount / 2).toLocaleString(
+                      "en-IN",
+                      {
+                        minimumFractionDigits: 2,
+                      }
+                    )} now (Half Payment)`,
                   },
                   {
                     value: "full",
@@ -1033,10 +1032,12 @@ const BookingDetailsPage = () => {
             </div>
             <div className="p-5">
               <p className="text-gray-600 mb-4">
-                {selectedActivityForDetails.description || "No description available."}
+                {selectedActivityForDetails.description ||
+                  "No description available."}
               </p>
               <span className="font-grotesk font-bold text-lg text-orange-500">
-                Price: ₹{selectedActivityForDetails.price.toLocaleString("en-IN", {
+                Price: ₹
+                {selectedActivityForDetails.price.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -1050,9 +1051,11 @@ const BookingDetailsPage = () => {
                 }}
                 className="bg-orange-500 hover:bg-black text-white font-grotesk font-bold py-2 px-4 rounded-full text-base transition-colors"
               >
-                {selectedActivities.some(a => a._id === selectedActivityForDetails._id)
-                  ? 'Remove from Booking'
-                  : 'Add to Booking'}
+                {selectedActivities.some(
+                  (a) => a._id === selectedActivityForDetails._id
+                )
+                  ? "Remove from Booking"
+                  : "Add to Booking"}
               </button>
             </div>
           </div>

@@ -1,9 +1,17 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import Header from '../components/header';
-import { toast } from 'sonner';
-import { api } from '../api/api-config';
-import { CalendarIcon, MapPinIcon, ClockIcon, TrashIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import Header from "../components/header";
+import { toast } from "sonner";
+import { api } from "../api/api-config";
+import {
+  CalendarIcon,
+  MapPinIcon,
+  ClockIcon,
+  TrashIcon,
+  ExclamationTriangleIcon,
+  CurrencyRupeeIcon,
+  ArrowLeftIcon,
+} from "@heroicons/react/24/outline";
 
 const MyBookingDetailPage = () => {
   const location = useLocation();
@@ -17,8 +25,14 @@ const MyBookingDetailPage = () => {
         <div className="flex-grow flex items-center justify-center">
           <div className="text-center">
             <h2 className="text-2xl font-bold mb-4">Booking Not Found</h2>
-            <p>The booking details could not be loaded. Please go back to your bookings and try again.</p>
-            <button onClick={() => navigate('/my-bookings')} className="mt-4 bg-orange-500 hover:bg-black text-white font-bold py-2 px-4 rounded-full">
+            <p>
+              The booking details could not be loaded. Please go back to your
+              bookings and try again.
+            </p>
+            <button
+              onClick={() => navigate("/my-bookings")}
+              className="mt-4 bg-orange-500 hover:bg-black text-white font-bold py-2 px-4 rounded-full"
+            >
               My Bookings
             </button>
           </div>
@@ -27,22 +41,45 @@ const MyBookingDetailPage = () => {
     );
   }
 
-  const { bookingId, createdAt, pickupDateTime, startLocation, destinations, totalAmount, distance, serviceType, carCategory = 'Car' } = booking;
+  const {
+    bookingId,
+    createdAt,
+    pickupDateTime,
+    startLocation,
+    exactLocation,
+    destinations,
+    totalAmount,
+    distance,
+    serviceType,
+    userId,
+    recievedAmount,
+    carCategory = "Car",
+  } = booking;
+
   const bookingDate = new Date(createdAt);
   const pickupDate = new Date(pickupDateTime);
 
-  
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Header />
       <main className="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-12 mt-20">
-        <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200">
+        <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg border border-gray-200">
           {/* Header Section */}
-          <div className="p-6 sm:p-8 border-b border-gray-200 flex justify-between items-start">
+          <div className="p-6 border-b-2 border-gray-300 flex justify-between items-center">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 font-grotesk">Booking Invoice</h2>
-              <p className="text-sm text-gray-500 mt-1">Booking ID: {bookingId}</p>
+              <h1 className="text-3xl font-extrabold">Booking Invoice</h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Booking ID: <span className="font-semibold">{bookingId}</span>
+              </p>
             </div>
+
+            <button
+              onClick={() => navigate("/my-bookings")}
+              className="flex items-center gap-2 px-4 py-2 border-2 rounded-full border-orange-500 text-orange-600 hover:bg-orange-50 text-sm font-semibold"
+            >
+              <ArrowLeftIcon className="h-4 w-4" />
+              Back
+            </button>
           </div>
 
           {/* Booking Summary */}
@@ -50,29 +87,63 @@ const MyBookingDetailPage = () => {
             <div className="flex items-center gap-4">
               <CalendarIcon className="h-8 w-8 text-orange-500" />
               <div>
-                <p className="text-sm font-semibold text-gray-600">Booking Date</p>
-                <p className="text-base font-bold text-gray-900">{bookingDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                <p className="text-sm font-semibold text-gray-600">
+                  Booking Date
+                </p>
+                <p className="text-base font-bold text-gray-900">
+                  {bookingDate.toLocaleDateString("en-IN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
               <ClockIcon className="h-8 w-8 text-orange-500" />
               <div>
-                <p className="text-sm font-semibold text-gray-600">Booking Time</p>
-                <p className="text-base font-bold text-gray-900">{bookingDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                <p className="text-sm font-semibold text-gray-600">
+                  Booking Time
+                </p>
+                <p className="text-base font-bold text-gray-900">
+                  {bookingDate.toLocaleTimeString("en-IN", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <p className="text-3xl font-bold text-gray-900">₹{totalAmount.toLocaleString('en-IN')}</p>
+              <CurrencyRupeeIcon className="size-8 text-orange-500" />
               <div>
-                <p className="text-sm font-semibold text-gray-600">Total Amount</p>
+                <p className="text-sm font-semibold text-gray-600">
+                  Total Amount
+                </p>
+                <p className="text-base font-bold text-gray-900">
+                  ₹{totalAmount.toLocaleString("en-IN")} (
+                  {recievedAmount
+                    ? `${recievedAmount.toLocaleString("en-IN")} Paid`
+                    : "Pending"}
+                  )
+                </p>
               </div>
             </div>
           </div>
 
           {/* Itinerary Details */}
           <div className="p-6 sm:p-8 border-t border-gray-200">
-            <h3 className="text-xl font-bold text-gray-800 mb-4 font-grotesk">Itinerary Details</h3>
+            <h3 className="text-xl font-bold text-gray-800 mb-4 font-grotesk">
+              Itinerary Details
+            </h3>
             <div className="space-y-4">
+              <div className="flex items-start gap-4">
+                <MapPinIcon className="h-6 w-6 text-green-500 mt-1" />
+                <div>
+                  <p className="font-semibold text-gray-800">Exact Pickup</p>
+                  <p className="text-gray-600">{exactLocation}</p>
+                </div>
+              </div>
               <div className="flex items-start gap-4">
                 <MapPinIcon className="h-6 w-6 text-green-500 mt-1" />
                 <div>
@@ -80,25 +151,57 @@ const MyBookingDetailPage = () => {
                   <p className="text-gray-600">{startLocation.address}</p>
                 </div>
               </div>
-              {destinations && destinations.length > 0 && (
-                <div className="flex items-start gap-4">
-                  <MapPinIcon className="h-6 w-6 text-red-500 mt-1" />
-                  <div>
-                    <p className="font-semibold text-gray-800">Dropoff Address</p>
-                    <p className="text-gray-600">{destinations[destinations.length - 1].address}</p>
-                  </div>
-                </div>
-              )}
+              {destinations && destinations.length > 1
+                ? destinations.map((destination, idx) => (
+                    <div className="flex items-start gap-4" key={idx}>
+                      <MapPinIcon className="h-6 w-6 text-red-500 mt-1" />
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          Destination - Stop {idx + 1}
+                        </p>
+                        <p className="text-gray-600">{destination.address}</p>
+                      </div>
+                    </div>
+                  ))
+                : destinations.length === 1 && (
+                    <div className="flex items-start gap-4">
+                      <MapPinIcon className="h-6 w-6 text-red-500 mt-1" />
+                      <div>
+                        <p className="font-semibold text-gray-800">
+                          Drop Location
+                        </p>
+                        <p className="text-gray-600">
+                          {destinations[0].address}
+                        </p>
+                      </div>
+                    </div>
+                  )}
               <div className="flex items-start gap-4">
                 <CalendarIcon className="h-6 w-6 text-orange-500 mt-1" />
                 <div>
-                  <p className="font-semibold text-gray-800">Pickup Date & Time</p>
-                  <p className="text-gray-600">{pickupDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })} at {pickupDate.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                  <p className="font-semibold text-gray-800">
+                    Pickup Date & Time
+                  </p>
+                  <p className="text-gray-600">
+                    {pickupDate.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}{" "}
+                    at{" "}
+                    {pickupDate.toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <p className="font-semibold text-gray-800">Service Type:</p>
-                <p className="text-gray-600">{serviceType.replace(/_/g, ' ').toUpperCase()}</p>
+                <p className="text-gray-600">
+                  {serviceType.replace(/_/g, " ").toUpperCase()}
+                </p>
               </div>
               <div className="flex items-start gap-4">
                 <p className="font-semibold text-gray-800">Car Category:</p>
@@ -106,17 +209,50 @@ const MyBookingDetailPage = () => {
               </div>
               {distance > 0 && (
                 <div className="flex items-start gap-4">
-                  <p className="font-semibold text-gray-800">Expected Distance:</p>
+                  <p className="font-semibold text-gray-800">
+                    Expected Distance:
+                  </p>
                   <p className="text-gray-600">{distance} Km</p>
                 </div>
               )}
             </div>
           </div>
 
+          {/* User Details (read-only) */}
+          <div className="p-6 sm:p-8 border-t border-gray-200">
+            <h3 className="text-xl font-bold text-gray-800 mb-4 font-grotesk">
+              User Details
+            </h3>
+            <div className="grid grid-cols-1 gap-4 max-w-md">
+              <div>
+                <p className="text-sm font-semibold text-gray-700">
+                  Full Name:
+                </p>
+                <p className="text-gray-900">
+                  {userId.fullName || booking.fullName || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Email:</p>
+                <p className="text-gray-900">
+                  {userId.email || booking.email || "-"}
+                </p>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-gray-700">Mobile:</p>
+                <p className="text-gray-900">
+                  {userId.mobile || booking.mobile || "-"}
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Inclusions & Exclusions */}
           <div className="p-6 sm:p-8 border-t border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div>
-              <h4 className="text-lg font-bold text-gray-800 mb-3 font-grotesk">Inclusions</h4>
+              <h4 className="text-lg font-bold text-gray-800 mb-3 font-grotesk">
+                Inclusions
+              </h4>
               <ul className="space-y-2 text-gray-600 list-disc list-inside">
                 <li>Driver & Fuel Charges</li>
                 <li>Toll, Tax, Parking & State Tax</li>
@@ -124,7 +260,9 @@ const MyBookingDetailPage = () => {
               </ul>
             </div>
             <div>
-              <h4 className="text-lg font-bold text-gray-800 mb-3 font-grotesk">Exclusions</h4>
+              <h4 className="text-lg font-bold text-gray-800 mb-3 font-grotesk">
+                Exclusions
+              </h4>
               <ul className="space-y-2 text-gray-600 list-disc list-inside">
                 <li>Any extra kilometers driven</li>
                 <li>Extra hours</li>
@@ -138,17 +276,27 @@ const MyBookingDetailPage = () => {
             <div className="flex items-start gap-3">
               <ExclamationTriangleIcon className="h-6 w-6 text-yellow-600" />
               <div>
-                <h4 className="text-lg font-bold text-yellow-800 mb-2 font-grotesk">Important Notes</h4>
+                <h4 className="text-lg font-bold text-yellow-800 mb-2 font-grotesk">
+                  Important Notes
+                </h4>
                 <ul className="space-y-2 text-sm text-yellow-700 list-disc list-inside">
-                  <li>One Day Means One Calendar day from Midnight (12:00:00 Midnight to 23:50:00 Midnight)</li>
-                  <li>Kilometers (Km) and Hours will be Calculated from Garage to Garage or Specified</li>
+                  <li>
+                    One Day Means One Calendar day from Midnight (12:00:00
+                    Midnight to 23:50:00 Midnight)
+                  </li>
+                  <li>
+                    Kilometers (Km) and Hours will be Calculated from Garage to
+                    Garage or Specified
+                  </li>
                   <li>Air Con will be switched off in Hill Areas</li>
-                  <li>If Driver Drives Vehicle between 00:00:00 to 00:00:00, Driver Allowance/Night Charges 20 will be Applicable</li>
+                  <li>
+                    If Driver Drives Vehicle between 00:00:00 to 00:00:00,
+                    Driver Allowance/Night Charges 20 will be Applicable
+                  </li>
                 </ul>
               </div>
             </div>
           </div>
-
         </div>
       </main>
     </div>

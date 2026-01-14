@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   ChevronDownIcon,
   MagnifyingGlassIcon,
-  FunnelIcon,
   CheckCircleIcon,
   ArrowPathIcon,
   MapPinIcon,
@@ -12,6 +11,9 @@ import {
   CurrencyDollarIcon,
   XMarkIcon,
   ChevronRightIcon,
+  FunnelIcon,
+  BanknotesIcon,
+  TicketIcon,
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../../context/SearchContext";
@@ -23,6 +25,9 @@ const iconMap = {
   ClockIcon,
   BriefcaseIcon,
   CalendarIcon,
+  FunnelIcon,
+  BanknotesIcon,
+  TicketIcon,
 };
 
 const ListingPage = () => {
@@ -40,7 +45,6 @@ const ListingPage = () => {
     showAdults: true,
   });
   const [isActivity, setIsActivity] = useState(false);
-
 
   const [priceRange, setPriceRange] = useState([0, 100000]);
   const [selectedSeats, setSelectedSeats] = useState([]);
@@ -140,15 +144,7 @@ const ListingPage = () => {
             const baseFare = cat.baseFare || 0;
             const totalAmount = cat.totalAmount || 0;
             const perKmCharge = cat.perKmCharge || 0; // Add this line
-
-            let seats = "5 Seats";
-            if (categoryName.includes("HATCH")) seats = "4 Seats";
-            if (categoryName.includes("SEDAN")) seats = "5 Seats";
-            if (
-              categoryName.includes("SUV") ||
-              categoryName.includes("MINIVAN")
-            )
-              seats = "7 Seats";
+            const seats = cat.seats || 4;
 
             return {
               id: cat._id || idx,
@@ -157,30 +153,39 @@ const ListingPage = () => {
                 cat.type.image?.url ||
                 "https://via.placeholder.com/300x200?text=Car+Image",
               name: categoryName,
-              features: ["AC", "Automatic", "Petrol", seats],
+              features: ["AC", `Seats ${seats} + 1`, "Comfort"],
               marketFare,
               baseFare,
               perKmCharge,
               actualPrice: Math.round(totalAmount),
               seats,
-              description: `Market Rate: ₹${marketFare}/km | Total: ₹${Math.round(
-                totalAmount
-              )}`,
               inclusions: [
-                { text: "24/7 Roadside Assistance", icon: "CheckCircleIcon" },
+                // { text: "24/7 Roadside Assistance", icon: "CheckCircleIcon" },
                 {
-                  text: "Free Cancellation",
-                  icon: "ArrowPathIcon",
+                  text: "Driver Allowance",
+                  icon: "BriefcaseIcon",
                 },
-                ...(cat.freeKmPerDay
-                  ? [
-                      {
-                        text: `Free ${cat.freeKmPerDay} Km included Per Day. After that ₹${cat.extraKmCharge}/Km`,
-                        icon: "MapPinIcon",
-                      },
-                    ]
-                  : []),
-                ...(cat.perHourCharge
+                {
+                  text: "Fuel Charges",
+                  icon: "FunnelIcon",
+                },
+                {
+                  text: "Toll & Parking (as per route)",
+                  icon: "TicketIcon",
+                },
+                {
+                  text: "Interstate Permit Charges if applicable",
+                  icon: "BanknotesIcon",
+                },
+                // ...(cat.freeKmPerDay
+                //   ? [
+                //       {
+                //         text: `Free ${cat.freeKmPerDay} Km included Per Day. After that ₹${cat.extraKmCharge}/Km`,
+                //         icon: "MapPinIcon",
+                //       },
+                //     ]
+                //   : []),
+                ...(currentServiceType === "rental" && cat.perHourCharge
                   ? [
                       {
                         text: `Extra Hour: ₹${cat.perHourCharge}/Hr`,
@@ -188,22 +193,26 @@ const ListingPage = () => {
                       },
                     ]
                   : []),
-                ...(cat.driverAllowance
-                  ? [
-                      {
-                        text: `Driver Allowance Per Day: ₹${cat.driverAllowance}`,
-                        icon: "BriefcaseIcon",
-                      },
-                    ]
-                  : []),
-                ...(cat.nightCharge
-                  ? [
-                      {
-                        text: `Night Charge Per Night: ₹${cat.nightCharge}`,
-                        icon: "CalendarIcon",
-                      },
-                    ]
-                  : []),
+                // ...(cat.driverAllowance
+                //   ? [
+                //       {
+                //         text: `Driver Allowance Per Day: ₹${cat.driverAllowance}`,
+                //         icon: "BriefcaseIcon",
+                //       },
+                //     ]
+                //   : []),
+                // ...(cat.nightCharge
+                //   ? [
+                //       {
+                //         text: `Night Charge Per Night: ₹${cat.nightCharge}`,
+                //         icon: "CalendarIcon",
+                //       },
+                //     ]
+                //   : []),
+                {
+                  text: "Free Cancellation upto 48 Hrs before pick up",
+                  icon: "ArrowPathIcon",
+                },
               ],
             };
           })
@@ -240,12 +249,9 @@ const ListingPage = () => {
       );
     }
     setFilteredItems(tempItems);
-
   }, [priceRange, selectedSeats, selectedCategories, items]);
 
   const currentFilteredItems = filteredItems;
-
-
 
   return (
     <section className="max-w-7xl mx-auto p-4 sm:p-6">
@@ -415,7 +421,6 @@ const ListingPage = () => {
                   serviceType={searchFormData.serviceType || "rental"}
                 />
               ))}
-
             </>
           )}
         </main>
@@ -632,9 +637,6 @@ const ItemCard = ({ item, serviceType }) => {
           </div>
           <div className="p-4 space-y-3">
             <h3 className="text-xl font-extrabold font-grotesk">{item.name}</h3>
-            <p className="text-sm text-gray-600 line-clamp-2">
-              {item.description}
-            </p>
             <p className="text-xs text-gray-500">
               Cancellation: {item.cancellationPolicy}
             </p>
@@ -709,7 +711,6 @@ const ItemCard = ({ item, serviceType }) => {
             <h3 className="text-3xl font-grotesk font-extrabold mb-2">
               {item.name}
             </h3>
-            <p className="mt-2 text-gray-600">{item.description}</p>
             <p className="mt-2 text-gray-600 font-semibold">
               Cancellation Policy: {item.cancellationPolicy}
             </p>
@@ -888,7 +889,6 @@ const ItemCard = ({ item, serviceType }) => {
               </li>
             ))}
           </ul>
-          <p className="mt-2 text-gray-600">{item.description}</p>
         </div>
         <div className="w-1/4 flex flex-col justify-center items-end text-right border-l border-[#d4d4d4]">
           {serviceType !== "transfer" && (

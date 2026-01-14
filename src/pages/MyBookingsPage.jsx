@@ -206,7 +206,7 @@ const MyBookingsPage = () => {
             <div className="flex items-start gap-3">
               <MapPinIcon className="h-5 w-5 text-orange-500 mt-1" />
               <div>
-                <p className="font-semibold">Dropoff:</p>
+                <p className="font-semibold">Drop Location:</p>
                 <p>{destinations[0].address}</p>
               </div>
             </div>

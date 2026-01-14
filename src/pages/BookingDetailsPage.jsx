@@ -420,16 +420,6 @@ const BookingDetailsPage = () => {
     ? carOrActivityBaseTotal
     : carOrActivityBaseTotal + activitiesTotal;
 
-  // Direct values from apiCategory
-  const baseFare = apiCategory?.baseFare || 0;
-  const taxAmount = apiCategory?.tax || 0; // Using 'tax' directly as requested
-  const extraKmCharges = apiCategory?.extraKmCharges || 0;
-  const totalNightCharge = apiCategory?.totalNightCharge || 0;
-  const hillCharge = apiCategory?.hillCharge || 0;
-  const totalDriverAllowance = apiCategory?.totalDriverAllowance || 0;
-  const tollCharges = apiCategory?.tollCharges || 0; // No change requested for this
-  const discount = apiCategory?.discount || 0; // No change requested for this
-
   // ======================================================================
 
   return (
@@ -841,15 +831,31 @@ const BookingDetailsPage = () => {
 
                   {/* Hill Charge - For Outstation */}
                   {serviceType === "outstation" &&
-                    apiCategory?.hillCharge > 0 && (
+                    apiCategory?.totalHillCharge > 0 && (
                       <div className="flex justify-between">
                         <span className="text-gray-600">Hill Charge</span>
                         <span className="font-semibold">
                           ₹
-                          {apiCategory.hillCharge.toLocaleString("en-IN", {
+                          {apiCategory.totalHillCharge.toLocaleString("en-IN", {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
                           })}
+                        </span>
+                      </div>
+                    )}
+                  {serviceType === "outstation" &&
+                    apiCategory?.totalPermitCharge > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Permit Charge</span>
+                        <span className="font-semibold">
+                          ₹
+                          {apiCategory.totalPermitCharge.toLocaleString(
+                            "en-IN",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }
+                          )}
                         </span>
                       </div>
                     )}

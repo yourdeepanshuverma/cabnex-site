@@ -77,7 +77,7 @@ const BookingDetailsPage = () => {
         featureMap[f] || {
           text: f,
           description: "Feature available for your journey.",
-        }
+        },
     );
   };
 
@@ -242,7 +242,7 @@ const BookingDetailsPage = () => {
   useEffect(() => {
     const total = selectedActivities.reduce(
       (sum, activity) => sum + activity.price,
-      0
+      0,
     );
     setActivitiesTotal(total);
   }, [selectedActivities]);
@@ -346,26 +346,27 @@ const BookingDetailsPage = () => {
             ? searchFormData.multicityStops.map((stop) => ({
                 address: stop.selectedDropoffAddress,
                 place_id: stop.dropoffPlaceId || null,
+                dateTime: stop.dateTime,
               }))
             : showDropoff
-            ? [
-                {
-                  address: travellerInfo.dropoffLocation.name,
-                  place_id: travellerInfo.dropoffLocation.place_id || null,
-                },
-              ]
-            : [],
+              ? [
+                  {
+                    address: travellerInfo.dropoffLocation.name,
+                    place_id: travellerInfo.dropoffLocation.place_id || null,
+                  },
+                ]
+              : [],
         returnDateTime:
           serviceType === "outstation" &&
           searchFormData.outstationTripType === "round-trip"
             ? searchFormData.outstationReturnDateTime
             : serviceType === "outstation" &&
-              searchFormData.outstationTripType === "multicity" &&
-              searchFormData.multicityStops.length > 0
-            ? searchFormData.multicityStops[
-                searchFormData.multicityStops.length - 1
-              ].dateTime
-            : null,
+                searchFormData.outstationTripType === "multicity" &&
+                searchFormData.multicityStops.length > 0
+              ? searchFormData.multicityStops[
+                  searchFormData.multicityStops.length - 1
+                ].dateTime
+              : null,
         distance: searchFormData.distance || 0,
         totalAmount: finalTotalAmount,
         city:
@@ -800,7 +801,7 @@ const BookingDetailsPage = () => {
                             {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            }
+                            },
                           )}
                         </span>
                       </div>
@@ -823,7 +824,7 @@ const BookingDetailsPage = () => {
                             {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            }
+                            },
                           )}
                         </span>
                       </div>
@@ -854,7 +855,7 @@ const BookingDetailsPage = () => {
                             {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
-                            }
+                            },
                           )}
                         </span>
                       </div>
@@ -925,7 +926,7 @@ const BookingDetailsPage = () => {
                         <input
                           type="checkbox"
                           checked={selectedActivities.some(
-                            (selected) => selected._id === activity._id
+                            (selected) => selected._id === activity._id,
                           )}
                           onChange={() => handleActivitySelection(activity)}
                           className="accent-orange-500 h-5 w-5"
@@ -980,7 +981,7 @@ const BookingDetailsPage = () => {
                       "en-IN",
                       {
                         minimumFractionDigits: 2,
-                      }
+                      },
                     )} now (Half Payment)`,
                   },
                   {
@@ -1058,7 +1059,7 @@ const BookingDetailsPage = () => {
                 className="bg-orange-500 hover:bg-black text-white font-grotesk font-bold py-2 px-4 rounded-full text-base transition-colors"
               >
                 {selectedActivities.some(
-                  (a) => a._id === selectedActivityForDetails._id
+                  (a) => a._id === selectedActivityForDetails._id,
                 )
                   ? "Remove from Booking"
                   : "Add to Booking"}

@@ -59,6 +59,26 @@ const MyBookingDetailPage = () => {
   const bookingDate = new Date(createdAt);
   const pickupDate = new Date(pickupDateTime);
 
+  const formatDateTime = (dateTime) => {
+    if (!dateTime) return "Date not selected";
+
+    const dateObj = new Date(dateTime);
+    if (isNaN(dateObj.getTime())) return "";
+
+    const date = dateObj.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    const time = dateObj.toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+
+    return `${date} at ${time}`;
+  };
   return (
     <div className="flex flex-col min-h-screen bg-gray-100">
       <Header />
@@ -147,7 +167,21 @@ const MyBookingDetailPage = () => {
               <div className="flex items-start gap-4">
                 <MapPinIcon className="h-6 w-6 text-green-500 mt-1" />
                 <div>
-                  <p className="font-semibold text-gray-800">Pickup Address</p>
+                  <p className="font-semibold text-gray-800">
+                    Pickup Address ({" "}
+                    {pickupDate.toLocaleDateString("en-IN", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}{" "}
+                    at{" "}
+                    {pickupDate.toLocaleTimeString("en-IN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}{" "}
+                    )
+                  </p>
                   <p className="text-gray-600">{startLocation.address}</p>
                 </div>
               </div>
@@ -157,7 +191,8 @@ const MyBookingDetailPage = () => {
                       <MapPinIcon className="h-6 w-6 text-red-500 mt-1" />
                       <div>
                         <p className="font-semibold text-gray-800">
-                          Destination - Stop {idx + 1}
+                          Destination – Stop {idx + 1} (
+                          {formatDateTime(destination.dateTime)})
                         </p>
                         <p className="text-gray-600">{destination.address}</p>
                       </div>
@@ -176,27 +211,6 @@ const MyBookingDetailPage = () => {
                       </div>
                     </div>
                   )}
-              <div className="flex items-start gap-4">
-                <CalendarIcon className="h-6 w-6 text-orange-500 mt-1" />
-                <div>
-                  <p className="font-semibold text-gray-800">
-                    Pickup Date & Time
-                  </p>
-                  <p className="text-gray-600">
-                    {pickupDate.toLocaleDateString("en-IN", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}{" "}
-                    at{" "}
-                    {pickupDate.toLocaleTimeString("en-IN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      hour12: true,
-                    })}
-                  </p>
-                </div>
-              </div>
               <div className="flex items-start gap-4">
                 <p className="font-semibold text-gray-800">Service Type:</p>
                 <p className="text-gray-600">

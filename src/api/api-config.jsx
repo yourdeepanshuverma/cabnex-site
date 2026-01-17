@@ -2,6 +2,7 @@ import axios from "axios";
 
 const api = axios.create({
   baseURL: "https://api.cabnex.in",
+  // baseURL: "http://localhost:3000",
   headers: {
     "Content-Type": "application/json",
   },
@@ -32,7 +33,7 @@ const endpoints = {
 const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
 if (!GOOGLE_MAPS_API_KEY) {
   console.warn(
-    "Google Maps API Key is missing! Add VITE_GOOGLE_MAPS_API_KEY in .env file."
+    "Google Maps API Key is missing! Add VITE_GOOGLE_MAPS_API_KEY in .env file.",
   );
 }
 const googleConfig = {

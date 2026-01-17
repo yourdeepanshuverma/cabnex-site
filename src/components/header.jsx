@@ -49,8 +49,6 @@ import {
   CalendarIcon,
 } from "@heroicons/react/24/outline";
 
-
-
 const dropdownItems = [
   { name: "My Profile", href: "/profile" },
   { name: "My Bookings", href: "/my-bookings" },
@@ -130,11 +128,6 @@ export default function Header() {
     setForgotPasswordErrors((prev) => ({ ...prev, forgotOtp: "" }));
   };
 
-  // Debugging context
-  useEffect(() => {
-    console.log("SearchContext values:", { isLoggedIn, user });
-  }, [isLoggedIn, user]);
-
   // Check for existing user session from cookies or localStorage
   useEffect(() => {
     const storedUserData = localStorage.getItem("userData"); // Renamed to avoid confusion with parameter
@@ -153,40 +146,57 @@ export default function Header() {
         ) {
           setUser(parsedUserData);
           setIsLoggedIn(true);
-          console.log("User restored from localStorage with full data:", parsedUserData);
+
           // Sync cookie with fullName - keep this as it updates the cookie if necessary
           if (userNameCookie !== parsedUserData.fullName) {
             Cookies.set("userName", parsedUserData.fullName, { expires: 7 });
           }
         } else {
-          console.warn("Invalid user data in localStorage, clearing:", parsedUserData);
+          console.warn(
+            "Invalid user data in localStorage, clearing:",
+            parsedUserData,
+          );
           localStorage.removeItem("userData");
           setIsLoggedIn(false);
           setUser(null);
           // If invalid, try fallback to cookie if it exists (though it will be incomplete)
           if (userNameCookie) {
-             setUser({ fullName: userNameCookie });
-             setIsLoggedIn(true);
-             console.log("User partially restored from cookies after invalid localStorage data:", userNameCookie);
+            setUser({ fullName: userNameCookie });
+            setIsLoggedIn(true);
+            console.log(
+              "User partially restored from cookies after invalid localStorage data:",
+              userNameCookie,
+            );
           }
         }
       } catch (error) {
-        console.error("Error parsing userData from localStorage, clearing:", error);
+        console.error(
+          "Error parsing userData from localStorage, clearing:",
+          error,
+        );
         localStorage.removeItem("userData");
         setIsLoggedIn(false);
         setUser(null);
-         // If error, try fallback to cookie if it exists
+        // If error, try fallback to cookie if it exists
         if (userNameCookie) {
-           setUser({ fullName: userNameCookie });
-           setIsLoggedIn(true);
-           console.log("User partially restored from cookies after error in localStorage parsing:", userNameCookie);
+          setUser({ fullName: userNameCookie });
+          setIsLoggedIn(true);
+          console.log(
+            "User partially restored from cookies after error in localStorage parsing:",
+            userNameCookie,
+          );
         }
       }
-    } else if (userNameCookie) { // Only fallback to userName cookie if NO userData in localStorage
+    } else if (userNameCookie) {
+      // Only fallback to userName cookie if NO userData in localStorage
       setUser({ fullName: userNameCookie });
       setIsLoggedIn(true);
-      console.log("User restored from cookies (no localStorage userData):", userNameCookie);
-    } else { // No user data anywhere
+      console.log(
+        "User restored from cookies (no localStorage userData):",
+        userNameCookie,
+      );
+    } else {
+      // No user data anywhere
       setIsLoggedIn(false);
       setUser(null);
       console.log("No user found in cookies or localStorage.");
@@ -295,7 +305,7 @@ export default function Header() {
         newErrors.forgotIdentifier = "Email or Mobile Number is required";
       } else if (
         !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(
-          forgotIdentifier
+          forgotIdentifier,
         ) &&
         !/^\d{10}$/.test(forgotIdentifier)
       ) {
@@ -457,7 +467,7 @@ export default function Header() {
     } catch (error) {
       toast.error(
         "Registration failed: " +
-          (error.response?.data?.message || error.message)
+          (error.response?.data?.message || error.message),
       );
       console.error("Register error:", error);
     } finally {
@@ -476,7 +486,7 @@ export default function Header() {
     setForgotPasswordErrors({}); // Clear previous errors
     if (!validateForgotPassword("sendOtp")) {
       Object.values(forgotPasswordErrors).forEach((error) =>
-        toast.error(error)
+        toast.error(error),
       );
       return;
     }
@@ -508,7 +518,7 @@ export default function Header() {
     setForgotPasswordErrors({}); // Clear previous errors
     if (!validateForgotPassword("verifyOtp")) {
       Object.values(forgotPasswordErrors).forEach((error) =>
-        toast.error(error)
+        toast.error(error),
       );
       return;
     }
@@ -518,7 +528,7 @@ export default function Header() {
       console.log("Verifying OTP:", forgotOtp);
       const response = await api.post(
         "/api/v1/auth/verify-forget-otp", // Assuming a dedicated verify-forgot-otp endpoint
-        payload
+        payload,
       );
       console.log("Verify OTP response:", response.data);
       if (response.data.success) {
@@ -542,7 +552,7 @@ export default function Header() {
     setForgotPasswordErrors({}); // Clear previous errors
     if (!validateForgotPassword("resetPassword")) {
       Object.values(forgotPasswordErrors).forEach((error) =>
-        toast.error(error)
+        toast.error(error),
       );
       return;
     }
@@ -622,7 +632,7 @@ export default function Header() {
               />
             </button>
           </div>
-          
+
           <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-x-4">
             {isLoggedIn && user && (
               <Popover className="relative cursor-pointer">
@@ -723,7 +733,6 @@ export default function Header() {
                 <XMarkIcon aria-hidden="true" className="h-6 w-6" />
               </button>
             </div>
-           
           </DialogPanel>
         </Dialog>
         <Dialog open={loginOpen} onClose={setLoginOpen}>
@@ -983,21 +992,21 @@ export default function Header() {
                               const response = await api.post(
                                 "/api/v1/otp/send",
                                 { phone: mobile },
-                                { withCredentials: false }
+                                { withCredentials: false },
                               );
                               if (response.data.success) {
                                 setShowPhoneOTP(true);
                                 toast.info(`OTP sent to ${mobile}.`);
                               } else {
                                 toast.error(
-                                  response.data.message || "Failed to send OTP"
+                                  response.data.message || "Failed to send OTP",
                                 );
                               }
                             } catch (error) {
                               toast.error(
                                 "Error: " +
                                   (error.response?.data?.message ||
-                                    error.message)
+                                    error.message),
                               );
                               console.error("Send OTP error:", error);
                             } finally {
@@ -1044,7 +1053,7 @@ export default function Header() {
                               setIsLoading(true);
                               const response = await api.post(
                                 "/api/v1/otp/verify",
-                                { phone: mobile, otp: phoneOtp.join("") }
+                                { phone: mobile, otp: phoneOtp.join("") },
                               ); // Assuming a verify-otp endpoint
                               if (response.data.success) {
                                 setPhoneVerified(true);
@@ -1054,14 +1063,14 @@ export default function Header() {
                               } else {
                                 toast.error(
                                   response.data.message ||
-                                    "Failed to verify OTP"
+                                    "Failed to verify OTP",
                                 );
                               }
                             } catch (error) {
                               toast.error(
                                 "Error: " +
                                   (error.response?.data?.message ||
-                                    error.message)
+                                    error.message),
                               );
                               console.error("Verify OTP error:", error);
                             } finally {
@@ -1257,8 +1266,8 @@ export default function Header() {
                   {forgotVerified
                     ? "Reset Password"
                     : showForgotOTP
-                    ? "Verify OTP"
-                    : "Forgot Password"}
+                      ? "Verify OTP"
+                      : "Forgot Password"}
                 </h2>
                 <div className="space-y-4">
                   {!forgotVerified && (

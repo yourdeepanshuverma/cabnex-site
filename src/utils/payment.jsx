@@ -3,7 +3,9 @@ import axios from "axios";
 import { toast } from "sonner";
 import { endpoints } from "../api/api-config"; // Import endpoints
 
+// const API_URL = "http://localhost:3000/api/v1";
 const API_URL = "https://api.cabnex.in/api/v1";
+// const BASE_URL = "http://localhost:5173";
 const BASE_URL = "https://cabnex.in";
 // const BASE_URL = "http://localhost:5173";
 
@@ -31,7 +33,7 @@ export const loadRazorpay = async ({
         `${API_URL}/transaction/get-razorpay-key`,
         {
           withCredentials: true,
-        }
+        },
       );
       console.log("Razorpay Key Response:", keyData);
 
@@ -45,7 +47,7 @@ export const loadRazorpay = async ({
       const { data: orderData } = await axios.post(
         `${API_URL}/transaction/create-order`,
         { price: amount },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       console.log("Order Creation Response:", orderData);
 
@@ -78,12 +80,12 @@ export const loadRazorpay = async ({
               destinations: Array.isArray(destinations)
                 ? destinations
                 : destinations
-                ? [
-                    typeof destinations === "object"
-                      ? destinations
-                      : { address: destinations, place_id: null },
-                  ]
-                : [],
+                  ? [
+                      typeof destinations === "object"
+                        ? destinations
+                        : { address: destinations, place_id: null },
+                    ]
+                  : [],
               returnDateTime,
               distance: distance || 0,
               totalAmount,
@@ -97,7 +99,7 @@ export const loadRazorpay = async ({
               verifyPayload,
               {
                 withCredentials: true,
-              }
+              },
             );
             console.log("Backend Verification:", verifyRes.data);
 
@@ -105,7 +107,7 @@ export const loadRazorpay = async ({
               toast.success("Payment verified! Redirecting to success page...");
               // Extract bookingId from the nested structure
               const bookingResponse = encodeURIComponent(
-                JSON.stringify(verifyRes.data)
+                JSON.stringify(verifyRes.data),
               );
               setTimeout(() => {
                 window.location.href = `${BASE_URL}/success?data=${bookingResponse}`;
@@ -113,11 +115,11 @@ export const loadRazorpay = async ({
             } else {
               toast.error(
                 verifyRes.data.message ||
-                  "Verification failed! Redirecting to failure page..."
+                  "Verification failed! Redirecting to failure page...",
               );
               setTimeout(() => {
                 window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(
-                  verifyRes.data.message || "unknown"
+                  verifyRes.data.message || "unknown",
                 )}`;
               }, 2000);
             }
@@ -126,7 +128,7 @@ export const loadRazorpay = async ({
             toast.error("Verification failed! Redirecting to failure page...");
             setTimeout(() => {
               window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(
-                err.response?.data?.message || "network_error"
+                err.response?.data?.message || "network_error",
               )}`;
             }, 2000);
           }
@@ -179,13 +181,13 @@ export const createOfflineBooking = async (bookingDetails) => {
       bookingDetails,
       {
         withCredentials: true,
-      }
+      },
     );
 
     if (bookingRes.data.success) {
       toast.success("Booking successful! Redirecting to success page...");
       const bookingResponse = encodeURIComponent(
-        JSON.stringify(bookingRes.data)
+        JSON.stringify(bookingRes.data),
       );
       setTimeout(() => {
         window.location.href = `${BASE_URL}/success?data=${bookingResponse}`;
@@ -193,7 +195,7 @@ export const createOfflineBooking = async (bookingDetails) => {
     } else {
       toast.error(
         bookingRes.data.message ||
-          "Booking failed! Redirecting to failure page..."
+          "Booking failed! Redirecting to failure page...",
       );
       // setTimeout(() => {
       //   window.location.href = `${BASE_URL}/failure?reason=${encodeURIComponent(

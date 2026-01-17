@@ -124,8 +124,8 @@ const ListingPage = () => {
           time: isTransfer
             ? "-"
             : data.time
-            ? `${Math.floor(data.time / 60)} hrs`
-            : "-",
+              ? `${Math.floor(data.time / 60)} hrs`
+              : "-",
           serviceType:
             currentServiceType.toUpperCase().replace(/_/g, " ") + " TRIP",
           city: "",
@@ -236,16 +236,16 @@ const ListingPage = () => {
     let tempItems = [...items];
     tempItems = tempItems.filter(
       (item) =>
-        item.actualPrice >= priceRange[0] && item.actualPrice <= priceRange[1]
+        item.actualPrice >= priceRange[0] && item.actualPrice <= priceRange[1],
     );
     if (selectedSeats.length > 0) {
       tempItems = tempItems.filter((item) =>
-        selectedSeats.includes(item.seats)
+        selectedSeats.includes(item.seats),
       );
     }
     if (selectedCategories.length > 0) {
       tempItems = tempItems.filter((item) =>
-        selectedCategories.includes(item.name)
+        selectedCategories.includes(item.name),
       );
     }
     setFilteredItems(tempItems);
@@ -320,7 +320,7 @@ const ListingPage = () => {
                         <input
                           type="range"
                           min="0"
-                          max="5000"
+                          max="500000"
                           value={priceRange[1]}
                           onChange={(e) =>
                             setPriceRange([
@@ -353,7 +353,7 @@ const ListingPage = () => {
                               e.target.checked
                                 ? setSelectedSeats([...selectedSeats, seat])
                                 : setSelectedSeats(
-                                    selectedSeats.filter((s) => s !== seat)
+                                    selectedSeats.filter((s) => s !== seat),
                                   )
                             }
                             className="accent-blue-600"
@@ -388,7 +388,7 @@ const ListingPage = () => {
                                     cat,
                                   ])
                                 : setSelectedCategories(
-                                    selectedCategories.filter((c) => c !== cat)
+                                    selectedCategories.filter((c) => c !== cat),
                                   )
                             }
                             className="accent-blue-600"
@@ -474,7 +474,7 @@ const ListingPage = () => {
                 <input
                   type="range"
                   min="0"
-                  max="5000"
+                  max="500000"
                   value={priceRange[1]}
                   onChange={(e) =>
                     setPriceRange([priceRange[0], parseInt(e.target.value)])
@@ -501,7 +501,7 @@ const ListingPage = () => {
                         e.target.checked
                           ? setSelectedSeats([...selectedSeats, seat])
                           : setSelectedSeats(
-                              selectedSeats.filter((s) => s !== seat)
+                              selectedSeats.filter((s) => s !== seat),
                             )
                       }
                       className="accent-orange-500"
@@ -529,14 +529,14 @@ const ListingPage = () => {
                                 cat,
                               ])
                             : setSelectedCategories(
-                                selectedCategories.filter((c) => c !== cat)
+                                selectedCategories.filter((c) => c !== cat),
                               )
                         }
                         className="accent-orange-500"
                       />
                       <span className="text-sm">{cat}</span>
                     </label>
-                  )
+                  ),
                 )}
               </FilterSection>
             </div>
@@ -587,7 +587,7 @@ const ItemCard = ({ item, serviceType }) => {
   const handleBookNow = () => {
     if (item.type === "activity") {
       const originalActivity = searchResult?.data?.activities?.find(
-        (act) => (act._doc?._id || act._id) === item.id
+        (act) => (act._doc?._id || act._id) === item.id,
       );
 
       const bookingItem = {
@@ -605,7 +605,7 @@ const ItemCard = ({ item, serviceType }) => {
       }));
 
       const originalCategory = searchResult?.data?.categories?.find(
-        (cat) => cat._id === item.id
+        (cat) => cat._id === item.id,
       );
 
       const bookingItem = {

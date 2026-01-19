@@ -31,10 +31,10 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   const navigate = useNavigate();
 
   const tabServiceMap = {
-    rental: 0,
+    outstation: 0,
     transfer: 1,
-    outstation: 2,
-    activity: 3,
+    activity: 2,
+    rental: 3,
   };
 
   const [activeTabIndex, setActiveTabIndex] = useState(

@@ -36,7 +36,7 @@ export const SearchProvider = ({ children }) => {
           selectedDropoffAddress: "",
         },
       ],
-      serviceType: "rental",
+      serviceType: "outstation",
       dropoffLocation: null,
       pickupLocation: null,
       transferDirection: "home-to-station",

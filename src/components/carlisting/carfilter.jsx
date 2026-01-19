@@ -143,8 +143,9 @@ const ListingPage = () => {
             const marketFare = cat.marketFare || 0;
             const baseFare = cat.baseFare || 0;
             const totalAmount = cat.totalAmount || 0;
-            const perKmCharge = cat.perKmCharge || 0; // Add this line
-            const seats = cat.seats || 4;
+            const perKmCharge = cat.perKmCharge || 0;
+            const extraKmCharge = cat.extraKmCharge || 0;
+            const seats = cat.type.seats || 4;
 
             return {
               id: cat._id || idx,
@@ -157,6 +158,7 @@ const ListingPage = () => {
               marketFare,
               baseFare,
               perKmCharge,
+              extraKmCharge,
               actualPrice: Math.round(totalAmount),
               seats,
               inclusions: [
@@ -802,7 +804,7 @@ const ItemCard = ({ item, serviceType }) => {
               </span>
             ))}
           </div>
-          <p className="text-xs text-gray-600">Per Km: ₹{item.baseFare}</p>
+          <p className="text-xs text-gray-600">Per Km: ₹{item.extraKmCharge}</p>
           <div className="flex justify-between items-center">
             <p className="text-2xl font-extrabold font-grotesk">
               ₹{item.actualPrice.toLocaleString("en-IN")}
@@ -891,7 +893,7 @@ const ItemCard = ({ item, serviceType }) => {
         <div className="w-1/4 flex flex-col justify-center items-end text-right border-l border-[#d4d4d4]">
           {serviceType !== "transfer" && (
             <div className="flex gap-2">
-              <p className="text-red-600">Per Km: ₹{item.perKmCharge}</p>
+              <p className="text-red-600">Per Km: ₹{item.extraKmCharge}</p>
             </div>
           )}
           <div className="flex items-center gap-2">

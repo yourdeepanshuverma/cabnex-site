@@ -18,8 +18,8 @@ const SuccessPage = () => {
 
     if (encodedData) {
       try {
-        const decoded = JSON.parse(decodeURIComponent(encodedData));
-        setBookingData(decoded?.data?.booking || decoded?.data || null);
+        const decoded = JSON.parse(encodedData);
+        setBookingData(decoded?.data?.booking || null);
         setError(null);
       } catch (error) {
         console.error("Error decoding payment data:", error);
@@ -54,7 +54,7 @@ const SuccessPage = () => {
     doc.text(
       `Pickup Time: ${new Date(bookingData.pickupDateTime).toLocaleString()}`,
       20,
-      100
+      100,
     );
     doc.text(`Status: ${bookingData.status}`, 20, 110);
     doc.save(`Booking_${bookingData.bookingId}.pdf`);
@@ -67,7 +67,7 @@ const SuccessPage = () => {
         <div className="text-center mt-8">
           <CheckCircleIcon
             className={`h-16 w-16 mx-auto mb-4 ${
-              bookingData?.status === "pending"
+              bookingData?.paymentStatus === "pending"
                 ? "text-yellow-500"
                 : "text-green-500"
             }`}
@@ -75,7 +75,7 @@ const SuccessPage = () => {
           />
 
           <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            {bookingData?.status === "pending"
+            {bookingData?.paymentStatus === "pending"
               ? "Booking Request Received"
               : "Payment Successful!"}
           </h1>
@@ -93,7 +93,7 @@ const SuccessPage = () => {
               {error}
             </p>
           ) : bookingData ? (
-            bookingData.status === "pending" ? (
+            bookingData?.paymentStatus === "pending" ? (
               <>
                 <div className="mx-auto max-w-xl text-left space-y-3 bg-gray-50 p-6 rounded-lg">
                   <p className="text-lg text-gray-700">
@@ -233,10 +233,14 @@ const SuccessPage = () => {
               type="button"
               onClick={downloadPDF}
               disabled={
-                isLoading || !bookingData || bookingData?.status === "pending"
+                isLoading ||
+                !bookingData ||
+                bookingData?.paymentStatus === "pending"
               }
               className={`w-full sm:w-auto px-6 py-3 rounded-lg shadow-md transition duration-300 text-white ${
-                isLoading || !bookingData || bookingData?.status === "pending"
+                isLoading ||
+                !bookingData ||
+                bookingData?.paymentStatus === "pending"
                   ? "bg-blue-300 cursor-not-allowed"
                   : "bg-blue-500 hover:bg-blue-600"
               }`}

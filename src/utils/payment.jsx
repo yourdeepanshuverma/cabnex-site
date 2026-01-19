@@ -7,7 +7,6 @@ import { endpoints } from "../api/api-config"; // Import endpoints
 const API_URL = "https://api.cabnex.in/api/v1";
 // const BASE_URL = "http://localhost:5173";
 const BASE_URL = "https://cabnex.in";
-// const BASE_URL = "http://localhost:5173";
 
 export const loadRazorpay = async ({
   amount,

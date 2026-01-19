@@ -218,8 +218,8 @@ const ListingPage = () => {
               ],
             };
           })
-          .filter(Boolean);
-
+          .filter(Boolean)
+          .sort((a, b) => a.actualPrice - b.actualPrice);
         setItems(mappedCars);
         setFilteredItems(mappedCars);
       }

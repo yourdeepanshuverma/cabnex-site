@@ -9,6 +9,7 @@ const API_URL = "https://api.cabnex.in/api/v1";
 const BASE_URL = "https://cabnex.in";
 
 export const loadRazorpay = async ({
+  amount,
   carCategoryName,
   serviceType,
   packageType,
@@ -24,7 +25,6 @@ export const loadRazorpay = async ({
   oneWay,
   user,
 }) => {
-  let amount = 1; // Default to 100 INR
   const initiatePayment = async () => {
     try {
       // Step 1: Get Razorpay Key

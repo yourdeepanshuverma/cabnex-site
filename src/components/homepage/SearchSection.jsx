@@ -349,7 +349,7 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
       }
     } catch (error) {
       console.error("Network Error:", error);
-      alert("Network error.");
+      toast.error(error?.response?.data?.message || "Network error occurred");
     }
   };
 

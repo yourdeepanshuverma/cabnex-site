@@ -16,6 +16,8 @@ import { LoadScript, Autocomplete } from "@react-google-maps/api";
 import { googleConfig, api, endpoints } from "../../api/api-config";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "../../context/SearchContext";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 registerLocale("en-US", enUS);
 
@@ -26,8 +28,13 @@ const getDefaultDateTime = () => {
 };
 
 const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
-  const { searchFormData, setSearchFormData, setSearchResult, isLoggedIn } =
-    useSearch();
+  const {
+    searchFormData,
+    setSearchFormData,
+    user,
+    setSearchResult,
+    isLoggedIn,
+  } = useSearch();
   const navigate = useNavigate();
 
   const tabServiceMap = {
@@ -308,6 +315,12 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
       });
       return;
     }
+    if (!user.isVerified) {
+      toast.error(
+        "Please wait for your account to be verified to perform searches or contact support.",
+      );
+      return;
+    }
     saveFormToContext();
     if (
       !data.pickupLocation ||
@@ -456,152 +469,630 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   };
 
   return (
-    <LoadScript
-      googleMapsApiKey={googleConfig.apiKey}
-      libraries={googleConfig.libraries}
-    >
-      <div className="search-section w-full max-w-7xl mx-auto mt-6 px-4 z-30 relative">
-        <Tabs selectedIndex={activeTabIndex} onSelect={handleTabSwitch}>
-          <TabList className="flex flex-wrap justify-center gap-0 md:justify-start border-gray-200 mb-0">
-            {tabs.map((tab, index, arr) => (
-              <Tab
-                key={index}
-                className={`w-1/2 md:w-auto text-center px-6 py-3 font-grotesk text-md font-medium cursor-pointer backdrop-blur-xl bg-black md:bg-[#cdcdcd33] text-[#ffffff] hover:bg-black transition-colors ${
-                  index === 0
-                    ? "rounded-tl-3xl md:rounded-tl-3xl"
-                    : index === arr.length - 1
-                      ? "rounded-tr-3xl md:rounded-tr-3xl"
-                      : ""
-                }`}
-                selectedClassName="!bg-orange-600 text-white"
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        className="font-grotesk"
+      />
+      <LoadScript
+        googleMapsApiKey={googleConfig.apiKey}
+        libraries={googleConfig.libraries}
+      >
+        <div className="search-section w-full max-w-7xl mx-auto mt-6 px-4 z-30 relative">
+          <Tabs selectedIndex={activeTabIndex} onSelect={handleTabSwitch}>
+            <TabList className="flex flex-wrap justify-center gap-0 md:justify-start border-gray-200 mb-0">
+              {tabs.map((tab, index, arr) => (
+                <Tab
+                  key={index}
+                  className={`w-1/2 md:w-auto text-center px-6 py-3 font-grotesk text-md font-medium cursor-pointer backdrop-blur-xl bg-black md:bg-[#cdcdcd33] text-[#ffffff] hover:bg-black transition-colors ${
+                    index === 0
+                      ? "rounded-tl-3xl md:rounded-tl-3xl"
+                      : index === arr.length - 1
+                        ? "rounded-tr-3xl md:rounded-tr-3xl"
+                        : ""
+                  }`}
+                  selectedClassName="!bg-orange-600 text-white"
+                >
+                  {tab}
+                </Tab>
+              ))}
+            </TabList>
+
+            {/* OUTSTATION TAB */}
+            <TabPanel>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (outstationTripType === "multicity") {
+                    const invalidStop = multicityStops.find(
+                      (stop) =>
+                        !stop.pickupPlaceId ||
+                        !stop.dropoffPlaceId ||
+                        !stop.dateTime,
+                    );
+                    if (invalidStop || multicityStops.length < 1) {
+                      alert("Complete all legs.");
+                      return;
+                    }
+                    const data = {
+                      pickupLocation: multicityStops[0].pickupPlaceId,
+                      destinations: multicityStops.map(
+                        (stop) => stop.dropoffPlaceId,
+                      ),
+                      oneWay: false,
+                      serviceType: "outstation",
+                      packageId: null,
+                      pickupDateTime: multicityStops[0].dateTime.toISOString(),
+                      returnDateTime:
+                        multicityStops[
+                          multicityStops.length - 1
+                        ].dateTime.toISOString(),
+                    };
+                    handleSearch(data, "Outstation Multicity");
+                  } else {
+                    const pickupPlaceId =
+                      selectedPlaces.outstationPickup?.place_id;
+                    const dropoffPlaceId =
+                      selectedPlaces.outstationDropoff?.place_id;
+                    if (
+                      !pickupPlaceId ||
+                      !dropoffPlaceId ||
+                      !outstationPickupDateTime
+                    ) {
+                      alert("Complete fields.");
+                      return;
+                    }
+                    if (
+                      outstationTripType === "round-trip" &&
+                      !outstationReturnDateTime
+                    ) {
+                      alert("Select return date.");
+                      return;
+                    }
+                    const data = {
+                      pickupLocation: pickupPlaceId,
+                      destinations: [dropoffPlaceId],
+                      oneWay: outstationTripType === "one-way",
+                      serviceType: "outstation",
+                      packageId: null,
+                      pickupDateTime: outstationPickupDateTime.toISOString(),
+                      ...(outstationTripType === "round-trip" && {
+                        returnDateTime: outstationReturnDateTime.toISOString(),
+                      }),
+                    };
+                    handleSearch(data, "Outstation");
+                  }
+                }}
+                className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
               >
-                {tab}
-              </Tab>
-            ))}
-          </TabList>
-
-          {/* OUTSTATION TAB */}
-          <TabPanel>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (outstationTripType === "multicity") {
-                  const invalidStop = multicityStops.find(
-                    (stop) =>
-                      !stop.pickupPlaceId ||
-                      !stop.dropoffPlaceId ||
-                      !stop.dateTime,
-                  );
-                  if (invalidStop || multicityStops.length < 1) {
-                    alert("Complete all legs.");
-                    return;
-                  }
-                  const data = {
-                    pickupLocation: multicityStops[0].pickupPlaceId,
-                    destinations: multicityStops.map(
-                      (stop) => stop.dropoffPlaceId,
-                    ),
-                    oneWay: false,
-                    serviceType: "outstation",
-                    packageId: null,
-                    pickupDateTime: multicityStops[0].dateTime.toISOString(),
-                    returnDateTime:
-                      multicityStops[
-                        multicityStops.length - 1
-                      ].dateTime.toISOString(),
-                  };
-                  handleSearch(data, "Outstation Multicity");
-                } else {
-                  const pickupPlaceId =
-                    selectedPlaces.outstationPickup?.place_id;
-                  const dropoffPlaceId =
-                    selectedPlaces.outstationDropoff?.place_id;
-                  if (
-                    !pickupPlaceId ||
-                    !dropoffPlaceId ||
-                    !outstationPickupDateTime
-                  ) {
-                    alert("Complete fields.");
-                    return;
-                  }
-                  if (
-                    outstationTripType === "round-trip" &&
-                    !outstationReturnDateTime
-                  ) {
-                    alert("Select return date.");
-                    return;
-                  }
-                  const data = {
-                    pickupLocation: pickupPlaceId,
-                    destinations: [dropoffPlaceId],
-                    oneWay: outstationTripType === "one-way",
-                    serviceType: "outstation",
-                    packageId: null,
-                    pickupDateTime: outstationPickupDateTime.toISOString(),
-                    ...(outstationTripType === "round-trip" && {
-                      returnDateTime: outstationReturnDateTime.toISOString(),
-                    }),
-                  };
-                  handleSearch(data, "Outstation");
-                }
-              }}
-              className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
-            >
-              <div className="flex flex-col w-full relative mb-4">
-                <label className="text-md font-grotesk font-semibold mb-2">
-                  Trip Type
-                </label>
-                <div className="flex gap-6">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="outstationTripType"
-                      value="multicity"
-                      checked={outstationTripType === "multicity"}
-                      onChange={(e) => setOutstationTripType(e.target.value)}
-                      className="mr-2"
-                    />
-                    Multicity
+                <div className="flex flex-col w-full relative mb-4">
+                  <label className="text-md font-grotesk font-semibold mb-2">
+                    Trip Type
                   </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="outstationTripType"
-                      value="round-trip"
-                      checked={outstationTripType === "round-trip"}
-                      onChange={(e) => setOutstationTripType(e.target.value)}
-                      className="mr-2"
-                    />
-                    Round-trip
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="outstationTripType"
-                      value="one-way"
-                      checked={outstationTripType === "one-way"}
-                      onChange={(e) => setOutstationTripType(e.target.value)}
-                      className="mr-2"
-                    />
-                    One-way
-                  </label>
+                  <div className="flex gap-6">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="outstationTripType"
+                        value="multicity"
+                        checked={outstationTripType === "multicity"}
+                        onChange={(e) => setOutstationTripType(e.target.value)}
+                        className="mr-2"
+                      />
+                      Multicity
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="outstationTripType"
+                        value="round-trip"
+                        checked={outstationTripType === "round-trip"}
+                        onChange={(e) => setOutstationTripType(e.target.value)}
+                        className="mr-2"
+                      />
+                      Round-trip
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="outstationTripType"
+                        value="one-way"
+                        checked={outstationTripType === "one-way"}
+                        onChange={(e) => setOutstationTripType(e.target.value)}
+                        className="mr-2"
+                      />
+                      One-way
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              {(outstationTripType === "one-way" ||
-                outstationTripType === "round-trip") && (
-                <div className="flex flex-col md:flex-row gap-4 mb-4">
+                {(outstationTripType === "one-way" ||
+                  outstationTripType === "round-trip") && (
+                  <div className="flex flex-col md:flex-row gap-4 mb-4">
+                    <div className="flex flex-col w-full relative">
+                      <label className="text-md font-grotesk font-semibold mb-2">
+                        Pickup Location
+                      </label>
+                      <div className="relative">
+                        <Autocomplete
+                          onLoad={(ac) => (outstationPickupRef.current = ac)}
+                          onPlaceChanged={() =>
+                            handlePlaceSelect(
+                              outstationPickupRef,
+                              "outstationPickup",
+                            )
+                          }
+                          options={{
+                            componentRestrictions: { country: "IN" },
+                            types: ["geocode"],
+                          }}
+                        >
+                          <input
+                            type="text"
+                            placeholder="Type & select pickup"
+                            defaultValue={
+                              selectedPlaces.outstationPickup?.name || ""
+                            }
+                            className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                            required
+                          />
+                        </Autocomplete>
+                        <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col w-full relative">
+                      <label className="text-md font-grotesk font-semibold mb-2">
+                        Dropoff Location
+                      </label>
+                      <div className="relative">
+                        <Autocomplete
+                          onLoad={(ac) => (outstationDropoffRef.current = ac)}
+                          onPlaceChanged={() =>
+                            handlePlaceSelect(
+                              outstationDropoffRef,
+                              "outstationDropoff",
+                            )
+                          }
+                          options={{
+                            componentRestrictions: { country: "IN" },
+                            types: ["geocode"],
+                          }}
+                        >
+                          <input
+                            type="text"
+                            placeholder="Type & select dropoff"
+                            defaultValue={
+                              selectedPlaces.outstationDropoff?.name || ""
+                            }
+                            className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                            required
+                          />
+                        </Autocomplete>
+                        <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                      </div>
+                    </div>
+                    <div className="flex flex-col w-full relative">
+                      <label className="text-md font-grotesk font-semibold mb-2">
+                        Pickup Date/Time
+                      </label>
+                      <DatePicker
+                        selected={outstationPickupDateTime}
+                        onChange={setOutstationPickupDateTime}
+                        showTimeSelect
+                        dateFormat="MMMM d, yyyy h:mm aa"
+                        customInput={
+                          <CustomInput placeholder="Select date and time" />
+                        }
+                        minDate={new Date()}
+                        required
+                      />
+                    </div>
+                    {outstationTripType === "round-trip" && (
+                      <div className="flex flex-col w-full relative">
+                        <label className="text-md font-grotesk font-semibold mb-2">
+                          Return Date/Time
+                        </label>
+                        <DatePicker
+                          selected={outstationReturnDateTime}
+                          onChange={setOutstationReturnDateTime}
+                          showTimeSelect
+                          dateFormat="MMMM d, yyyy h:mm aa"
+                          customInput={
+                            <CustomInput placeholder="Select return date and time" />
+                          }
+                          minDate={outstationPickupDateTime || new Date()}
+                          required
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-3 items-end pb-3">
+                      <button
+                        type="submit"
+                        className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600"
+                      >
+                        {buttonIcon} {buttonText}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {outstationTripType === "multicity" && (
+                  <>
+                    {multicityStops.map((stop, index) => (
+                      <div
+                        key={index}
+                        className="flex flex-col md:flex-row gap-4 mb-6 border-b pb-6 relative"
+                      >
+                        {index === 0 ? (
+                          <div className="flex flex-col w-full relative">
+                            <label className="text-md font-grotesk font-semibold mb-2">
+                              Starting Pickup
+                            </label>
+                            <div className="relative">
+                              <Autocomplete
+                                onLoad={(autocomplete) => {
+                                  stop.pickupRef.current = autocomplete;
+                                }}
+                                onPlaceChanged={() =>
+                                  handleMulticityPlaceSelect(index, "pickup")
+                                }
+                                options={{
+                                  componentRestrictions: { country: "IN" },
+                                  types: ["geocode"],
+                                }}
+                              >
+                                <input
+                                  type="text"
+                                  placeholder="Type & select pickup"
+                                  defaultValue={
+                                    stop.selectedPickupAddress || ""
+                                  }
+                                  className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                                  required
+                                />
+                              </Autocomplete>
+                              <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col w-full relative">
+                            <label className="text-md font-grotesk font-semibold mb-2">
+                              Pickup Destination {index + 1}
+                            </label>
+                            <div className="p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
+                              {stop.selectedPickupAddress ||
+                                "Waiting for previous drop selection"}
+                            </div>
+                          </div>
+                        )}
+                        <div className="flex flex-col w-full relative">
+                          <label className="text-md font-grotesk font-semibold mb-2">
+                            Destination – Stop {index + 1}
+                          </label>
+                          <div className="relative">
+                            <Autocomplete
+                              onLoad={(autocomplete) => {
+                                stop.dropoffRef.current = autocomplete;
+                              }}
+                              onPlaceChanged={() =>
+                                handleMulticityPlaceSelect(index, "dropoff")
+                              }
+                              options={{
+                                componentRestrictions: { country: "IN" },
+                                types: ["geocode"],
+                              }}
+                            >
+                              <input
+                                type="text"
+                                placeholder="Type & select dropoff"
+                                defaultValue={stop.selectedDropoffAddress || ""}
+                                className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                                required
+                              />
+                            </Autocomplete>
+                            <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                          </div>
+                        </div>
+                        <div className="flex flex-col w-full relative">
+                          <label className="text-md font-grotesk font-semibold mb-2">
+                            Travel Date & Time – Stop {index + 1}
+                          </label>
+                          <DatePicker
+                            selected={stop.dateTime}
+                            onChange={(date) =>
+                              updateMulticityStop(index, "dateTime", date)
+                            }
+                            showTimeSelect
+                            dateFormat="MMMM d, yyyy h:mm aa"
+                            customInput={
+                              <CustomInput placeholder="Select date and time" />
+                            }
+                            minDate={getPreviousDropoffDate(index)}
+                            required
+                          />
+                        </div>
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => removeMulticityStop(index)}
+                            className="absolute top-0 right-0 text-red-500 hover:text-red-700"
+                          >
+                            <FaTrash />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    <div className="flex gap-4 items-center">
+                      <button
+                        type="button"
+                        onClick={addMulticityStop}
+                        className="text-orange-500 bg-[#ff71011a] p-3 rounded-xl flex items-center gap-2"
+                      >
+                        <FaPlus /> Add Stop
+                      </button>
+                      <button
+                        type="submit"
+                        className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 ml-auto"
+                      >
+                        {buttonIcon} {buttonText} Multicity
+                      </button>
+                    </div>
+                  </>
+                )}
+              </form>
+            </TabPanel>
+
+            {/* TRANSFER TAB - SENDS transferDirection */}
+            <TabPanel>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const fromPlaceId = selectedPlaces.transferFrom?.place_id;
+                  const toPlaceId = selectedPlaces.transferTo?.place_id;
+                  if (
+                    !selectedCity ||
+                    !fromPlaceId ||
+                    !toPlaceId ||
+                    !transferDateTime
+                  ) {
+                    alert("Complete all fields: City, From, To, Date/Time.");
+                    return;
+                  }
+                  const data = {
+                    pickupLocation: fromPlaceId,
+                    destinations: [toPlaceId],
+                    oneWay: true,
+                    serviceType: "transfer",
+                    packageId: null,
+                    pickupDateTime: transferDateTime.toISOString(),
+                    transferDirection,
+                  };
+                  handleSearch(data, "Transfer");
+                }}
+                className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
+              >
+                {/* Trip Direction */}
+                <div className="mb-4">
+                  <label className="text-md font-grotesk font-semibold mb-2 block">
+                    Trip Direction
+                  </label>
+                  <div className="flex gap-6">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="direction"
+                        value="home-to-station"
+                        checked={transferDirection === "home-to-station"}
+                        onChange={(e) => setTransferDirection(e.target.value)}
+                        className="mr-2"
+                      />
+                      Home to Station
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="direction"
+                        value="station-to-home"
+                        checked={transferDirection === "station-to-home"}
+                        onChange={(e) => setTransferDirection(e.target.value)}
+                        className="mr-2"
+                      />
+                      Station to Home
+                    </label>
+                  </div>
+                </div>
+
+                {/* City Selection */}
+                <div className="mb-4">
+                  <label className="text-md font-grotesk font-semibold mb-2 block">
+                    Select City
+                  </label>
+                  <div className="relative">
+                    <Autocomplete
+                      onLoad={(ac) => (cityRef.current = ac)}
+                      onPlaceChanged={() =>
+                        handlePlaceSelect(cityRef, "transferCity", () => {
+                          setSelectedPlaces((prev) => ({
+                            ...prev,
+                            transferFrom: null,
+                            transferTo: null,
+                          }));
+                        })
+                      }
+                      options={{
+                        types: ["(cities)"],
+                        componentRestrictions: { country: "IN" },
+                      }}
+                    >
+                      <input
+                        type="text"
+                        placeholder="Type city name (e.g., Delhi)"
+                        defaultValue={selectedCity?.name || ""}
+                        className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                        required
+                      />
+                    </Autocomplete>
+                    <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                  </div>
+                </div>
+
+                {/* From & To Fields */}
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* FROM */}
                   <div className="flex flex-col w-full relative">
                     <label className="text-md font-grotesk font-semibold mb-2">
-                      Pickup Location
+                      {transferDirection === "home-to-station"
+                        ? `Home Address in ${selectedCity?.name || "City"}`
+                        : "Station in City"}
                     </label>
                     <div className="relative">
                       <Autocomplete
-                        onLoad={(ac) => (outstationPickupRef.current = ac)}
+                        onLoad={(ac) => (transferFromRef.current = ac)}
+                        onPlaceChanged={() =>
+                          handlePlaceSelect(transferFromRef, "transferFrom")
+                        }
+                        options={{
+                          bounds: selectedCity?.viewport || undefined,
+                          strictBounds: true,
+                          types:
+                            transferDirection === "home-to-station"
+                              ? ["geocode"]
+                              : ["train_station", "bus_station", "airport"],
+                          componentRestrictions: { country: "IN" },
+                        }}
+                        disabled={!selectedCity}
+                      >
+                        <input
+                          type="text"
+                          placeholder={
+                            selectedCity ? "Type address" : "Select city first"
+                          }
+                          defaultValue={selectedPlaces.transferFrom?.name || ""}
+                          className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                          disabled={!selectedCity}
+                          required
+                        />
+                      </Autocomplete>
+                      <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    </div>
+                  </div>
+
+                  {/* TO */}
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-md font-grotesk font-semibold mb-2">
+                      {transferDirection === "home-to-station"
+                        ? "Station in City"
+                        : `Home Address in ${selectedCity?.name || "City"}`}
+                    </label>
+                    <div className="relative">
+                      <Autocomplete
+                        onLoad={(ac) => (transferToRef.current = ac)}
+                        onPlaceChanged={() =>
+                          handlePlaceSelect(transferToRef, "transferTo")
+                        }
+                        options={{
+                          bounds: selectedCity?.viewport || undefined,
+                          strictBounds: true,
+                          types:
+                            transferDirection === "home-to-station"
+                              ? ["train_station", "bus_station", "airport"]
+                              : ["geocode"],
+                          componentRestrictions: { country: "IN" },
+                        }}
+                        disabled={!selectedCity}
+                      >
+                        <input
+                          type="text"
+                          placeholder={
+                            selectedCity
+                              ? "Select station"
+                              : "Select city first"
+                          }
+                          defaultValue={selectedPlaces.transferTo?.name || ""}
+                          className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
+                          disabled={!selectedCity}
+                          required
+                        />
+                      </Autocomplete>
+                      <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                    </div>
+                  </div>
+
+                  {/* Date/Time */}
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-md font-grotesk font-semibold mb-2">
+                      Date/Time
+                    </label>
+                    <DatePicker
+                      selected={transferDateTime}
+                      onChange={setTransferDateTime}
+                      showTimeSelect
+                      dateFormat="MMMM d, yyyy h:mm aa"
+                      customInput={
+                        <CustomInput placeholder="Select date and time" />
+                      }
+                      minDate={new Date()}
+                      required
+                    />
+                  </div>
+
+                  {/* Submit */}
+                  <div className="flex gap-3 items-end pb-3">
+                    <button
+                      type="submit"
+                      className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600"
+                    >
+                      {buttonIcon} {buttonText}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </TabPanel>
+
+            {/* ACTIVITY TAB */}
+            <TabPanel>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const activityPlaceId =
+                    selectedPlaces.activityLocation?.place_id;
+                  if (!activityPlaceId || !activityDateTime) {
+                    alert("Complete all fields.");
+                    return;
+                  }
+                  const data = {
+                    pickupLocation: activityPlaceId,
+                    destinations: [],
+                    oneWay: true,
+                    serviceType: "activity",
+                    packageId: null,
+                    pickupDateTime: activityDateTime.toISOString(),
+                  };
+                  handleSearch(data, "Activity");
+                }}
+                className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
+              >
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-md font-grotesk font-semibold mb-2">
+                      Activity Location
+                    </label>
+                    <div className="relative">
+                      <Autocomplete
+                        onLoad={(ac) => (activityLocationRef.current = ac)}
                         onPlaceChanged={() =>
                           handlePlaceSelect(
-                            outstationPickupRef,
-                            "outstationPickup",
+                            activityLocationRef,
+                            "activityLocation",
                           )
                         }
                         options={{
@@ -611,9 +1102,9 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                       >
                         <input
                           type="text"
-                          placeholder="Type & select pickup"
+                          placeholder="Type & select location"
                           defaultValue={
-                            selectedPlaces.outstationPickup?.name || ""
+                            selectedPlaces.activityLocation?.name || ""
                           }
                           className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
                           required
@@ -624,16 +1115,64 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                   </div>
                   <div className="flex flex-col w-full relative">
                     <label className="text-md font-grotesk font-semibold mb-2">
-                      Dropoff Location
+                      Date/Time
+                    </label>
+                    <DatePicker
+                      selected={activityDateTime}
+                      onChange={setActivityDateTime}
+                      showTimeSelect
+                      dateFormat="MMMM d, yyyy h:mm aa"
+                      customInput={
+                        <CustomInput placeholder="Select date and time" />
+                      }
+                      minDate={new Date()}
+                      required
+                    />
+                  </div>
+                  <div className="flex gap-3 items-end pb-3">
+                    <button
+                      type="submit"
+                      className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600"
+                    >
+                      {buttonIcon} {buttonText}
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </TabPanel>
+
+            {/* RENTAL TAB */}
+            <TabPanel>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const placeId = selectedPlaces.rentalPickup?.place_id;
+                  if (!placeId || !pickupDateTime || !rentalPackage) {
+                    alert("Complete all fields.");
+                    return;
+                  }
+                  const data = {
+                    pickupLocation: placeId,
+                    destinations: [],
+                    oneWay: true,
+                    serviceType: "rental",
+                    packageId: rentalPackage,
+                    pickupDateTime: pickupDateTime.toISOString(),
+                  };
+                  handleSearch(data, "Rental");
+                }}
+                className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
+              >
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-md font-grotesk font-semibold mb-2">
+                      Pickup Location
                     </label>
                     <div className="relative">
                       <Autocomplete
-                        onLoad={(ac) => (outstationDropoffRef.current = ac)}
+                        onLoad={(ac) => (rentalPickupRef.current = ac)}
                         onPlaceChanged={() =>
-                          handlePlaceSelect(
-                            outstationDropoffRef,
-                            "outstationDropoff",
-                          )
+                          handlePlaceSelect(rentalPickupRef, "rentalPickup")
                         }
                         options={{
                           componentRestrictions: { country: "IN" },
@@ -642,10 +1181,8 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                       >
                         <input
                           type="text"
-                          placeholder="Type & select dropoff"
-                          defaultValue={
-                            selectedPlaces.outstationDropoff?.name || ""
-                          }
+                          placeholder="Enter pickup location"
+                          defaultValue={selectedPlaces.rentalPickup?.name || ""}
                           className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
                           required
                         />
@@ -658,35 +1195,42 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                       Pickup Date/Time
                     </label>
                     <DatePicker
-                      selected={outstationPickupDateTime}
-                      onChange={setOutstationPickupDateTime}
+                      selected={pickupDateTime}
+                      onChange={setPickupDateTime}
                       showTimeSelect
                       dateFormat="MMMM d, yyyy h:mm aa"
                       customInput={
-                        <CustomInput placeholder="Select date and time" />
+                        <CustomInput placeholder="Select pickup date and time" />
                       }
                       minDate={new Date()}
                       required
                     />
                   </div>
-                  {outstationTripType === "round-trip" && (
-                    <div className="flex flex-col w-full relative">
-                      <label className="text-md font-grotesk font-semibold mb-2">
-                        Return Date/Time
-                      </label>
-                      <DatePicker
-                        selected={outstationReturnDateTime}
-                        onChange={setOutstationReturnDateTime}
-                        showTimeSelect
-                        dateFormat="MMMM d, yyyy h:mm aa"
-                        customInput={
-                          <CustomInput placeholder="Select return date and time" />
-                        }
-                        minDate={outstationPickupDateTime || new Date()}
+                  <div className="flex flex-col w-full relative">
+                    <label className="text-md font-grotesk font-semibold mb-2">
+                      Package
+                    </label>
+                    {loading ? (
+                      <p>Loading packages...</p>
+                    ) : error ? (
+                      <p className="text-red-500">{error}</p>
+                    ) : (
+                      <select
+                        value={rentalPackage}
+                        onChange={(e) => setRentalPackage(e.target.value)}
+                        className="p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"
                         required
-                      />
-                    </div>
-                  )}
+                      >
+                        <option value="">Select Package</option>
+                        {packages.map((pkg) => (
+                          <option key={pkg._id} value={pkg._id}>
+                            {`${pkg.duration} Hours - ${pkg.kilometer} KM`}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                  </div>
                   <div className="flex gap-3 items-end pb-3">
                     <button
                       type="submit"
@@ -696,524 +1240,12 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                     </button>
                   </div>
                 </div>
-              )}
-
-              {outstationTripType === "multicity" && (
-                <>
-                  {multicityStops.map((stop, index) => (
-                    <div
-                      key={index}
-                      className="flex flex-col md:flex-row gap-4 mb-6 border-b pb-6 relative"
-                    >
-                      {index === 0 ? (
-                        <div className="flex flex-col w-full relative">
-                          <label className="text-md font-grotesk font-semibold mb-2">
-                            Starting Pickup
-                          </label>
-                          <div className="relative">
-                            <Autocomplete
-                              onLoad={(autocomplete) => {
-                                stop.pickupRef.current = autocomplete;
-                              }}
-                              onPlaceChanged={() =>
-                                handleMulticityPlaceSelect(index, "pickup")
-                              }
-                              options={{
-                                componentRestrictions: { country: "IN" },
-                                types: ["geocode"],
-                              }}
-                            >
-                              <input
-                                type="text"
-                                placeholder="Type & select pickup"
-                                defaultValue={stop.selectedPickupAddress || ""}
-                                className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                                required
-                              />
-                            </Autocomplete>
-                            <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col w-full relative">
-                          <label className="text-md font-grotesk font-semibold mb-2">
-                            Pickup Destination {index + 1}
-                          </label>
-                          <div className="p-3 border border-gray-300 rounded-md bg-gray-100 text-gray-700">
-                            {stop.selectedPickupAddress ||
-                              "Waiting for previous drop selection"}
-                          </div>
-                        </div>
-                      )}
-                      <div className="flex flex-col w-full relative">
-                        <label className="text-md font-grotesk font-semibold mb-2">
-                          Destination – Stop {index + 1}
-                        </label>
-                        <div className="relative">
-                          <Autocomplete
-                            onLoad={(autocomplete) => {
-                              stop.dropoffRef.current = autocomplete;
-                            }}
-                            onPlaceChanged={() =>
-                              handleMulticityPlaceSelect(index, "dropoff")
-                            }
-                            options={{
-                              componentRestrictions: { country: "IN" },
-                              types: ["geocode"],
-                            }}
-                          >
-                            <input
-                              type="text"
-                              placeholder="Type & select dropoff"
-                              defaultValue={stop.selectedDropoffAddress || ""}
-                              className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                              required
-                            />
-                          </Autocomplete>
-                          <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                        </div>
-                      </div>
-                      <div className="flex flex-col w-full relative">
-                        <label className="text-md font-grotesk font-semibold mb-2">
-                          Travel Date & Time – Stop {index + 1}
-                        </label>
-                        <DatePicker
-                          selected={stop.dateTime}
-                          onChange={(date) =>
-                            updateMulticityStop(index, "dateTime", date)
-                          }
-                          showTimeSelect
-                          dateFormat="MMMM d, yyyy h:mm aa"
-                          customInput={
-                            <CustomInput placeholder="Select date and time" />
-                          }
-                          minDate={getPreviousDropoffDate(index)}
-                          required
-                        />
-                      </div>
-                      {index > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => removeMulticityStop(index)}
-                          className="absolute top-0 right-0 text-red-500 hover:text-red-700"
-                        >
-                          <FaTrash />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  <div className="flex gap-4 items-center">
-                    <button
-                      type="button"
-                      onClick={addMulticityStop}
-                      className="text-orange-500 bg-[#ff71011a] p-3 rounded-xl flex items-center gap-2"
-                    >
-                      <FaPlus /> Add Stop
-                    </button>
-                    <button
-                      type="submit"
-                      className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 ml-auto"
-                    >
-                      {buttonIcon} {buttonText} Multicity
-                    </button>
-                  </div>
-                </>
-              )}
-            </form>
-          </TabPanel>
-
-          {/* TRANSFER TAB - SENDS transferDirection */}
-          <TabPanel>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const fromPlaceId = selectedPlaces.transferFrom?.place_id;
-                const toPlaceId = selectedPlaces.transferTo?.place_id;
-                if (
-                  !selectedCity ||
-                  !fromPlaceId ||
-                  !toPlaceId ||
-                  !transferDateTime
-                ) {
-                  alert("Complete all fields: City, From, To, Date/Time.");
-                  return;
-                }
-                const data = {
-                  pickupLocation: fromPlaceId,
-                  destinations: [toPlaceId],
-                  oneWay: true,
-                  serviceType: "transfer",
-                  packageId: null,
-                  pickupDateTime: transferDateTime.toISOString(),
-                  transferDirection,
-                };
-                handleSearch(data, "Transfer");
-              }}
-              className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
-            >
-              {/* Trip Direction */}
-              <div className="mb-4">
-                <label className="text-md font-grotesk font-semibold mb-2 block">
-                  Trip Direction
-                </label>
-                <div className="flex gap-6">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="direction"
-                      value="home-to-station"
-                      checked={transferDirection === "home-to-station"}
-                      onChange={(e) => setTransferDirection(e.target.value)}
-                      className="mr-2"
-                    />
-                    Home to Station
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      name="direction"
-                      value="station-to-home"
-                      checked={transferDirection === "station-to-home"}
-                      onChange={(e) => setTransferDirection(e.target.value)}
-                      className="mr-2"
-                    />
-                    Station to Home
-                  </label>
-                </div>
-              </div>
-
-              {/* City Selection */}
-              <div className="mb-4">
-                <label className="text-md font-grotesk font-semibold mb-2 block">
-                  Select City
-                </label>
-                <div className="relative">
-                  <Autocomplete
-                    onLoad={(ac) => (cityRef.current = ac)}
-                    onPlaceChanged={() =>
-                      handlePlaceSelect(cityRef, "transferCity", () => {
-                        setSelectedPlaces((prev) => ({
-                          ...prev,
-                          transferFrom: null,
-                          transferTo: null,
-                        }));
-                      })
-                    }
-                    options={{
-                      types: ["(cities)"],
-                      componentRestrictions: { country: "IN" },
-                    }}
-                  >
-                    <input
-                      type="text"
-                      placeholder="Type city name (e.g., Delhi)"
-                      defaultValue={selectedCity?.name || ""}
-                      className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                      required
-                    />
-                  </Autocomplete>
-                  <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                </div>
-              </div>
-
-              {/* From & To Fields */}
-              <div className="flex flex-col md:flex-row gap-4">
-                {/* FROM */}
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    {transferDirection === "home-to-station"
-                      ? `Home Address in ${selectedCity?.name || "City"}`
-                      : "Station in City"}
-                  </label>
-                  <div className="relative">
-                    <Autocomplete
-                      onLoad={(ac) => (transferFromRef.current = ac)}
-                      onPlaceChanged={() =>
-                        handlePlaceSelect(transferFromRef, "transferFrom")
-                      }
-                      options={{
-                        bounds: selectedCity?.viewport || undefined,
-                        strictBounds: true,
-                        types:
-                          transferDirection === "home-to-station"
-                            ? ["geocode"]
-                            : ["train_station", "bus_station", "airport"],
-                        componentRestrictions: { country: "IN" },
-                      }}
-                      disabled={!selectedCity}
-                    >
-                      <input
-                        type="text"
-                        placeholder={
-                          selectedCity ? "Type address" : "Select city first"
-                        }
-                        defaultValue={selectedPlaces.transferFrom?.name || ""}
-                        className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                        disabled={!selectedCity}
-                        required
-                      />
-                    </Autocomplete>
-                    <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                  </div>
-                </div>
-
-                {/* TO */}
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    {transferDirection === "home-to-station"
-                      ? "Station in City"
-                      : `Home Address in ${selectedCity?.name || "City"}`}
-                  </label>
-                  <div className="relative">
-                    <Autocomplete
-                      onLoad={(ac) => (transferToRef.current = ac)}
-                      onPlaceChanged={() =>
-                        handlePlaceSelect(transferToRef, "transferTo")
-                      }
-                      options={{
-                        bounds: selectedCity?.viewport || undefined,
-                        strictBounds: true,
-                        types:
-                          transferDirection === "home-to-station"
-                            ? ["train_station", "bus_station", "airport"]
-                            : ["geocode"],
-                        componentRestrictions: { country: "IN" },
-                      }}
-                      disabled={!selectedCity}
-                    >
-                      <input
-                        type="text"
-                        placeholder={
-                          selectedCity ? "Select station" : "Select city first"
-                        }
-                        defaultValue={selectedPlaces.transferTo?.name || ""}
-                        className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                        disabled={!selectedCity}
-                        required
-                      />
-                    </Autocomplete>
-                    <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                  </div>
-                </div>
-
-                {/* Date/Time */}
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    Date/Time
-                  </label>
-                  <DatePicker
-                    selected={transferDateTime}
-                    onChange={setTransferDateTime}
-                    showTimeSelect
-                    dateFormat="MMMM d, yyyy h:mm aa"
-                    customInput={
-                      <CustomInput placeholder="Select date and time" />
-                    }
-                    minDate={new Date()}
-                    required
-                  />
-                </div>
-
-                {/* Submit */}
-                <div className="flex gap-3 items-end pb-3">
-                  <button
-                    type="submit"
-                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600"
-                  >
-                    {buttonIcon} {buttonText}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </TabPanel>
-
-          {/* ACTIVITY TAB */}
-          <TabPanel>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const activityPlaceId =
-                  selectedPlaces.activityLocation?.place_id;
-                if (!activityPlaceId || !activityDateTime) {
-                  alert("Complete all fields.");
-                  return;
-                }
-                const data = {
-                  pickupLocation: activityPlaceId,
-                  destinations: [],
-                  oneWay: true,
-                  serviceType: "activity",
-                  packageId: null,
-                  pickupDateTime: activityDateTime.toISOString(),
-                };
-                handleSearch(data, "Activity");
-              }}
-              className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
-            >
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    Activity Location
-                  </label>
-                  <div className="relative">
-                    <Autocomplete
-                      onLoad={(ac) => (activityLocationRef.current = ac)}
-                      onPlaceChanged={() =>
-                        handlePlaceSelect(
-                          activityLocationRef,
-                          "activityLocation",
-                        )
-                      }
-                      options={{
-                        componentRestrictions: { country: "IN" },
-                        types: ["geocode"],
-                      }}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Type & select location"
-                        defaultValue={
-                          selectedPlaces.activityLocation?.name || ""
-                        }
-                        className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                        required
-                      />
-                    </Autocomplete>
-                    <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                  </div>
-                </div>
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    Date/Time
-                  </label>
-                  <DatePicker
-                    selected={activityDateTime}
-                    onChange={setActivityDateTime}
-                    showTimeSelect
-                    dateFormat="MMMM d, yyyy h:mm aa"
-                    customInput={
-                      <CustomInput placeholder="Select date and time" />
-                    }
-                    minDate={new Date()}
-                    required
-                  />
-                </div>
-                <div className="flex gap-3 items-end pb-3">
-                  <button
-                    type="submit"
-                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600"
-                  >
-                    {buttonIcon} {buttonText}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </TabPanel>
-
-          {/* RENTAL TAB */}
-          <TabPanel>
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                const placeId = selectedPlaces.rentalPickup?.place_id;
-                if (!placeId || !pickupDateTime || !rentalPackage) {
-                  alert("Complete all fields.");
-                  return;
-                }
-                const data = {
-                  pickupLocation: placeId,
-                  destinations: [],
-                  oneWay: true,
-                  serviceType: "rental",
-                  packageId: rentalPackage,
-                  pickupDateTime: pickupDateTime.toISOString(),
-                };
-                handleSearch(data, "Rental");
-              }}
-              className="flex flex-col w-full rounded-tl-none rounded-3xl py-3 px-5 bg-gray-50 shadow-md"
-            >
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    Pickup Location
-                  </label>
-                  <div className="relative">
-                    <Autocomplete
-                      onLoad={(ac) => (rentalPickupRef.current = ac)}
-                      onPlaceChanged={() =>
-                        handlePlaceSelect(rentalPickupRef, "rentalPickup")
-                      }
-                      options={{
-                        componentRestrictions: { country: "IN" },
-                        types: ["geocode"],
-                      }}
-                    >
-                      <input
-                        type="text"
-                        placeholder="Enter pickup location"
-                        defaultValue={selectedPlaces.rentalPickup?.name || ""}
-                        className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full"
-                        required
-                      />
-                    </Autocomplete>
-                    <FaMapMarkerAlt className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                  </div>
-                </div>
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    Pickup Date/Time
-                  </label>
-                  <DatePicker
-                    selected={pickupDateTime}
-                    onChange={setPickupDateTime}
-                    showTimeSelect
-                    dateFormat="MMMM d, yyyy h:mm aa"
-                    customInput={
-                      <CustomInput placeholder="Select pickup date and time" />
-                    }
-                    minDate={new Date()}
-                    required
-                  />
-                </div>
-                <div className="flex flex-col w-full relative">
-                  <label className="text-md font-grotesk font-semibold mb-2">
-                    Package
-                  </label>
-                  {loading ? (
-                    <p>Loading packages...</p>
-                  ) : error ? (
-                    <p className="text-red-500">{error}</p>
-                  ) : (
-                    <select
-                      value={rentalPackage}
-                      onChange={(e) => setRentalPackage(e.target.value)}
-                      className="p-3 pr-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-orange-500"
-                      required
-                    >
-                      <option value="">Select Package</option>
-                      {packages.map((pkg) => (
-                        <option key={pkg._id} value={pkg._id}>
-                          {`${pkg.duration} Hours - ${pkg.kilometer} KM`}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                  <FaChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
-                </div>
-                <div className="flex gap-3 items-end pb-3">
-                  <button
-                    type="submit"
-                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600"
-                  >
-                    {buttonIcon} {buttonText}
-                  </button>
-                </div>
-              </div>
-            </form>
-          </TabPanel>
-        </Tabs>
-      </div>
-    </LoadScript>
+              </form>
+            </TabPanel>
+          </Tabs>
+        </div>
+      </LoadScript>
+    </>
   );
 };
 

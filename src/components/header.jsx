@@ -396,26 +396,30 @@ export default function Header() {
       Object.values(registerErrors).forEach((error) => toast.error(error));
       return;
     }
-    if (!showPhoneOTP && !phoneVerified) {
-      if (!mobile) {
-        toast.error("Please enter a mobile number.");
-        return;
-      }
-      setShowPhoneOTP(true);
-      toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
-      return;
-    }
-    if (showPhoneOTP && !phoneVerified) {
-      if (phoneOtp.join("").length === 4) {
-        setPhoneVerified(true);
-        setVerifiedRegisterOtp(phoneOtp.join(""));
-        setShowPhoneOTP(false);
-        toast.success("Phone number verified!");
-      } else {
-        toast.error("Please enter a 4-digit OTP.");
-        return;
-      }
-    }
+// OTP verification bypass: Directly proceed with registration without phone verification
+    // if (!showPhoneOTP && !phoneVerified) {
+    //   if (!mobile) {
+    //     toast.error("Please enter a mobile number.");
+    //     return;
+    //   }
+    //   setShowPhoneOTP(true);
+    //   toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
+    //   return;
+    // }
+    // if (showPhoneOTP && !phoneVerified) {
+    //   if (phoneOtp.join("").length === 4) {
+    //     setPhoneVerified(true);
+    //     setVerifiedRegisterOtp(phoneOtp.join(""));
+    //     setShowPhoneOTP(false);
+    //     toast.success("Phone number verified!");
+    //   } else {
+    //     toast.error("Please enter a 4-digit OTP.");
+    //     return;
+    //   }
+    // }
+    // Temporarily setting phoneVerified to true to bypass OTP for testing
+    setPhoneVerified(true); 
+
     const formData = {
       fullName,
       email,
@@ -425,7 +429,7 @@ export default function Header() {
       gst,
       city: "Mumbai",
       acceptedTerms,
-      otp: verifiedRegisterOtp,
+      // otp: verifiedRegisterOtp, // OTP commented out for temporary bypass
     };
     try {
       setIsLoading(true);
@@ -980,6 +984,7 @@ export default function Header() {
                         }`}
                         placeholder="Enter your mobile number"
                       />
+                      {/*
                       {!phoneVerified && !showPhoneOTP && (
                         <button
                           onClick={async () => {
@@ -1025,9 +1030,10 @@ export default function Header() {
                           aria-hidden="true"
                         />
                       )}
+                      */}
                     </div>
 
-                    {showPhoneOTP && !phoneVerified && (
+                    {/* {showPhoneOTP && !phoneVerified && (
                       <div className="mt-2 flex items-center justify-between space-x-2">
                         {[0, 1, 2, 3].map((index) => (
                           <input
@@ -1083,7 +1089,7 @@ export default function Header() {
                           {isLoading ? "Verifying..." : "Submit"}
                         </button>
                       </div>
-                    )}
+                    )} */}
                   </div>
                   <div className="flex gap-2 justify-between">
                     <div className="relative w-full">

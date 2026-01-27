@@ -396,7 +396,7 @@ export default function Header() {
       Object.values(registerErrors).forEach((error) => toast.error(error));
       return;
     }
-// OTP verification bypass: Directly proceed with registration without phone verification
+    // OTP verification bypass: Directly proceed with registration without phone verification
     // if (!showPhoneOTP && !phoneVerified) {
     //   if (!mobile) {
     //     toast.error("Please enter a mobile number.");
@@ -418,7 +418,7 @@ export default function Header() {
     //   }
     // }
     // Temporarily setting phoneVerified to true to bypass OTP for testing
-    setPhoneVerified(true); 
+    setPhoneVerified(true);
 
     const formData = {
       fullName,
@@ -691,23 +691,23 @@ export default function Header() {
                 />
                 <button
                   onClick={() => setLoginOpen(true)}
-                  className="text-md cursor-pointer font-grotesk font-semibold text-black"
+                  className="text-md cursor-pointer font-grotesk font-semibold text-black hover:underline"
                 >
                   Login
                 </button>
                 <span className="text-black">/</span>
                 <button
                   onClick={() => setRegisterOpen(true)}
-                  className="text-md cursor-pointer font-grotesk font-semibold text-black"
+                  className="text-md cursor-pointer font-grotesk font-semibold text-black hover:underline"
                 >
                   Register
                 </button>
-                <button
+                {/* <button
                   onClick={handleVendorRegister}
                   className="ml-2 cursor-pointer bg-[#384B59] px-3 py-2.5 text-md font-grotesk font-semibold text-white border-none rounded-lg"
                 >
                   Login as Vendor
-                </button>
+                </button> */}
               </div>
             )}
           </div>

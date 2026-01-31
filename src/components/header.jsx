@@ -718,24 +718,80 @@ export default function Header() {
           <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
               <a href="#" className="-m-1.5 p-1.5">
-                <span className="sr-only">Your Company</span>
-                <img
-                  alt=""
-                  src={settings?.logo?.url || ""}
-                  className="h-8 w-auto"
-                />
+                <img src={settings?.logo?.url || ""} className="h-8 w-auto" />
               </a>
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(false)}
-                className="-m-2.5 rounded-md p-2.5 text-gray-700"
-              >
-                <span className="sr-only">Close menu</span>
-                <XMarkIcon aria-hidden="true" className="h-6 w-6" />
+              <button onClick={() => setMobileMenuOpen(false)}>
+                <XMarkIcon className="h-6 w-6" />
               </button>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              {!isLoggedIn && (
+                <>
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setLoginOpen(true);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-lg text-gray-900 font-semibold hover:bg-gray-100"
+                  >
+                    Login
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      setRegisterOpen(true);
+                    }}
+                    className="block w-full text-left px-4 py-3 rounded-lg text-gray-900 font-semibold hover:bg-gray-100"
+                  >
+                    Register
+                  </button>
+
+                  <button
+                    onClick={handleVendorRegister}
+                    className="block w-full text-left px-4 py-3 rounded-lg bg-[#384B59] text-white font-semibold"
+                  >
+                    Login as Vendor
+                  </button>
+                </>
+              )}
+
+              {isLoggedIn && user && (
+                <>
+                  <div className="px-4 py-2 font-bold text-gray-700">
+                    Hi, {user.fullName}
+                  </div>
+
+                  {dropdownItems.map((item) =>
+                    item.action === "logout" ? (
+                      <button
+                        key={item.name}
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="block w-full text-left px-4 py-3 rounded-lg text-red-600 font-semibold hover:bg-gray-100"
+                      >
+                        Logout
+                      </button>
+                    ) : (
+                      <Link
+                        key={item.name}
+                        to={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="block px-4 py-3 rounded-lg text-gray-900 font-semibold hover:bg-gray-100"
+                      >
+                        {item.name}
+                      </Link>
+                    ),
+                  )}
+                </>
+              )}
             </div>
           </DialogPanel>
         </Dialog>
+
         <Dialog open={loginOpen} onClose={setLoginOpen}>
           <div className="fixed inset-0 bg-black/30 z-50" aria-hidden="true" />
           <DialogPanel className="fixed inset-0 flex items-center justify-center z-50">

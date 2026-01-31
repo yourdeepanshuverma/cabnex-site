@@ -396,29 +396,26 @@ export default function Header() {
       Object.values(registerErrors).forEach((error) => toast.error(error));
       return;
     }
-    // OTP verification bypass: Directly proceed with registration without phone verification
-    // if (!showPhoneOTP && !phoneVerified) {
-    //   if (!mobile) {
-    //     toast.error("Please enter a mobile number.");
-    //     return;
-    //   }
-    //   setShowPhoneOTP(true);
-    //   toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
-    //   return;
-    // }
-    // if (showPhoneOTP && !phoneVerified) {
-    //   if (phoneOtp.join("").length === 4) {
-    //     setPhoneVerified(true);
-    //     setVerifiedRegisterOtp(phoneOtp.join(""));
-    //     setShowPhoneOTP(false);
-    //     toast.success("Phone number verified!");
-    //   } else {
-    //     toast.error("Please enter a 4-digit OTP.");
-    //     return;
-    //   }
-    // }
-    // Temporarily setting phoneVerified to true to bypass OTP for testing
-    setPhoneVerified(true);
+    if (!showPhoneOTP && !phoneVerified) {
+      if (!mobile) {
+        toast.error("Please enter a mobile number.");
+        return;
+      }
+      setShowPhoneOTP(true);
+      toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
+      return;
+    }
+    if (showPhoneOTP && !phoneVerified) {
+      if (phoneOtp.join("").length === 4) {
+        setPhoneVerified(true);
+        setVerifiedRegisterOtp(phoneOtp.join(""));
+        setShowPhoneOTP(false);
+        toast.success("Phone number verified!");
+      } else {
+        toast.error("Please enter a 4-digit OTP.");
+        return;
+      }
+    }
 
     const formData = {
       fullName,
@@ -429,7 +426,7 @@ export default function Header() {
       gst,
       city: "Mumbai",
       acceptedTerms,
-      // otp: verifiedRegisterOtp, // OTP commented out for temporary bypass
+      otp: verifiedRegisterOtp,
     };
     try {
       setIsLoading(true);
@@ -691,23 +688,23 @@ export default function Header() {
                 />
                 <button
                   onClick={() => setLoginOpen(true)}
-                  className="text-md cursor-pointer font-grotesk font-semibold text-black hover:underline"
+                  className="text-md cursor-pointer font-grotesk font-semibold text-black"
                 >
                   Login
                 </button>
                 <span className="text-black">/</span>
                 <button
                   onClick={() => setRegisterOpen(true)}
-                  className="text-md cursor-pointer font-grotesk font-semibold text-black hover:underline"
+                  className="text-md cursor-pointer font-grotesk font-semibold text-black"
                 >
                   Register
                 </button>
-                {/* <button
+                <button
                   onClick={handleVendorRegister}
                   className="ml-2 cursor-pointer bg-[#384B59] px-3 py-2.5 text-md font-grotesk font-semibold text-white border-none rounded-lg"
                 >
                   Login as Vendor
-                </button> */}
+                </button>
               </div>
             )}
           </div>
@@ -984,7 +981,7 @@ export default function Header() {
                         }`}
                         placeholder="Enter your mobile number"
                       />
-                      {/*
+
                       {!phoneVerified && !showPhoneOTP && (
                         <button
                           onClick={async () => {
@@ -1030,10 +1027,9 @@ export default function Header() {
                           aria-hidden="true"
                         />
                       )}
-                      */}
                     </div>
 
-                    {/* {showPhoneOTP && !phoneVerified && (
+                    {showPhoneOTP && !phoneVerified && (
                       <div className="mt-2 flex items-center justify-between space-x-2">
                         {[0, 1, 2, 3].map((index) => (
                           <input
@@ -1089,7 +1085,7 @@ export default function Header() {
                           {isLoading ? "Verifying..." : "Submit"}
                         </button>
                       </div>
-                    )} */}
+                    )}
                   </div>
                   <div className="flex gap-2 justify-between">
                     <div className="relative w-full">

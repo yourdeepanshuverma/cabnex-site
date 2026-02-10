@@ -396,26 +396,29 @@ export default function Header() {
       Object.values(registerErrors).forEach((error) => toast.error(error));
       return;
     }
-    if (!showPhoneOTP && !phoneVerified) {
-      if (!mobile) {
-        toast.error("Please enter a mobile number.");
-        return;
-      }
-      setShowPhoneOTP(true);
-      toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
-      return;
-    }
-    if (showPhoneOTP && !phoneVerified) {
-      if (phoneOtp.join("").length === 4) {
-        setPhoneVerified(true);
-        setVerifiedRegisterOtp(phoneOtp.join(""));
-        setShowPhoneOTP(false);
-        toast.success("Phone number verified!");
-      } else {
-        toast.error("Please enter a 4-digit OTP.");
-        return;
-      }
-    }
+    // OTP verification bypass: Directly proceed with registration without phone verification
+    // if (!showPhoneOTP && !phoneVerified) {
+    //   if (!mobile) {
+    //     toast.error("Please enter a mobile number.");
+    //     return;
+    //   }
+    //   setShowPhoneOTP(true);
+    //   toast.info(`Enter any 4-digit OTP for ${mobile}.s`);
+    //   return;
+    // }
+    // if (showPhoneOTP && !phoneVerified) {
+    //   if (phoneOtp.join("").length === 4) {
+    //     setPhoneVerified(true);
+    //     setVerifiedRegisterOtp(phoneOtp.join(""));
+    //     setShowPhoneOTP(false);
+    //     toast.success("Phone number verified!");
+    //   } else {
+    //     toast.error("Please enter a 4-digit OTP.");
+    //     return;
+    //   }
+    // }
+    // Temporarily setting phoneVerified to true to bypass OTP for testing
+    setPhoneVerified(true);
 
     const formData = {
       fullName,
@@ -426,7 +429,7 @@ export default function Header() {
       gst,
       city: "Mumbai",
       acceptedTerms,
-      otp: verifiedRegisterOtp,
+      // otp: verifiedRegisterOtp, // OTP commented out for temporary bypass
     };
     try {
       setIsLoading(true);
@@ -699,12 +702,6 @@ export default function Header() {
                 >
                   Register
                 </button>
-                <button
-                  onClick={handleVendorRegister}
-                  className="ml-2 cursor-pointer bg-[#384B59] px-3 py-2.5 text-md font-grotesk font-semibold text-white border-none rounded-lg"
-                >
-                  Login as Vendor
-                </button>
               </div>
             )}
           </div>
@@ -718,80 +715,24 @@ export default function Header() {
           <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
               <a href="#" className="-m-1.5 p-1.5">
-                <img src={settings?.logo?.url || ""} className="h-8 w-auto" />
+                <span className="sr-only">Your Company</span>
+                <img
+                  alt=""
+                  src={settings?.logo?.url || ""}
+                  className="h-8 w-auto"
+                />
               </a>
-              <button onClick={() => setMobileMenuOpen(false)}>
-                <XMarkIcon className="h-6 w-6" />
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(false)}
+                className="-m-2.5 rounded-md p-2.5 text-gray-700"
+              >
+                <span className="sr-only">Close menu</span>
+                <XMarkIcon aria-hidden="true" className="h-6 w-6" />
               </button>
-            </div>
-
-            <div className="mt-6 space-y-4">
-              {!isLoggedIn && (
-                <>
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setLoginOpen(true);
-                    }}
-                    className="block w-full text-left px-4 py-3 rounded-lg text-gray-900 font-semibold hover:bg-gray-100"
-                  >
-                    Login
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      setRegisterOpen(true);
-                    }}
-                    className="block w-full text-left px-4 py-3 rounded-lg text-gray-900 font-semibold hover:bg-gray-100"
-                  >
-                    Register
-                  </button>
-
-                  <button
-                    onClick={handleVendorRegister}
-                    className="block w-full text-left px-4 py-3 rounded-lg bg-[#384B59] text-white font-semibold"
-                  >
-                    Login as Vendor
-                  </button>
-                </>
-              )}
-
-              {isLoggedIn && user && (
-                <>
-                  <div className="px-4 py-2 font-bold text-gray-700">
-                    Hi, {user.fullName}
-                  </div>
-
-                  {dropdownItems.map((item) =>
-                    item.action === "logout" ? (
-                      <button
-                        key={item.name}
-                        onClick={() => {
-                          handleLogout();
-                          setMobileMenuOpen(false);
-                        }}
-                        className="block w-full text-left px-4 py-3 rounded-lg text-red-600 font-semibold hover:bg-gray-100"
-                      >
-                        Logout
-                      </button>
-                    ) : (
-                      <Link
-                        key={item.name}
-                        to={item.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="block px-4 py-3 rounded-lg text-gray-900 font-semibold hover:bg-gray-100"
-                      >
-                        {item.name}
-                      </Link>
-                    ),
-                  )}
-                </>
-              )}
             </div>
           </DialogPanel>
         </Dialog>
-
         <Dialog open={loginOpen} onClose={setLoginOpen}>
           <div className="fixed inset-0 bg-black/30 z-50" aria-hidden="true" />
           <DialogPanel className="fixed inset-0 flex items-center justify-center z-50">
@@ -1037,7 +978,7 @@ export default function Header() {
                         }`}
                         placeholder="Enter your mobile number"
                       />
-
+                      {/*
                       {!phoneVerified && !showPhoneOTP && (
                         <button
                           onClick={async () => {
@@ -1083,9 +1024,10 @@ export default function Header() {
                           aria-hidden="true"
                         />
                       )}
+                      */}
                     </div>
 
-                    {showPhoneOTP && !phoneVerified && (
+                    {/* {showPhoneOTP && !phoneVerified && (
                       <div className="mt-2 flex items-center justify-between space-x-2">
                         {[0, 1, 2, 3].map((index) => (
                           <input
@@ -1141,7 +1083,7 @@ export default function Header() {
                           {isLoading ? "Verifying..." : "Submit"}
                         </button>
                       </div>
-                    )}
+                    )} */}
                   </div>
                   <div className="flex gap-2 justify-between">
                     <div className="relative w-full">

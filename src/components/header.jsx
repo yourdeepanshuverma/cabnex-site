@@ -714,12 +714,12 @@ export default function Header() {
           <div className="fixed inset-0 z-50" />
           <DialogPanel className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
             <div className="flex items-center justify-between">
-              <a href="#" className="-m-1.5 p-1.5">
+              <a href="/" className="-m-1.5 p-1.5">
                 <span className="sr-only">Your Company</span>
                 <img
-                  alt=""
+                  alt="logo"
                   src={settings?.logo?.url || ""}
-                  className="h-8 w-auto"
+                  className="h-10 w-auto"
                 />
               </a>
               <button
@@ -730,6 +730,66 @@ export default function Header() {
                 <span className="sr-only">Close menu</span>
                 <XMarkIcon aria-hidden="true" className="h-6 w-6" />
               </button>
+            </div>
+            <div className="mt-6 flow-root">
+              <div className="-my-6 divide-y divide-gray-500/10">
+                <div className="space-y-2 py-6">
+                  {isLoggedIn && user ? (
+                    <>
+                      <div className="flex items-center gap-x-3 px-3 py-2">
+                        <UserIcon className="h-10 w-10 bg-[#FF6900] p-2 rounded-full text-white" />
+                        <span className="text-base font-semibold text-gray-900">
+                          {user?.fullName || "User"}
+                        </span>
+                      </div>
+                      <Link
+                        to="/profile"
+                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        My Profile
+                      </Link>
+                      <Link
+                        to="/my-bookings"
+                        className="-mx-3 block rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        My Bookings
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="-mx-3 block w-full text-left rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      >
+                        Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setLoginOpen(true);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="-mx-3 block w-full text-left rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      >
+                        Login
+                      </button>
+                      <button
+                        onClick={() => {
+                          setRegisterOpen(true);
+                          setMobileMenuOpen(false);
+                        }}
+                        className="-mx-3 block w-full text-left rounded-lg px-3 py-2 text-base font-semibold leading-7 text-gray-900 hover:bg-gray-50"
+                      >
+                        Register
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
           </DialogPanel>
         </Dialog>

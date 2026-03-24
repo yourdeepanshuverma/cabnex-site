@@ -17,7 +17,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   return (
     <div className="mt-20">
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-[60] w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -49,7 +49,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
       {isOpen && (
         <div
-          className="fixed sm:hidden inset-0 bg-black bg-opacity-50 z-30"
+          className="fixed sm:hidden inset-0 bg-black bg-opacity-50 z-[55]"
           onClick={() => setIsOpen(false)}
         />
       )}

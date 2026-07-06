@@ -13,6 +13,7 @@ import {
   FunnelIcon,
   BanknotesIcon,
   TicketIcon,
+  XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useSearch } from "../context/SearchContext";
@@ -551,6 +552,83 @@ const BookingDetailsPage = () => {
                   </div>
                 </div>
               ))}
+
+              {/* Checkbox for Booking for someone else */}
+              <div className="flex items-center gap-3 sm:col-span-2 mt-2">
+                <input
+                  type="checkbox"
+                  id="isBookingForOther"
+                  checked={isBookingForOther}
+                  onChange={(e) => setIsBookingForOther(e.target.checked)}
+                  className="h-5 w-5 rounded border-gray-300 text-[#5143D9] focus:ring-[#5143D9] accent-orange-500 cursor-pointer"
+                />
+                <label
+                  htmlFor="isBookingForOther"
+                  className="font-grotesk font-semibold text-sm text-gray-700 cursor-pointer select-none"
+                >
+                  Booking for someone else? (Enter traveller details below)
+                </label>
+              </div>
+
+              {isBookingForOther && (
+                <div className="sm:col-span-2 border-t border-gray-200 pt-4 mt-2 space-y-4">
+                  <h5 className="font-grotesk font-bold text-base text-[#5143D9]">
+                    Passenger Details
+                  </h5>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="flex items-start gap-3">
+                      <UserIcon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <label className="font-grotesk font-semibold text-sm text-black">
+                          Passenger Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={alternateName}
+                          onChange={(e) => setAlternateName(e.target.value)}
+                          className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                          placeholder="Enter passenger's full name"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-start gap-3">
+                      <UserIcon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <label className="font-grotesk font-semibold text-sm text-black">
+                          Passenger Phone Number <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="tel"
+                          value={alternatePhone}
+                          onChange={(e) => setAlternatePhone(e.target.value)}
+                          className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                          placeholder="Enter passenger's phone number"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-3 sm:col-span-2">
+                      <EnvelopeIcon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />
+                      <div className="flex-1">
+                        <label className="font-grotesk font-semibold text-sm text-black">
+                          Passenger Email <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={alternateEmail}
+                          onChange={(e) => setAlternateEmail(e.target.value)}
+                          className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                          placeholder="Enter passenger's email address"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex items-start gap-3 sm:col-span-2">
                 <MapPinIcon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />

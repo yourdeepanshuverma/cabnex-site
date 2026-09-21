@@ -1,8 +1,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://api.cabnex.in",
-  // baseURL: "http://localhost:3000",
+  // baseURL: "https://api.cabnex.in",
+  baseURL: "http://localhost:3000",
   headers: {
     "Content-Type": "application/json",
   },
@@ -28,17 +28,13 @@ const endpoints = {
   Verifyotp: "/api/v1/otp/verify",
   ContactUs: "/api/v1/admin/contact-us",
   offlineBooking: "/api/v1/auth/bookings/without-payment",
+  masterCities: "/api/v1/master/cities",
+  masterTransfers: "/api/v1/master/transfers",
 };
 
-const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-if (!GOOGLE_MAPS_API_KEY) {
-  console.warn(
-    "Google Maps API Key is missing! Add VITE_GOOGLE_MAPS_API_KEY in .env file.",
-  );
-}
 const googleConfig = {
-  apiKey: GOOGLE_MAPS_API_KEY,
-  libraries: ["places"],
+  apiKey: "",
+  libraries: [],
 };
 
 export { api, endpoints, googleConfig };

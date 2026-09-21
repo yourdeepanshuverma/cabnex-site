@@ -135,40 +135,42 @@ const BookingDetailsPage = () => {
   const distance = searchResult?.data?.distance || 0;
 
   const serviceType = searchFormData.serviceType || "outstation";
-  let pickupLocation = { name: "Not specified", place_id: null };
-  let dropoffLocation = { name: "Not specified", place_id: null };
+  const normalizeLocation = (loc) => {
+    if (!loc) return { name: "Not specified", place_id: null, cityId: null };
+    if (typeof loc === "string")
+      return { name: loc, place_id: null, cityId: null };
+    const name = loc.city
+      ? loc.city.replace(/-/g, " ")
+      : loc.name || "Not specified";
+    return {
+      name,
+      place_id: loc._id || loc.place_id || null,
+      cityId: loc._id || null,
+    };
+  };
+
+  let pickupLocation = { name: "Not specified", place_id: null, cityId: null };
+  let dropoffLocation = { name: "Not specified", place_id: null, cityId: null };
   let pickupDateTimeForState = null;
   let dropoffDateTimeForState = null;
 
   if (serviceType === "rental") {
-    pickupLocation =
-      searchFormData.pickupLocation ||
+    pickupLocation = normalizeLocation(
       searchFormData.selectedPlaces?.rentalPickup ||
-      pickupLocation;
-    dropoffLocation =
-      searchFormData.dropoffLocation ||
-      searchFormData.selectedPlaces?.rentalDropoff ||
-      pickupLocation;
-    pickupDateTimeForState = searchFormData.pickupDateTime;
-  } else if (serviceType === "city_taxi") {
-    pickupLocation =
-      searchFormData.pickupLocation ||
-      searchFormData.selectedPlaces?.cityTaxiPickup ||
-      pickupLocation;
-    dropoffLocation =
-      searchFormData.dropoffLocation ||
-      searchFormData.selectedPlaces?.cityTaxiDropoff ||
-      dropoffLocation;
+        searchFormData.pickupLocation,
+    );
+    dropoffLocation = pickupLocation;
     pickupDateTimeForState = searchFormData.pickupDateTime;
   } else if (serviceType === "transfer") {
-    pickupLocation =
-      searchFormData.pickupLocation ||
-      searchFormData.selectedPlaces?.transferFrom ||
-      pickupLocation;
-    dropoffLocation =
-      searchFormData.dropoffLocation ||
+    pickupLocation = normalizeLocation(
+      searchFormData.selectedCity ||
+        searchFormData.selectedPlaces?.transferFrom ||
+        searchFormData.pickupLocation,
+    );
+    dropoffLocation = normalizeLocation(
       searchFormData.selectedPlaces?.transferTo ||
-      dropoffLocation;
+        searchFormData.dropoffLocation,
+    );
     pickupDateTimeForState = searchFormData.transferDateTime;
   } else if (serviceType === "outstation") {
     if (
@@ -179,32 +181,34 @@ const BookingDetailsPage = () => {
       const lastStop =
         searchFormData.multicityStops[searchFormData.multicityStops.length - 1];
       pickupLocation = {
-        name: firstStop.selectedPickupAddress,
-        place_id: firstStop.pickupPlaceId,
+        name: firstStop.selectedPickupAddress || "Not specified",
+        place_id: firstStop.pickupCityId || firstStop.pickupPlaceId || null,
+        cityId: firstStop.pickupCityId || null,
       };
       dropoffLocation = {
-        name: lastStop.selectedDropoffAddress,
-        place_id: lastStop.dropoffPlaceId,
+        name: lastStop.selectedDropoffAddress || "Not specified",
+        place_id: lastStop.dropoffCityId || lastStop.dropoffPlaceId || null,
+        cityId: lastStop.dropoffCityId || null,
       };
       pickupDateTimeForState = firstStop.dateTime;
       dropoffDateTimeForState = lastStop.dateTime;
     } else {
-      pickupLocation =
-        searchFormData.pickupLocation ||
+      pickupLocation = normalizeLocation(
         searchFormData.selectedPlaces?.outstationPickup ||
-        pickupLocation;
-      dropoffLocation =
-        searchFormData.dropoffLocation ||
+          searchFormData.pickupLocation,
+      );
+      dropoffLocation = normalizeLocation(
         searchFormData.selectedPlaces?.outstationDropoff ||
-        dropoffLocation;
+          searchFormData.dropoffLocation,
+      );
       pickupDateTimeForState = searchFormData.outstationPickupDateTime;
       dropoffDateTimeForState = searchFormData.outstationReturnDateTime;
     }
   } else if (serviceType === "activity") {
-    pickupLocation =
-      searchFormData.pickupLocation ||
+    pickupLocation = normalizeLocation(
       searchFormData.selectedPlaces?.activityLocation ||
-      pickupLocation;
+        searchFormData.pickupLocation,
+    );
     dropoffLocation = pickupLocation;
     pickupDateTimeForState = searchFormData.activityDateTime;
   }
@@ -346,7 +350,8 @@ const BookingDetailsPage = () => {
           searchFormData.outstationTripType === "multicity"
             ? searchFormData.multicityStops.map((stop) => ({
                 address: stop.selectedDropoffAddress,
-                place_id: stop.dropoffPlaceId || null,
+                place_id: stop.dropoffCityId || stop.dropoffPlaceId || null,
+                cityId: stop.dropoffCityId || null,
                 dateTime: stop.dateTime,
               }))
             : showDropoff
@@ -354,6 +359,7 @@ const BookingDetailsPage = () => {
                   {
                     address: travellerInfo.dropoffLocation.name,
                     place_id: travellerInfo.dropoffLocation.place_id || null,
+                    cityId: travellerInfo.dropoffLocation.cityId || null,
                   },
                 ]
               : [],

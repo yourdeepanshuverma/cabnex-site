@@ -7,18 +7,27 @@ import { format } from "date-fns";
 const SearchSummary = ({ onModify }) => {
   const { searchFormData } = useSearch();
 
-  const formatDate = (dateStr) => {
+  const formatDate = (dateStr, showTime = true) => {
     if (!dateStr) return "-";
-    return format(new Date(dateStr), "dd MMM yyyy, h:mm a");
+    return format(
+      new Date(dateStr),
+      showTime ? "dd MMM yyyy, h:mm a" : "dd MMM yyyy",
+    );
   };
 
   const getLocationName = (key) => {
-    return searchFormData.selectedPlaces[key]?.name || "-";
+    const place = searchFormData.selectedPlaces?.[key];
+    if (!place) return "-";
+    if (typeof place === "string") return place;
+    return place.city ? place.city.replace(/-/g, " ") : place.name || "-";
   };
 
-  const serviceType = searchFormData.serviceType?.toUpperCase();
+  const serviceType = searchFormData.serviceType?.toUpperCase() || "";
 
-  const cityName = searchFormData.selectedCity?.name || "-";
+  const cityName =
+    searchFormData.selectedCity?.city?.replace(/-/g, " ") ||
+    searchFormData.selectedCity?.name ||
+    "-";
 
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 mb-8 border border-gray-200">
@@ -81,10 +90,10 @@ const SearchSummary = ({ onModify }) => {
                     <FaCalendarAlt className="text-purple-500 mt-1" />
                     <div>
                       <p className="font-semibold text-xs text-gray-500">
-                        Departure
+                        Travel Date
                       </p>
                       <p className="font-bold text-sm">
-                        {formatDate(stop.dateTime)}
+                        {formatDate(stop.dateTime, false)}
                       </p>
                     </div>
                   </div>

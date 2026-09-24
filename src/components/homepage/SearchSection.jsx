@@ -7,6 +7,7 @@ import {
   FaSearch,
   FaPlus,
   FaTrash,
+  FaSpinner,
 } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -20,6 +21,7 @@ import "react-toastify/dist/ReactToastify.css";
 import CityAutocomplete, {
   formatCityDisplay,
 } from "../common/CityAutocomplete";
+import SearchLoadingModal from "../common/SearchLoadingModal";
 
 registerLocale("en-US", enUS);
 
@@ -45,6 +47,9 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
     isLoggedIn,
   } = useSearch();
   const navigate = useNavigate();
+
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchMeta, setSearchMeta] = useState({});
 
   const tabServiceMap = {
     outstation: 0,
@@ -370,10 +375,68 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
       return;
     }
 
+    // Determine descriptive metadata for the animation
+    let meta = {
+      tripType: tab || "Cab Search",
+    };
+
+    if (tab === "Outstation Multicity") {
+      const originName =
+        multicityStops[0]?.pickupCity?.city ||
+        multicityStops[0]?.selectedPickupAddress ||
+        "";
+      const destName =
+        multicityStops[multicityStops.length - 1]?.dropoffCity?.city ||
+        multicityStops[multicityStops.length - 1]?.selectedDropoffAddress ||
+        "";
+      meta = {
+        origin: originName,
+        destination: destName,
+        legsCount: multicityStops.length,
+        tripType: "Outstation Multicity",
+      };
+    } else if (tab === "Outstation") {
+      meta = {
+        origin: selectedPlaces.outstationPickup?.city || "",
+        destination: selectedPlaces.outstationDropoff?.city || "",
+        tripType:
+          outstationTripType === "round-trip"
+            ? "Outstation Round-Trip"
+            : "Outstation One-Way",
+      };
+    } else if (tab === "Transfer") {
+      meta = {
+        origin: selectedCity?.city || "",
+        destination:
+          transferDirection === "home-to-station"
+            ? "Airport / Station"
+            : "City Address",
+        tripType: "City Transfer",
+      };
+    } else if (tab === "Activity") {
+      meta = {
+        origin: selectedPlaces.activityLocation?.city || "",
+        destination: "Activity Tour",
+        tripType: "Sightseeing & Activities",
+      };
+    } else if (tab === "Rental") {
+      meta = {
+        origin: selectedPlaces.rentalPickup?.city || "",
+        destination: "Hourly Package",
+        tripType: "Rental",
+      };
+    }
+
+    setSearchMeta(meta);
+    setIsSearching(true);
     saveFormToContext();
 
     try {
-      const response = await api.post(endpoints.search, data);
+      const minDisplayDelay = new Promise((resolve) => setTimeout(resolve, 1400));
+      const [response] = await Promise.all([
+        api.post(endpoints.search, data),
+        minDisplayDelay,
+      ]);
       const result = response.data;
       if (result.success) {
         setSearchResult(result);
@@ -393,6 +456,8 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
     } catch (error) {
       console.error("Search Error:", error);
       toast.error(error?.response?.data?.message || "Error performing search");
+    } finally {
+      setIsSearching(false);
     }
   };
 
@@ -509,19 +574,26 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
         theme="light"
         className="font-grotesk"
       />
+
+      {/* Animated Fullscreen Search Overlay */}
+      <SearchLoadingModal
+        isOpen={isSearching}
+        searchMeta={searchMeta}
+        onClose={() => setIsSearching(false)}
+      />
+
       <div className="search-section w-full max-w-7xl mx-auto mt-6 px-4 z-30 relative">
         <Tabs selectedIndex={activeTabIndex} onSelect={handleTabSwitch}>
           <TabList className="flex flex-wrap justify-center gap-0 md:justify-start border-gray-200 mb-0">
             {tabs.map((tab, index, arr) => (
               <Tab
                 key={index}
-                className={`w-1/2 md:w-auto text-center px-6 py-3 font-grotesk text-md font-medium cursor-pointer backdrop-blur-xl bg-black md:bg-[#cdcdcd33] text-[#ffffff] hover:bg-black transition-colors ${
-                  index === 0
-                    ? "rounded-tl-3xl md:rounded-tl-3xl"
-                    : index === arr.length - 1
-                      ? "rounded-tr-3xl md:rounded-tr-3xl"
-                      : ""
-                }`}
+                className={`w-1/2 md:w-auto text-center px-6 py-3 font-grotesk text-md font-medium cursor-pointer backdrop-blur-xl bg-black md:bg-[#cdcdcd33] text-[#ffffff] hover:bg-black transition-colors ${index === 0
+                  ? "rounded-tl-3xl md:rounded-tl-3xl"
+                  : index === arr.length - 1
+                    ? "rounded-tr-3xl md:rounded-tr-3xl"
+                    : ""
+                  }`}
                 selectedClassName="!bg-orange-600 text-white"
               >
                 {tab}
@@ -638,83 +710,92 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
               {/* ONE-WAY / ROUND-TRIP INPUTS */}
               {(outstationTripType === "one-way" ||
                 outstationTripType === "round-trip") && (
-                <div className="flex flex-col md:flex-row gap-4 mb-4">
-                  <div className="flex flex-col w-full relative">
-                    <label className="text-md font-grotesk font-semibold mb-2">
-                      Pickup City
-                    </label>
-                    <CityAutocomplete
-                      value={selectedPlaces.outstationPickup}
-                      onSelect={(city) =>
-                        setSelectedPlaces((prev) => ({
-                          ...prev,
-                          outstationPickup: city,
-                        }))
-                      }
-                      placeholder="Select pickup city"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col w-full relative">
-                    <label className="text-md font-grotesk font-semibold mb-2">
-                      Dropoff City
-                    </label>
-                    <CityAutocomplete
-                      value={selectedPlaces.outstationDropoff}
-                      onSelect={(city) =>
-                        setSelectedPlaces((prev) => ({
-                          ...prev,
-                          outstationDropoff: city,
-                        }))
-                      }
-                      placeholder="Select dropoff city"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-col w-full relative">
-                    <label className="text-md font-grotesk font-semibold mb-2">
-                      Pickup Date/Time
-                    </label>
-                    <DatePicker
-                      selected={outstationPickupDateTime}
-                      onChange={setOutstationPickupDateTime}
-                      showTimeSelect
-                      dateFormat="MMMM d, yyyy h:mm aa"
-                      customInput={
-                        <CustomInput placeholder="Select date and time" />
-                      }
-                      minDate={new Date()}
-                      required
-                    />
-                  </div>
-                  {outstationTripType === "round-trip" && (
+                  <div className="flex flex-col md:flex-row gap-4 mb-4">
                     <div className="flex flex-col w-full relative">
                       <label className="text-md font-grotesk font-semibold mb-2">
-                        Return Date/Time
+                        Pickup City
                       </label>
-                      <DatePicker
-                        selected={outstationReturnDateTime}
-                        onChange={setOutstationReturnDateTime}
-                        showTimeSelect
-                        dateFormat="MMMM d, yyyy h:mm aa"
-                        customInput={
-                          <CustomInput placeholder="Select return date and time" />
+                      <CityAutocomplete
+                        value={selectedPlaces.outstationPickup}
+                        onSelect={(city) =>
+                          setSelectedPlaces((prev) => ({
+                            ...prev,
+                            outstationPickup: city,
+                          }))
                         }
-                        minDate={outstationPickupDateTime || new Date()}
+                        placeholder="Select pickup city"
                         required
                       />
                     </div>
-                  )}
-                  <div className="flex gap-3 items-end pb-1">
-                    <button
-                      type="submit"
-                      className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium"
-                    >
-                      {buttonIcon} {buttonText}
-                    </button>
+                    <div className="flex flex-col w-full relative">
+                      <label className="text-md font-grotesk font-semibold mb-2">
+                        Dropoff City
+                      </label>
+                      <CityAutocomplete
+                        value={selectedPlaces.outstationDropoff}
+                        onSelect={(city) =>
+                          setSelectedPlaces((prev) => ({
+                            ...prev,
+                            outstationDropoff: city,
+                          }))
+                        }
+                        placeholder="Select dropoff city"
+                        required
+                      />
+                    </div>
+                    <div className="flex flex-col w-full relative">
+                      <label className="text-md font-grotesk font-semibold mb-2">
+                        Pickup Date/Time
+                      </label>
+                      <DatePicker
+                        selected={outstationPickupDateTime}
+                        onChange={setOutstationPickupDateTime}
+                        showTimeSelect
+                        dateFormat="MMMM d, yyyy h:mm aa"
+                        customInput={
+                          <CustomInput placeholder="Select date and time" />
+                        }
+                        minDate={new Date()}
+                        required
+                      />
+                    </div>
+                    {outstationTripType === "round-trip" && (
+                      <div className="flex flex-col w-full relative">
+                        <label className="text-md font-grotesk font-semibold mb-2">
+                          Return Date/Time
+                        </label>
+                        <DatePicker
+                          selected={outstationReturnDateTime}
+                          onChange={setOutstationReturnDateTime}
+                          showTimeSelect
+                          dateFormat="MMMM d, yyyy h:mm aa"
+                          customInput={
+                            <CustomInput placeholder="Select return date and time" />
+                          }
+                          minDate={outstationPickupDateTime || new Date()}
+                          required
+                        />
+                      </div>
+                    )}
+                    <div className="flex gap-3 items-end pb-1">
+                      <button
+                        type="submit"
+                        disabled={isSearching}
+                        className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
+                      >
+                        {isSearching ? (
+                          <>
+                            <FaSpinner className="animate-spin inline" /> Searching...
+                          </>
+                        ) : (
+                          <>
+                            {buttonIcon} {buttonText}
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* MULTICITY INPUTS (DATE ONLY - TIME REMOVED) */}
               {outstationTripType === "multicity" && (
@@ -825,9 +906,18 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                     </button>
                     <button
                       type="submit"
-                      className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 ml-auto transition font-medium"
+                      disabled={isSearching}
+                      className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 ml-auto transition font-medium flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
                     >
-                      {buttonIcon} {buttonText} Multicity
+                      {isSearching ? (
+                        <>
+                          <FaSpinner className="animate-spin inline" /> Searching...
+                        </>
+                      ) : (
+                        <>
+                          {buttonIcon} {buttonText} Multicity
+                        </>
+                      )}
                     </button>
                   </div>
                 </>
@@ -950,9 +1040,18 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                 <div className="flex gap-3 items-end pb-1">
                   <button
                     type="submit"
-                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium"
+                    disabled={isSearching}
+                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
                   >
-                    {buttonIcon} {buttonText}
+                    {isSearching ? (
+                      <>
+                        <FaSpinner className="animate-spin inline" /> Searching...
+                      </>
+                    ) : (
+                      <>
+                        {buttonIcon} {buttonText}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1019,9 +1118,18 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                 <div className="flex gap-3 items-end pb-1">
                   <button
                     type="submit"
-                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium"
+                    disabled={isSearching}
+                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
                   >
-                    {buttonIcon} {buttonText}
+                    {isSearching ? (
+                      <>
+                        <FaSpinner className="animate-spin inline" /> Searching...
+                      </>
+                    ) : (
+                      <>
+                        {buttonIcon} {buttonText}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -1113,9 +1221,18 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                 <div className="flex gap-3 items-end pb-1">
                   <button
                     type="submit"
-                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium"
+                    disabled={isSearching}
+                    className="bg-orange-500 text-white px-8 py-3 rounded-md hover:bg-orange-600 transition font-medium flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-not-allowed shadow-md hover:shadow-lg active:scale-95"
                   >
-                    {buttonIcon} {buttonText}
+                    {isSearching ? (
+                      <>
+                        <FaSpinner className="animate-spin inline" /> Searching...
+                      </>
+                    ) : (
+                      <>
+                        {buttonIcon} {buttonText}
+                      </>
+                    )}
                   </button>
                 </div>
               </div>

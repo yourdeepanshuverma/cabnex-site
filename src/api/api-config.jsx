@@ -32,9 +32,4 @@ const endpoints = {
   masterTransfers: "/api/v1/master/transfers",
 };
 
-const googleConfig = {
-  apiKey: "",
-  libraries: [],
-};
-
-export { api, endpoints, googleConfig };
+export { api, endpoints };

@@ -936,6 +936,12 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                   alert("Please select a city and date/time.");
                   return;
                 }
+                if (availableTransfers.length === 0 && !selectedTransferId) {
+                  toast.error(
+                    "No transfer routes available for this city. Please select another city.",
+                  );
+                  return;
+                }
                 const data = {
                   serviceType: "transfer",
                   transferId: selectedTransferId || null,
@@ -1005,7 +1011,7 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                   >
                     {availableTransfers.length === 0 ? (
                       <option value="">
-                        {selectedCity ? "Standard City Transfer" : "Select city first"}
+                        {selectedCity ? "No transfer routes available" : "Select city first"}
                       </option>
                     ) : (
                       availableTransfers.map((t) => (

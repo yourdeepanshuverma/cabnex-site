@@ -76,7 +76,7 @@ const ListingPage = () => {
           serviceType: "ACTIVITY TRIP",
           city: result.data.city
             ? result.data.city.charAt(0).toUpperCase() +
-              result.data.city.slice(1)
+            result.data.city.slice(1)
             : "",
           showTime: false,
           showAdults: false,
@@ -95,16 +95,16 @@ const ListingPage = () => {
             description: activityData.description || "No description available",
             actualPrice:
               activityData.pricingOptions &&
-              activityData.pricingOptions.length > 0
+                activityData.pricingOptions.length > 0
                 ? activityData.pricingOptions[0].price
                 : activityData.price || 0,
             inclusions:
               activityData.includes && activityData.includes.length > 0
                 ? activityData.includes
                 : [
-                    { text: "Guided Tour", icon: "CheckCircleIcon" },
-                    { text: "Entry Fees Included", icon: "MapPinIcon" },
-                  ],
+                  { text: "Guided Tour", icon: "CheckCircleIcon" },
+                  { text: "Entry Fees Included", icon: "MapPinIcon" },
+                ],
             cancellationPolicy:
               activityData.cancellationPolicy || "Non-refundable",
           };
@@ -141,14 +141,14 @@ const ListingPage = () => {
               .replace(/-/g, " ")
               .toUpperCase();
             const marketFare = cat.marketFare || 0;
-            const baseFare = cat.baseFare || 0;
+            const baseFare = cat.baseFare ?? cat.baseVehicleCost ?? 0;
             const totalAmount = cat.totalAmount || 0;
             const perKmCharge = cat.perKmCharge || 0;
-            const extraKmCharge = cat.extraKmCharge || 0;
+            const extraKmCharge = cat.extraKmRate ?? cat.extraKmCharge ?? 0;
             const seats = cat.type.seats || 4;
 
             return {
-              id: cat._id || idx,
+              id: cat._id || cat.rateId || cat.type?._id || idx,
               type: "car",
               image:
                 cat.type.image?.url ||
@@ -161,6 +161,7 @@ const ListingPage = () => {
               extraKmCharge,
               actualPrice: Math.round(totalAmount),
               seats,
+              categoryData: cat,
               inclusions: [
                 // { text: "24/7 Roadside Assistance", icon: "CheckCircleIcon" },
                 {
@@ -189,11 +190,11 @@ const ListingPage = () => {
                 //   : []),
                 ...(currentServiceType === "rental" && cat.perHourCharge
                   ? [
-                      {
-                        text: `Extra Hour: ₹${cat.perHourCharge}/Hr`,
-                        icon: "ClockIcon",
-                      },
-                    ]
+                    {
+                      text: `Extra Hour: ₹${cat.perHourCharge}/Hr`,
+                      icon: "ClockIcon",
+                    },
+                  ]
                   : []),
                 // ...(cat.driverAllowance
                 //   ? [
@@ -355,8 +356,8 @@ const ListingPage = () => {
                               e.target.checked
                                 ? setSelectedSeats([...selectedSeats, seat])
                                 : setSelectedSeats(
-                                    selectedSeats.filter((s) => s !== seat),
-                                  )
+                                  selectedSeats.filter((s) => s !== seat),
+                                )
                             }
                             className="accent-blue-600"
                           />
@@ -386,12 +387,12 @@ const ListingPage = () => {
                             onChange={(e) =>
                               e.target.checked
                                 ? setSelectedCategories([
-                                    ...selectedCategories,
-                                    cat,
-                                  ])
+                                  ...selectedCategories,
+                                  cat,
+                                ])
                                 : setSelectedCategories(
-                                    selectedCategories.filter((c) => c !== cat),
-                                  )
+                                  selectedCategories.filter((c) => c !== cat),
+                                )
                             }
                             className="accent-blue-600"
                           />
@@ -440,9 +441,8 @@ const ListingPage = () => {
         {/* Mobile Filter Drawer */}
         {!isActivity && (
           <div
-            className={`lg:hidden fixed inset-y-0 left-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${
-              isFilterOpen ? "translate-x-0" : "-translate-x-full"
-            }`}
+            className={`lg:hidden fixed inset-y-0 left-0 w-80 bg-white shadow-2xl transform transition-transform duration-300 z-50 ${isFilterOpen ? "translate-x-0" : "-translate-x-full"
+              }`}
           >
             <div className="p-5 border-b flex justify-between items-center">
               <h2 className="text-xl font-bold flex items-center gap-2">
@@ -503,8 +503,8 @@ const ListingPage = () => {
                         e.target.checked
                           ? setSelectedSeats([...selectedSeats, seat])
                           : setSelectedSeats(
-                              selectedSeats.filter((s) => s !== seat),
-                            )
+                            selectedSeats.filter((s) => s !== seat),
+                          )
                       }
                       className="accent-orange-500"
                     />
@@ -527,12 +527,12 @@ const ListingPage = () => {
                         onChange={(e) =>
                           e.target.checked
                             ? setSelectedCategories([
-                                ...selectedCategories,
-                                cat,
-                              ])
+                              ...selectedCategories,
+                              cat,
+                            ])
                             : setSelectedCategories(
-                                selectedCategories.filter((c) => c !== cat),
-                              )
+                              selectedCategories.filter((c) => c !== cat),
+                            )
                         }
                         className="accent-orange-500"
                       />
@@ -571,9 +571,8 @@ const FilterSection = ({ title, defaultOpen, children, icon: Icon }) => {
           <span>{title}</span>
         </div>
         <ChevronDownIcon
-          className={`h-5 w-5 transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+          className={`h-5 w-5 transition-transform ${isOpen ? "rotate-180" : ""
+            }`}
         />
       </button>
       {isOpen && <div className="space-y-2 mt-2">{children}</div>}
@@ -606,12 +605,20 @@ const ItemCard = ({ item, serviceType }) => {
         distance: searchResult.data?.distance || 0,
       }));
 
-      const originalCategory = searchResult?.data?.categories?.find(
-        (cat) => cat._id === item.id,
-      );
+      const originalCategory =
+        item.categoryData ||
+        searchResult?.data?.categories?.find(
+          (cat, idx) =>
+            (cat._id && cat._id === item.id) ||
+            (cat.rateId && cat.rateId === item.id) ||
+            (cat.type?._id && cat.type?._id === item.id) ||
+            idx === item.id,
+        ) ||
+        searchResult?.data?.categories?.[0];
 
       const bookingItem = {
         ...item,
+        categoryData: originalCategory,
         data: {
           categories: [originalCategory],
         },
@@ -661,9 +668,8 @@ const ItemCard = ({ item, serviceType }) => {
                 >
                   <span>View Inclusions</span>
                   <ChevronRightIcon
-                    className={`h-5 w-5 transition-transform ${
-                      showDetails ? "rotate-90" : ""
-                    }`}
+                    className={`h-5 w-5 transition-transform ${showDetails ? "rotate-90" : ""
+                      }`}
                   />
                 </button>
                 {showDetails && (
@@ -739,9 +745,8 @@ const ItemCard = ({ item, serviceType }) => {
                   className="bg-black text-white p-1 rounded-md"
                 >
                   <ChevronDownIcon
-                    className={`h-6 w-6 transition-transform ${
-                      showDetails ? "rotate-180" : ""
-                    }`}
+                    className={`h-6 w-6 transition-transform ${showDetails ? "rotate-180" : ""
+                      }`}
                   />
                 </button>
               </div>
@@ -804,7 +809,7 @@ const ItemCard = ({ item, serviceType }) => {
               </span>
             ))}
           </div>
-          <p className="text-xs text-gray-600">Per Km: ₹{item.extraKmCharge}</p>
+          {/* <p className="text-xs text-gray-600">Per Km: ₹{item.extraKmCharge}</p> */}
           <div className="flex justify-between items-center">
             <p className="text-2xl font-extrabold font-grotesk">
               ₹{item.actualPrice.toLocaleString("en-IN")}
@@ -824,9 +829,8 @@ const ItemCard = ({ item, serviceType }) => {
               >
                 <span>View Inclusions</span>
                 <ChevronRightIcon
-                  className={`h-5 w-5 transition-transform ${
-                    showDetails ? "rotate-90" : ""
-                  }`}
+                  className={`h-5 w-5 transition-transform ${showDetails ? "rotate-90" : ""
+                    }`}
                 />
               </button>
               {showDetails && (
@@ -891,11 +895,11 @@ const ItemCard = ({ item, serviceType }) => {
           </ul>
         </div>
         <div className="w-1/4 flex flex-col justify-center items-end text-right border-l border-[#d4d4d4]">
-          {serviceType !== "transfer" && (
+          {/* {serviceType !== "transfer" && (
             <div className="flex gap-2">
               <p className="text-red-600">Per Km: ₹{item.extraKmCharge}</p>
             </div>
-          )}
+          )} */}
           <div className="flex items-center gap-2">
             <p className="text-3xl font-grotesk font-extrabold text-black">
               ₹{item.actualPrice.toLocaleString("en-IN")}
@@ -917,9 +921,8 @@ const ItemCard = ({ item, serviceType }) => {
             className="bg-black text-white p-1 rounded-md"
           >
             <ChevronDownIcon
-              className={`h-6 w-6 transition-transform ${
-                showDetails ? "rotate-180" : ""
-              }`}
+              className={`h-6 w-6 transition-transform ${showDetails ? "rotate-180" : ""
+                }`}
             />
           </button>
         </div>

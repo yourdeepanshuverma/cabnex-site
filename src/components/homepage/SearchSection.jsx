@@ -8,6 +8,7 @@ import {
   FaPlus,
   FaTrash,
   FaSpinner,
+  FaMoon,
 } from "react-icons/fa";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -116,10 +117,8 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
       : getDefaultDateTime(),
   );
 
-  // Multicity helper to initialize stop (DATE ONLY - time stripped)
-  const createInitialStop = (date) => {
-    const d = date ? new Date(date) : getDefaultDateOnly();
-    d.setHours(0, 0, 0, 0);
+  // Multicity helper to initialize a leg (no per-leg date — single pickup date at top)
+  const createInitialStop = () => {
     return {
       pickupCityId: null,
       dropoffCityId: null,
@@ -127,30 +126,39 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
       dropoffCity: null,
       selectedPickupAddress: "",
       selectedDropoffAddress: "",
-      dateTime: d,
-      nightsAtCity: 0,
+      nightsAtCity: 1,
     };
   };
+
+  // Single pickup date for multicity trips
+  const [multicityPickupDate, setMulticityPickupDate] = useState(() => {
+    if (searchFormData.multicityPickupDate) {
+      return new Date(searchFormData.multicityPickupDate);
+    }
+    if (searchFormData.multicityStops?.[0]?.dateTime) {
+      return new Date(searchFormData.multicityStops[0].dateTime);
+    }
+    return getDefaultDateOnly();
+  });
 
   const [multicityStops, setMulticityStops] = useState(() => {
     let stops = searchFormData.multicityStops || [];
     if (stops.length === 0) {
       stops = [createInitialStop()];
     } else {
-      stops = stops.map((stop) => {
-        const d = stop.dateTime ? new Date(stop.dateTime) : getDefaultDateOnly();
-        d.setHours(0, 0, 0, 0);
-        return {
-          ...stop,
-          pickupCityId: stop.pickupCityId || stop.pickupPlaceId || null,
-          dropoffCityId: stop.dropoffCityId || stop.dropoffPlaceId || null,
-          dateTime: d,
-          nightsAtCity: stop.nightsAtCity || 0,
-        };
-      });
+      stops = stops.map((stop) => ({
+        ...stop,
+        pickupCityId: stop.pickupCityId || stop.pickupPlaceId || null,
+        dropoffCityId: stop.dropoffCityId || stop.dropoffPlaceId || null,
+        nightsAtCity: stop.nightsAtCity || 1,
+      }));
     }
     return stops;
   });
+
+  // Computed totals for multicity
+  const totalNights = multicityStops.reduce((sum, s) => sum + (s.nightsAtCity || 0), 0);
+  const totalDays = totalNights + 1;
 
   const tabs = ["Outstation", "Transfer", "Activity", "Rental"];
 
@@ -249,6 +257,7 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
     selectedPlaces,
     rentalPackage,
     multicityStops,
+    multicityPickupDate,
     activeTabIndex,
     activityDateTime,
     selectedCity,
@@ -271,18 +280,23 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   );
 
   const saveFormToContext = () => {
-    const cleanStops = multicityStops.map((stop) => ({
-      pickupCityId: stop.pickupCityId,
-      dropoffCityId: stop.dropoffCityId,
-      pickupPlaceId: stop.pickupCityId,
-      dropoffPlaceId: stop.dropoffCityId,
-      pickupCity: stop.pickupCity,
-      dropoffCity: stop.dropoffCity,
-      selectedPickupAddress: stop.selectedPickupAddress,
-      selectedDropoffAddress: stop.selectedDropoffAddress,
-      dateTime: stop.dateTime ? stop.dateTime.toISOString() : null,
-      nightsAtCity: stop.nightsAtCity || 0,
-    }));
+    let runningDate = multicityPickupDate ? new Date(multicityPickupDate) : new Date();
+    const cleanStops = multicityStops.map((stop) => {
+      const legDate = new Date(runningDate);
+      runningDate.setDate(runningDate.getDate() + (stop.nightsAtCity || 0));
+      return {
+        pickupCityId: stop.pickupCityId,
+        dropoffCityId: stop.dropoffCityId,
+        pickupPlaceId: stop.pickupCityId,
+        dropoffPlaceId: stop.dropoffCityId,
+        pickupCity: stop.pickupCity,
+        dropoffCity: stop.dropoffCity,
+        selectedPickupAddress: stop.selectedPickupAddress,
+        selectedDropoffAddress: stop.selectedDropoffAddress,
+        nightsAtCity: stop.nightsAtCity || 0,
+        dateTime: legDate.toISOString(),
+      };
+    });
 
     const serviceType = tabs[activeTabIndex].toLowerCase().replace(" ", "_");
     const selectedTransfer =
@@ -332,20 +346,47 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
     } else if (serviceType === "outstation") {
       const pickupCity = selectedPlaces.outstationPickup;
       const dropoffCity = selectedPlaces.outstationDropoff;
+      const returnDate = multicityPickupDate ? new Date(multicityPickupDate) : null;
+      if (returnDate) {
+        returnDate.setDate(returnDate.getDate() + totalNights);
+      }
       newFormData = {
         ...newFormData,
-        outstationPickupDateTime: outstationPickupDateTime
-          ? outstationPickupDateTime.toISOString()
-          : null,
-        outstationReturnDateTime:
-          outstationTripType === "round-trip" && outstationReturnDateTime
-            ? outstationReturnDateTime.toISOString()
+        pickupDateTime:
+          outstationTripType === "multicity"
+            ? (multicityPickupDate ? multicityPickupDate.toISOString() : null)
             : null,
-        pickupCityId: pickupCity?._id || null,
-        dropoffCityId: dropoffCity?._id || null,
-        pickupLocation: pickupCity?.city || null,
-        dropoffLocation: dropoffCity?.city || null,
+        outstationPickupDateTime:
+          outstationTripType === "multicity"
+            ? (multicityPickupDate ? multicityPickupDate.toISOString() : null)
+            : (outstationPickupDateTime ? outstationPickupDateTime.toISOString() : null),
+        outstationReturnDateTime:
+          outstationTripType === "multicity"
+            ? (returnDate ? returnDate.toISOString() : null)
+            : (outstationTripType === "round-trip" && outstationReturnDateTime
+                ? outstationReturnDateTime.toISOString()
+                : null),
+        pickupCityId:
+          outstationTripType === "multicity"
+            ? (multicityStops[0]?.pickupCityId || null)
+            : (pickupCity?._id || null),
+        dropoffCityId:
+          outstationTripType === "multicity"
+            ? (multicityStops[multicityStops.length - 1]?.dropoffCityId || null)
+            : (dropoffCity?._id || null),
+        pickupLocation:
+          outstationTripType === "multicity"
+            ? (multicityStops[0]?.selectedPickupAddress || null)
+            : (pickupCity?.city || null),
+        dropoffLocation:
+          outstationTripType === "multicity"
+            ? (multicityStops[multicityStops.length - 1]?.selectedDropoffAddress || null)
+            : (dropoffCity?.city || null),
         multicityStops: outstationTripType === "multicity" ? cleanStops : [],
+        multicityPickupDate:
+          outstationTripType === "multicity" && multicityPickupDate
+            ? multicityPickupDate.toISOString()
+            : null,
       };
     } else if (serviceType === "activity") {
       newFormData = {
@@ -464,12 +505,7 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
   const addMulticityStop = () => {
     setMulticityStops((prev) => {
       const lastStop = prev[prev.length - 1];
-      const nextDate = lastStop?.dateTime
-        ? new Date(lastStop.dateTime)
-        : getDefaultDateOnly();
-      nextDate.setHours(0, 0, 0, 0);
-
-      const newStop = createInitialStop(nextDate);
+      const newStop = createInitialStop();
       if (lastStop?.dropoffCityId) {
         newStop.pickupCityId = lastStop.dropoffCityId;
         newStop.pickupCity = lastStop.dropoffCity;
@@ -506,11 +542,7 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
     });
   };
 
-  const getPreviousDropoffDate = (index) => {
-    if (index === 0) return new Date();
-    const prevDate = multicityStops[index - 1]?.dateTime;
-    return prevDate ? new Date(prevDate) : new Date();
-  };
+
 
   const handleTabSwitch = (index) => {
     const newServiceType = tabs[index].toLowerCase().replace(" ", "_");
@@ -524,6 +556,7 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
     setSelectedPlaces({});
     setRentalPackage("");
     setMulticityStops([createInitialStop()]);
+    setMulticityPickupDate(getDefaultDateOnly());
     setActivityDateTime(defaultDateTime);
     setSelectedCity(null);
     setSelectedTransferId("");
@@ -609,16 +642,22 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
               onSubmit={(e) => {
                 e.preventDefault();
                 if (outstationTripType === "multicity") {
+                  if (!multicityPickupDate) {
+                    alert("Please select a pickup date.");
+                    return;
+                  }
                   const invalidStop = multicityStops.find(
                     (stop) =>
                       !stop.pickupCityId ||
-                      !stop.dropoffCityId ||
-                      !stop.dateTime,
+                      !stop.dropoffCityId,
                   );
                   if (invalidStop || multicityStops.length < 1) {
-                    alert("Please select pickup, dropoff cities and travel date for all stops.");
+                    alert("Please select pickup and dropoff cities for all legs.");
                     return;
                   }
+                  // Auto-compute return date from pickup + total nights
+                  const returnDate = new Date(multicityPickupDate);
+                  returnDate.setDate(returnDate.getDate() + totalNights);
                   const data = {
                     pickupCityId: multicityStops[0].pickupCityId,
                     destinations: multicityStops.map((stop) => ({
@@ -628,11 +667,8 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                     oneWay: false,
                     serviceType: "outstation",
                     packageId: null,
-                    pickupDateTime: multicityStops[0].dateTime.toISOString(),
-                    returnDateTime:
-                      multicityStops[
-                        multicityStops.length - 1
-                      ].dateTime.toISOString(),
+                    pickupDateTime: multicityPickupDate.toISOString(),
+                    returnDateTime: returnDate.toISOString(),
                   };
                   handleSearch(data, "Outstation Multicity");
                 } else {
@@ -797,9 +833,55 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                   </div>
                 )}
 
-              {/* MULTICITY INPUTS (DATE ONLY - TIME REMOVED) */}
+              {/* MULTICITY INPUTS — Single Pickup Date + Per-Leg Nights */}
               {outstationTripType === "multicity" && (
                 <>
+                  {/* Pickup Date (single for entire trip) */}
+                  <div className="flex flex-col md:flex-row gap-4 mb-4">
+                    <div className="flex flex-col w-full md:w-1/3 relative">
+                      <label className="text-md font-grotesk font-semibold mb-2">
+                        Pickup Date
+                      </label>
+                      <DatePicker
+                        selected={multicityPickupDate}
+                        onChange={(date) => {
+                          if (date) date.setHours(0, 0, 0, 0);
+                          setMulticityPickupDate(date);
+                        }}
+                        dateFormat="MMMM d, yyyy"
+                        customInput={
+                          <CustomInput placeholder="Select pickup date" />
+                        }
+                        minDate={new Date()}
+                        required
+                      />
+                    </div>
+                    {/* Trip Summary */}
+                    <div className="flex items-end gap-6 ml-auto pb-1">
+                      <div className="text-center">
+                        <span className="block text-xs text-gray-500 font-grotesk">Total Nights</span>
+                        <span className="block text-2xl font-bold text-orange-600 font-grotesk">{totalNights}</span>
+                      </div>
+                      <div className="text-center">
+                        <span className="block text-xs text-gray-500 font-grotesk">Total Days</span>
+                        <span className="block text-2xl font-bold text-gray-800 font-grotesk">{totalDays}</span>
+                      </div>
+                      {multicityPickupDate && totalNights > 0 && (
+                        <div className="text-center">
+                          <span className="block text-xs text-gray-500 font-grotesk">Return Date</span>
+                          <span className="block text-sm font-semibold text-gray-700 font-grotesk">
+                            {(() => {
+                              const rd = new Date(multicityPickupDate);
+                              rd.setDate(rd.getDate() + totalNights);
+                              return rd.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+                            })()}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Per-Leg Inputs */}
                   {multicityStops.map((stop, index) => (
                     <div
                       key={index}
@@ -860,26 +942,33 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                         />
                       </div>
 
-                      {/* Travel Date (DATE ONLY - NO TIME SELECT) */}
-                      <div className="flex flex-col w-full relative">
+                      {/* Nights at destination */}
+                      <div className="flex flex-col w-full md:w-48 relative">
                         <label className="text-md font-grotesk font-semibold mb-2">
-                          Travel Date – Leg {index + 1}
+                          Nights
                         </label>
-                        <DatePicker
-                          selected={stop.dateTime}
-                          onChange={(date) => {
-                            if (date) {
-                              date.setHours(0, 0, 0, 0);
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min="0"
+                            max="30"
+                            value={stop.nightsAtCity}
+                            onChange={(e) =>
+                              updateMulticityStop(
+                                index,
+                                "nightsAtCity",
+                                Math.max(0, parseInt(e.target.value) || 0),
+                              )
                             }
-                            updateMulticityStop(index, "dateTime", date);
-                          }}
-                          dateFormat="MMMM d, yyyy"
-                          customInput={
-                            <CustomInput placeholder="Select travel date" />
-                          }
-                          minDate={getPreviousDropoffDate(index)}
-                          required
-                        />
+                            className="p-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 w-full bg-white"
+                          />
+                          <FaMoon className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
+                        </div>
+                        {/* {stop.nightsAtCity >= 2 && stop.dropoffCity && (
+                          <span className="text-xs text-green-600 mt-1 font-grotesk">
+                            + local sightseeing KM included
+                          </span>
+                        )} */}
                       </div>
 
                       {/* Remove stop button */}

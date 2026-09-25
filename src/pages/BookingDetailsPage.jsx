@@ -133,6 +133,7 @@ const BookingDetailsPage = () => {
   };
 
   const distance = searchResult?.data?.distance || 0;
+  const distanceBreakdown = searchResult?.data?.distanceBreakdown || null;
 
   const serviceType = searchFormData.serviceType || "outstation";
   const normalizeLocation = (loc) => {
@@ -190,8 +191,13 @@ const BookingDetailsPage = () => {
         place_id: lastStop.dropoffCityId || lastStop.dropoffPlaceId || null,
         cityId: lastStop.dropoffCityId || null,
       };
-      pickupDateTimeForState = firstStop.dateTime;
-      dropoffDateTimeForState = lastStop.dateTime;
+      pickupDateTimeForState =
+        firstStop?.dateTime ||
+        searchFormData.multicityPickupDate ||
+        searchFormData.pickupDateTime ||
+        searchFormData.outstationPickupDateTime;
+      dropoffDateTimeForState =
+        lastStop?.dateTime || searchFormData.outstationReturnDateTime;
     } else {
       pickupLocation = normalizeLocation(
         searchFormData.selectedPlaces?.outstationPickup ||
@@ -233,6 +239,7 @@ const BookingDetailsPage = () => {
   const [paymentOption, setPaymentOption] = useState("half");
   const [showFeatures, setShowFeatures] = useState(false);
   const [showInclusions, setShowInclusions] = useState(false);
+  const [showTaxesBreakdown, setShowTaxesBreakdown] = useState(false);
 
   // State for selected add-on activities
   const [selectedActivities, setSelectedActivities] = useState([]);
@@ -368,11 +375,13 @@ const BookingDetailsPage = () => {
           searchFormData.outstationTripType === "round-trip"
             ? searchFormData.outstationReturnDateTime
             : serviceType === "outstation" &&
-                searchFormData.outstationTripType === "multicity" &&
-                searchFormData.multicityStops.length > 0
-              ? searchFormData.multicityStops[
-                  searchFormData.multicityStops.length - 1
-                ].dateTime
+                searchFormData.outstationTripType === "multicity"
+              ? searchFormData.outstationReturnDateTime ||
+                (searchFormData.multicityStops?.length > 0
+                  ? searchFormData.multicityStops[
+                      searchFormData.multicityStops.length - 1
+                    ]?.dateTime
+                  : null)
               : null,
         distance: searchFormData.distance || 0,
         totalAmount: finalTotalAmount,
@@ -416,7 +425,20 @@ const BookingDetailsPage = () => {
   };
 
   // ==================== FARE BREAKDOWN (API SE) ====================
-  const apiCategory = item?.data?.categories?.[0];
+  const apiCategory =
+    item?.data?.categories?.[0] ||
+    item?.categoryData ||
+    searchResult?.data?.categories?.find(
+      (cat) =>
+        (cat._id && cat._id === selectedItem?.id) ||
+        (cat.type?._id && cat.type?._id === selectedItem?.id) ||
+        (cat.rateId && cat.rateId === selectedItem?.id) ||
+        (cat.type?.category &&
+          selectedItem?.name &&
+          cat.type.category.toLowerCase().replace(/[-_]/g, " ") ===
+            selectedItem.name.toLowerCase().replace(/[-_]/g, " ")),
+    ) ||
+    searchResult?.data?.categories?.[0];
 
   // Use API totalAmount, fallback to selectedItem.actualPrice
   const carOrActivityBaseTotal = isActivity
@@ -427,6 +449,138 @@ const BookingDetailsPage = () => {
   const finalTotalAmount = isActivity
     ? carOrActivityBaseTotal
     : carOrActivityBaseTotal + activitiesTotal;
+
+  // Fare component calculations
+  const totalDays =
+    apiCategory?.totalDays ??
+    apiCategory?.serviceDays ??
+    1;
+
+  const totalNights =
+    apiCategory?.totalNights ??
+    Math.max(0, totalDays - 1);
+
+  const baseFare =
+    apiCategory?.baseFare ??
+    apiCategory?.baseVehicleCost ??
+    selectedItem?.baseFare ??
+    0;
+
+  const extraKmCharges =
+    apiCategory?.extraKmCharges ??
+    apiCategory?.kmCost ??
+    0;
+
+  const freeKm =
+    apiCategory?.freeKmPerDay ??
+    apiCategory?.includedKmPerDay ??
+    0;
+
+  const extraKm =
+    apiCategory?.extraKm ??
+    (freeKm > 0 && totalDays > 0
+      ? Math.max(0, distance - freeKm * totalDays)
+      : 0);
+
+  const driverAllowance =
+    apiCategory?.totalDriverAllowance ??
+    apiCategory?.driverBata ??
+    0;
+
+  const nightCharge =
+    apiCategory?.totalNightCharge ??
+    apiCategory?.nightHalt ??
+    0;
+
+  const hillCharge =
+    apiCategory?.totalHillCharge ??
+    apiCategory?.hillCharge ??
+    0;
+
+  const permitCharge =
+    apiCategory?.totalPermitCharge ??
+    apiCategory?.permit ??
+    0;
+
+  const surchargeAmount =
+    apiCategory?.surchargeAmount ??
+    0;
+
+  const surchargeName =
+    apiCategory?.surchargeName ||
+    searchResult?.data?.surchargeInfo?.matchedPeriod ||
+    "Peak Season Surcharge";
+
+  const surchargePercent = Math.round(
+    (apiCategory?.surchargePercent ||
+      searchResult?.data?.surchargeInfo?.percent ||
+      0) * 100,
+  );
+
+  const tax = apiCategory?.tax ?? 0;
+  const taxSlab = apiCategory?.taxSlab ?? 0;
+
+  const knownCostSum =
+    baseFare +
+    extraKmCharges +
+    driverAllowance +
+    nightCharge +
+    hillCharge +
+    permitCharge +
+    surchargeAmount;
+
+  const totalTaxesAndService = Math.max(
+    0,
+    carOrActivityBaseTotal - knownCostSum,
+  );
+
+  const platformFee = apiCategory?.cabnexMargin || 0;
+  const partnerMarkup =
+    apiCategory?.agentMarkup || apiCategory?.markupAmount || 0;
+  const gstAmount = tax || 0;
+
+  const feeBreakdown = [];
+  if (platformFee > 0) {
+    feeBreakdown.push({
+      label: "Platform & Safety Fee",
+      amount: platformFee,
+    });
+  }
+  if (partnerMarkup > 0) {
+    feeBreakdown.push({
+      label: "Service & Booking Fee",
+      amount: partnerMarkup,
+    });
+  }
+  if (gstAmount > 0) {
+    feeBreakdown.push({
+      label: `GST / Govt. Taxes ${taxSlab ? `(${taxSlab}%)` : ""}`,
+      amount: gstAmount,
+    });
+  }
+
+  const itemizedSum = feeBreakdown.reduce((s, f) => s + f.amount, 0);
+  const remainingFee = totalTaxesAndService - itemizedSum;
+  if (remainingFee > 0) {
+    feeBreakdown.push({
+      label: "Facilitation Charges",
+      amount: remainingFee,
+    });
+  } else if (feeBreakdown.length === 0 && totalTaxesAndService > 0) {
+    const pFee = Math.round(totalTaxesAndService * 0.4);
+    const sFee = totalTaxesAndService - pFee;
+    feeBreakdown.push(
+      { label: "Platform & Safety Fee", amount: pFee },
+      { label: "Service & Booking Fee", amount: sFee },
+    );
+  }
+
+  const displayBaseFare =
+    baseFare > 0
+      ? baseFare
+      : knownCostSum === 0
+        ? carOrActivityBaseTotal
+        : 0;
 
   // ======================================================================
 
@@ -737,14 +891,14 @@ const BookingDetailsPage = () => {
                             </div>
                           </div>
                           <div className="flex items-center gap-3 mt-2">
-                            <CalendarIcon className="h-5 w-5 text-[#5143D9] flex-shrink-0" />
+                            <ClockIcon className="h-5 w-5 text-[#5143D9] flex-shrink-0" />
                             <div>
                               <p className="font-grotesk font-semibold text-xs text-black">
-                                Departure
+                                Stay
                               </p>
                               <p className="font-grotesk text-xs text-gray-600">
-                                {formatDate(stop.dateTime)} -{" "}
-                                {formatTime(stop.dateTime)}
+                                {stop.nightsAtCity || 0}{" "}
+                                {(stop.nightsAtCity || 0) === 1 ? "Night" : "Nights"}
                               </p>
                             </div>
                           </div>
@@ -825,7 +979,7 @@ const BookingDetailsPage = () => {
                 </h4>
 
                 <div className="space-y-2 my-2 text-sm font-grotesk">
-                  {/* Total Distance - Always shown for non-activities */}
+                  {/* Total Distance */}
                   <div className="flex justify-between">
                     <span className="text-gray-600">Total Distance</span>
                     <span className="font-semibold">
@@ -835,129 +989,164 @@ const BookingDetailsPage = () => {
                 </div>
 
                 <div className="space-y-2 text-sm font-grotesk">
-                  {/* Base Fare - Always shown for non-activities */}
+                  {/* Base Fare */}
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Base Fare</span>
+                    <span className="text-gray-600">
+                      Base Fare
+                      {totalDays > 1 ? ` (${totalDays} days)` : ""}
+                    </span>
                     <span className="font-semibold">
                       ₹
-                      {apiCategory?.baseFare?.toLocaleString("en-IN", {
+                      {displayBaseFare.toLocaleString("en-IN", {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
-                      }) || "0.00"}
+                      })}
                     </span>
                   </div>
 
-                  {/* Extra KM Charges - For Transfer and Outstation */}
-                  {(serviceType === "transfer" ||
-                    serviceType === "outstation") &&
-                    apiCategory?.extraKmCharges > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">
-                          Extra KM Charges (
-                          {distance -
-                            apiCategory?.freeKmPerDay * apiCategory?.totalDays}
-                          km)
-                        </span>
-                        <span className="font-semibold">
-                          ₹
-                          {apiCategory.extraKmCharges.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-                    )}
-
-                  {/* Total Driver Allowance - For Outstation */}
-                  {serviceType === "outstation" &&
-                    apiCategory?.totalDriverAllowance > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">
-                          Driver Allowance{" "}
-                          {`(${apiCategory?.totalDays} day${
-                            apiCategory?.totalDays > 1 ? "s" : ""
-                          })`}
-                        </span>
-                        <span className="font-semibold">
-                          ₹
-                          {apiCategory.totalDriverAllowance.toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}
-                        </span>
-                      </div>
-                    )}
-
-                  {/* Total Night Charge - For Outstation */}
-                  {serviceType === "outstation" &&
-                    apiCategory?.totalNightCharge > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">
-                          Night Charge{" "}
-                          {`(${apiCategory?.totalNights} night${
-                            apiCategory?.totalNights > 1 ? "s" : ""
-                          })`}
-                        </span>
-                        <span className="font-semibold">
-                          ₹
-                          {apiCategory.totalNightCharge.toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}
-                        </span>
-                      </div>
-                    )}
-
-                  {/* Hill Charge - For Outstation */}
-                  {serviceType === "outstation" &&
-                    apiCategory?.totalHillCharge > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Hill Charge</span>
-                        <span className="font-semibold">
-                          ₹
-                          {apiCategory.totalHillCharge.toLocaleString("en-IN", {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </span>
-                      </div>
-                    )}
-                  {serviceType === "outstation" &&
-                    apiCategory?.totalPermitCharge > 0 && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Permit Charge</span>
-                        <span className="font-semibold">
-                          ₹
-                          {apiCategory.totalPermitCharge.toLocaleString(
-                            "en-IN",
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            },
-                          )}
-                        </span>
-                      </div>
-                    )}
-
-                  {/* Tax - For all non-activities */}
-                  {apiCategory?.tax > 0 && (
+                  {/* Extra KM Charges */}
+                  {extraKmCharges > 0 && (
                     <div className="flex justify-between">
                       <span className="text-gray-600">
-                        Tax ({apiCategory?.taxSlab}%)
+                        Extra KM Charges
+                        {extraKm > 0 ? ` (${extraKm.toLocaleString("en-IN")} km)` : ""}
                       </span>
                       <span className="font-semibold">
                         ₹
-                        {apiCategory.tax.toLocaleString("en-IN", {
+                        {extraKmCharges.toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
                       </span>
+                    </div>
+                  )}
+
+                  {/* Driver Allowance */}
+                  {driverAllowance > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        Driver Allowance ({totalDays} day{totalDays > 1 ? "s" : ""})
+                      </span>
+                      <span className="font-semibold">
+                        ₹
+                        {driverAllowance.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Night Charge */}
+                  {nightCharge > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        Night Charge ({totalNights} night{totalNights > 1 ? "s" : ""})
+                      </span>
+                      <span className="font-semibold">
+                        ₹
+                        {nightCharge.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Hill Charge */}
+                  {hillCharge > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Hill Charge</span>
+                      <span className="font-semibold">
+                        ₹
+                        {hillCharge.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* State Permit Charges */}
+                  {permitCharge > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">State Permit Charges</span>
+                      <span className="font-semibold">
+                        ₹
+                        {permitCharge.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Surge Charge */}
+                  {surchargeAmount > 0 && (
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="text-gray-600">
+                          Surge Charge
+                          {surchargePercent > 0 ? ` (+${surchargePercent}%)` : ""}
+                        </span>
+                        {surchargeName &&
+                          surchargeName !== "NORMAL / NO SURCHARGE" && (
+                            <p className="text-xs text-gray-500 font-normal">
+                              {surchargeName}
+                            </p>
+                          )}
+                      </div>
+                      <span className="font-semibold">
+                        ₹
+                        {surchargeAmount.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Taxes & Service Fee - Togglable with itemized breakdown */}
+                  {totalTaxesAndService > 0 && (
+                    <div className="pt-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowTaxesBreakdown(!showTaxesBreakdown)}
+                        className="w-full flex justify-between items-center text-left py-0.5 group cursor-pointer focus:outline-none"
+                      >
+                        <span className="text-gray-600 flex items-center gap-1.5 group-hover:text-black transition-colors">
+                          <span>Taxes & Service Fee</span>
+                          <ChevronDownIcon
+                            className={`h-4 w-4 text-gray-400 group-hover:text-black transition-transform duration-200 ${
+                              showTaxesBreakdown ? "rotate-180" : ""
+                            }`}
+                          />
+                        </span>
+                        <span className="font-semibold text-gray-900">
+                          ₹
+                          {totalTaxesAndService.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
+                      </button>
+
+                      {showTaxesBreakdown && (
+                        <div className="mt-1.5 ml-2 pl-3 border-l-2 border-orange-300 space-y-1 py-1 text-xs text-gray-500 animate-in fade-in duration-150">
+                          {feeBreakdown.map((fee, idx) => (
+                            <div key={idx} className="flex justify-between items-center">
+                              <span>↳ {fee.label}</span>
+                              <span className="font-medium text-gray-700">
+                                ₹
+                                {fee.amount.toLocaleString("en-IN", {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                })}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -975,7 +1164,7 @@ const BookingDetailsPage = () => {
                     </div>
                   )}
 
-                  {/* Total Amount - Always shown for non-activities */}
+                  {/* Total Amount */}
                   <div className="border-t pt-2 mt-3 flex justify-between font-bold text-base text-black">
                     <span>Total Amount</span>
                     <span>

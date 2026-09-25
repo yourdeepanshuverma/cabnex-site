@@ -1,6 +1,6 @@
 // components/carlisting/SearchSummary.jsx
 import React from "react";
-import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaEdit } from "react-icons/fa";
+import { FaMapMarkerAlt, FaCalendarAlt, FaClock, FaEdit, FaMoon } from "react-icons/fa";
 import { useSearch } from "../../context/SearchContext";
 import { format } from "date-fns";
 
@@ -53,9 +53,50 @@ const SearchSummary = ({ onModify }) => {
             <p className="font-semibold text-gray-600">Trip Type</p>
             <p className="font-grotesk font-bold">
               {serviceType.replace(/_/g, " ")} TRIP
+              {searchFormData.outstationTripType === "multicity" ? " (MULTICITY)" : ""}
             </p>
           </div>
         </div>
+
+        {/* Pickup Date & Duration for Multicity */}
+        {searchFormData.outstationTripType === "multicity" && (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="bg-purple-100 p-2 rounded-full">
+                <FaCalendarAlt className="text-purple-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-600">Pickup Date</p>
+                <p className="font-grotesk font-bold">
+                  {formatDate(
+                    searchFormData.multicityPickupDate ||
+                      searchFormData.pickupDateTime ||
+                      searchFormData.outstationPickupDateTime,
+                    false,
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <div className="bg-orange-100 p-2 rounded-full">
+                <FaMoon className="text-orange-600" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-600">Duration</p>
+                <p className="font-grotesk font-bold">
+                  {(() => {
+                    const totalNights = (searchFormData.multicityStops || []).reduce(
+                      (sum, s) => sum + (s.nightsAtCity || 0),
+                      0,
+                    );
+                    return `${totalNights} ${totalNights === 1 ? "Night" : "Nights"} / ${totalNights + 1} Days`;
+                  })()}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
 
         {/* Multicity Itinerary */}
         {searchFormData.outstationTripType === "multicity" ? (
@@ -87,16 +128,30 @@ const SearchSummary = ({ onModify }) => {
                     </div>
                   </div>
                   <div className="flex items-start gap-2">
-                    <FaCalendarAlt className="text-purple-500 mt-1" />
+                    <FaMoon className="text-purple-500 mt-1" />
                     <div>
                       <p className="font-semibold text-xs text-gray-500">
-                        Travel Date
+                        Stay
                       </p>
                       <p className="font-bold text-sm">
-                        {formatDate(stop.dateTime, false)}
+                        {stop.nightsAtCity || 0}{" "}
+                        {(stop.nightsAtCity || 0) === 1 ? "Night" : "Nights"}
                       </p>
                     </div>
                   </div>
+                  {/* {stop.dateTime && (
+                    <div className="flex items-start gap-2">
+                      <FaCalendarAlt className="text-purple-500 mt-1" />
+                      <div>
+                        <p className="font-semibold text-xs text-gray-500">
+                          Travel Date
+                        </p>
+                        <p className="font-bold text-sm">
+                          {formatDate(stop.dateTime, false)}
+                        </p>
+                      </div>
+                    </div>
+                  )} */}
                 </div>
               </div>
             ))}

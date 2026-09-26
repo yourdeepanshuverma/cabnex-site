@@ -132,6 +132,28 @@ const BookingDetailsPage = () => {
     });
   };
 
+  const convert24to12 = (time24) => {
+    if (!time24) return "";
+    const [h, m] = time24.split(":");
+    let hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+    return `${String(hour).padStart(2, "0")}:${m} ${ampm}`;
+  };
+
+  const convert12to24 = (time12) => {
+    if (!time12 || time12 === "Not specified") return "";
+    if (/^\d{2}:\d{2}$/.test(time12)) return time12;
+    const match = time12.match(/(\d+):(\d+)\s*(AM|PM|am|pm)?/i);
+    if (!match) return "";
+    let hour = parseInt(match[1], 10);
+    const min = match[2];
+    const ampm = (match[3] || "").toUpperCase();
+    if (ampm === "PM" && hour < 12) hour += 12;
+    if (ampm === "AM" && hour === 12) hour = 0;
+    return `${String(hour).padStart(2, "0")}:${min}`;
+  };
+
   const distance = searchResult?.data?.distance || 0;
   const distanceBreakdown = searchResult?.data?.distanceBreakdown || null;
 
@@ -279,8 +301,14 @@ const BookingDetailsPage = () => {
   };
 
   const handlePayNow = async () => {
-    if (!travellerInfo.exactPickupLocation)
+    if (!travellerInfo.exactPickupLocation || !travellerInfo.exactPickupLocation.trim())
       return toast.error("Please enter exact pickup location.");
+    if (
+      !travellerInfo.pickupTime ||
+      travellerInfo.pickupTime === "Not specified" ||
+      !travellerInfo.pickupTime.trim()
+    )
+      return toast.error("Please select a departure time.");
     if (!travellerInfo.mobile)
       return toast.error("Please enter a mobile number.");
     if (!travellerInfo.email)
@@ -582,7 +610,10 @@ const BookingDetailsPage = () => {
       <div className="mt-16 sm:mt-20 mb-6">
         <h3 className="text-lg sm:text-xl font-grotesk font-semibold text-gray-700">
           {selectedItem.name} | {serviceType.replace(/_/g, " ").toUpperCase()} |{" "}
-          {travellerInfo.pickupDate} - {travellerInfo.pickupTime}
+          {travellerInfo.pickupDate}
+          {travellerInfo.pickupTime && travellerInfo.pickupTime !== "Not specified"
+            ? ` - ${travellerInfo.pickupTime}`
+            : ""}
         </h3>
       </div>
 
@@ -780,18 +811,40 @@ const BookingDetailsPage = () => {
                 </div>
               )}
 
-              <div className="flex items-start gap-3 sm:col-span-2">
-                <MapPinIcon className="h-6 w-6 text-[#5143D9] flex-shrink-0 mt-1" />
-                <div className="flex-1">
-                  <p className="font-grotesk font-semibold text-sm text-black">
-                    Exact Pickup Location
-                  </p>
+              {/* Pickup Address & Departure Time Input (Required) */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:col-span-2 bg-[#F9F9FA] p-4 rounded-xl border border-gray-200">
+                <div className="sm:col-span-2">
+                  <label className="font-grotesk font-semibold text-sm text-black flex items-center gap-1.5 mb-1.5">
+                    <MapPinIcon className="h-4 w-4 text-[#5143D9]" />
+                    Exact Pickup Location <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
                     value={travellerInfo.exactPickupLocation}
                     onChange={handleExactPickupLocationChange}
-                    placeholder="Hotel name, building, landmark..."
-                    className="w-full mt-1 p-2 border border-gray-300 rounded-md text-sm font-grotesk focus:ring-2 focus:ring-orange-500"
+                    placeholder="Hotel name, building, street, landmark..."
+                    required
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm font-grotesk focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-grotesk font-semibold text-sm text-black flex items-center gap-1.5 mb-1.5">
+                    <ClockIcon className="h-4 w-4 text-[#5143D9]" />
+                    Departure Time <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="time"
+                    value={convert12to24(travellerInfo.pickupTime)}
+                    onChange={(e) => {
+                      const val24 = e.target.value;
+                      setTravellerInfo((prev) => ({
+                        ...prev,
+                        pickupTime: val24 ? convert24to12(val24) : "",
+                      }));
+                    }}
+                    required
+                    className="w-full p-2.5 bg-white border border-gray-300 rounded-lg text-sm font-grotesk focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
                   />
                 </div>
               </div>
@@ -812,9 +865,9 @@ const BookingDetailsPage = () => {
                   label: "Pickup Date",
                   value: travellerInfo.pickupDate,
                 },
-                {
+                travellerInfo.pickupTime && travellerInfo.pickupTime !== "Not specified" && {
                   icon: ClockIcon,
-                  label: "Pickup Time",
+                  label: "Departure Time",
                   value: travellerInfo.pickupTime,
                 },
                 travellerInfo.dropoffDate !== "Not specified" && {
@@ -822,7 +875,7 @@ const BookingDetailsPage = () => {
                   label: "Final Drop-off Date",
                   value: travellerInfo.dropoffDate,
                 },
-                travellerInfo.dropoffTime !== "Not specified" && {
+                serviceType !== "outstation" && travellerInfo.dropoffTime !== "Not specified" && {
                   icon: ClockIcon,
                   label: "Final Drop-off Time",
                   value: travellerInfo.dropoffTime,

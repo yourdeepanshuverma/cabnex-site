@@ -781,15 +781,14 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                     </div>
                     <div className="flex flex-col w-full relative">
                       <label className="text-md font-grotesk font-semibold mb-2">
-                        Pickup Date/Time
+                        Departure Date
                       </label>
                       <DatePicker
                         selected={outstationPickupDateTime}
                         onChange={setOutstationPickupDateTime}
-                        showTimeSelect
-                        dateFormat="MMMM d, yyyy h:mm aa"
+                        dateFormat="MMMM d, yyyy"
                         customInput={
-                          <CustomInput placeholder="Select date and time" />
+                          <CustomInput placeholder="Select departure date" />
                         }
                         minDate={new Date()}
                         required
@@ -798,15 +797,14 @@ const SearchSection = ({ isUpdate = false, onUpdateComplete }) => {
                     {outstationTripType === "round-trip" && (
                       <div className="flex flex-col w-full relative">
                         <label className="text-md font-grotesk font-semibold mb-2">
-                          Return Date/Time
+                          Return Date
                         </label>
                         <DatePicker
                           selected={outstationReturnDateTime}
                           onChange={setOutstationReturnDateTime}
-                          showTimeSelect
-                          dateFormat="MMMM d, yyyy h:mm aa"
+                          dateFormat="MMMM d, yyyy"
                           customInput={
-                            <CustomInput placeholder="Select return date and time" />
+                            <CustomInput placeholder="Select return date" />
                           }
                           minDate={outstationPickupDateTime || new Date()}
                           required

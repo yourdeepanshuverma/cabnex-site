@@ -517,7 +517,7 @@ const BookingDetailsPage = () => {
       0) * 100,
   );
 
-  const tax = apiCategory?.tax ?? 0;
+  const taxAmount = apiCategory?.taxAmount ?? apiCategory?.tax ?? 0;
   const taxSlab = apiCategory?.taxSlab ?? 0;
 
   const knownCostSum =
@@ -535,26 +535,18 @@ const BookingDetailsPage = () => {
   );
 
   const platformFee = apiCategory?.cabnexMargin || 0;
-  const partnerMarkup =
-    apiCategory?.agentMarkup || apiCategory?.markupAmount || 0;
-  const gstAmount = tax || 0;
+  const gstAmount = taxAmount || 0;
 
   const feeBreakdown = [];
   if (platformFee > 0) {
     feeBreakdown.push({
-      label: "Platform & Safety Fee",
+      label: "Platform & Service Fee",
       amount: platformFee,
-    });
-  }
-  if (partnerMarkup > 0) {
-    feeBreakdown.push({
-      label: "Service & Booking Fee",
-      amount: partnerMarkup,
     });
   }
   if (gstAmount > 0) {
     feeBreakdown.push({
-      label: `GST / Govt. Taxes ${taxSlab ? `(${taxSlab}%)` : ""}`,
+      label: `GST ${taxSlab ? `(${taxSlab}%)` : ""}`,
       amount: gstAmount,
     });
   }
@@ -567,12 +559,10 @@ const BookingDetailsPage = () => {
       amount: remainingFee,
     });
   } else if (feeBreakdown.length === 0 && totalTaxesAndService > 0) {
-    const pFee = Math.round(totalTaxesAndService * 0.4);
-    const sFee = totalTaxesAndService - pFee;
-    feeBreakdown.push(
-      { label: "Platform & Safety Fee", amount: pFee },
-      { label: "Service & Booking Fee", amount: sFee },
-    );
+    feeBreakdown.push({
+      label: "Taxes & Service Fee",
+      amount: totalTaxesAndService,
+    });
   }
 
   const displayBaseFare =

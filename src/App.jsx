@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router } from 'react-router-dom';
 import AppRoutes from './routes/AppRoutes';
+import ScrollToTop from './utils/scroll-to-top';
 import 'react-toastify/dist/ReactToastify.css';
 import { SearchProvider } from './context/SearchContext';
 import { Toaster } from 'sonner';
@@ -26,6 +27,7 @@ function App() {
 
   return (
     <Router>
+      <ScrollToTop />
       <SearchProvider>
         <VendorAuthProvider>
           <main className="min-h-screen">

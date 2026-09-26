@@ -272,6 +272,11 @@ const BookingDetailsPage = () => {
   // Extract cityActivities from searchResult
   const cityActivities = searchResult?.data?.cityActivities || [];
 
+  // Scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, []);
+
   // Calculate activitiesTotal whenever selectedActivities changes
   useEffect(() => {
     const total = selectedActivities.reduce(
